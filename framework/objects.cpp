@@ -20,9 +20,33 @@ object_ref_t object_factory_t::create(object_type_t type)
     }
     else {
         assert(itt->second);
-        return object_ref_t(
-                itt->second->create(type)
-        );
+        object_t * obj = itt->second->create(type);
+        obj_.push_front(obj);
+        return object_ref_t(obj);
+    }
+}
+
+void object_factory_t::collect()
+{
+    for (auto itt = obj_.begin(); itt!=obj_.end();) {
+        // deref to get our object
+        object_t * obj = *itt;
+        // check if this object is disposed
+        if (obj->disposed()) {
+            // find the creator for this object
+            auto c_itt = creator_.find(obj->type_);
+            assert(c_itt != creator_.end());
+            // deref to get the creator object
+            const up_object_creator_t & creator = c_itt->second;
+            // use the creator to destroy this object
+            creator->destroy(obj);
+            // remove this object from the list
+            itt = obj_.erase(itt);
+        }
+        // object is health and alive
+        else {
+            ++itt;
+        }
     }
 }
 

@@ -6,11 +6,9 @@
 #include <map>
 #include <list>
 
-
 struct ref_t;
 struct object_t;
 struct object_ref_t;
-
 
 typedef uint32_t object_type_t;
 
@@ -35,6 +33,11 @@ struct ref_t
     bool disposed() const
     {
         return value_ <= 0;
+    }
+
+    int32_t count() const
+    {
+        return value_;
     }
 
 protected:
@@ -110,6 +113,18 @@ struct object_ref_t
         return obj_;
     }
 
+    bool operator == (const object_ref_t & ref) const
+    {
+        return obj_ == ref.obj_;
+    }
+
+    void dispose() {
+        if (obj_) {
+            dec();
+            obj_ = nullptr;
+        }
+    }
+
 protected:
 
     void dec();
@@ -126,6 +141,9 @@ struct object_t
     {
         // retain reference to self
         ref_.inc();
+    }
+
+    virtual ~object_t() {
     }
 
     template <typename type_t>
@@ -180,6 +198,16 @@ struct object_t
 
     const object_type_t type_;
 
+    uint32_t ref_count() const
+    {
+        return ref_.count();
+    }
+
+    bool disposed() const
+    {
+        return ref_.disposed();
+    }
+
 protected:
     friend struct object_ref_t;
     ref_t ref_;
@@ -209,6 +237,9 @@ struct object_factory_t
 
     object_ref_t create(object_type_t type);
 
+    // prune any dead objects
+    void collect();
+
 protected:
     std::list<object_t *> obj_;
 
@@ -218,10 +249,12 @@ protected:
 
 
 template <typename type_t>
-struct object_create_t : public object_factory_t::creator_t {
+struct object_create_t : public object_factory_t::creator_t
+{
     virtual object_t * create(object_type_t) {
         return new type_t;
     }
+
     virtual void destroy(object_t * obj) {
         delete static_cast<type_t*>(obj);
     }
