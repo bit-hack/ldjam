@@ -25,3 +25,15 @@ object_ref_t object_factory_t::create(object_type_t type)
         );
     }
 }
+
+void object_ref_t::dec() {
+    if (obj_) {
+        obj_->ref_.dec();
+    }
+}
+
+void object_ref_t::inc() {
+    if (obj_) {
+        obj_->ref_.inc();
+    }
+}

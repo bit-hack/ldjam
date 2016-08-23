@@ -6,14 +6,14 @@
 #include <map>
 #include <list>
 
-enum class object_type_t : uint32_t
-{
-    e_object_invalid    = 0,
-};
 
 struct ref_t;
 struct object_t;
 struct object_ref_t;
+
+
+typedef uint32_t object_type_t;
+
 
 struct ref_t
 {
@@ -40,6 +40,84 @@ struct ref_t
 protected:
     int32_t value_;
 };
+
+
+struct object_ref_t
+{
+    object_ref_t()
+            : obj_(nullptr)
+    {
+    }
+
+    object_ref_t(object_t * obj)
+            : obj_(obj)
+    {
+        inc();
+    }
+
+    object_ref_t(object_ref_t & copy)
+            : obj_(copy.obj_)
+    {
+        inc();
+    }
+
+    object_ref_t(object_ref_t && copy)
+            : obj_(copy.obj_)
+    {
+        copy.obj_ = nullptr;
+    }
+
+    void operator = (object_ref_t & rhs)
+    {
+        // discard old object
+        dec();
+        // assign new object
+        obj_ = rhs.obj_;
+        inc();
+    }
+
+    ~object_ref_t()
+    {
+        dec();
+    }
+
+    bool valid() const
+    {
+        return obj_ != nullptr;
+    }
+
+    object_t & get()
+    {
+        assert(obj_);
+        return *obj_;
+    }
+
+    const object_t & get() const
+    {
+        assert(obj_);
+        return *obj_;
+    }
+
+    object_t * operator -> ()
+    {
+        assert(obj_);
+        return obj_;
+    }
+
+    const object_t * operator -> () const
+    {
+        assert(obj_);
+        return obj_;
+    }
+
+protected:
+
+    void dec();
+    void inc();
+
+    object_t * obj_;
+};
+
 
 struct object_t
 {
@@ -116,7 +194,18 @@ struct object_factory_t
         virtual void destroy(object_t*) = 0;
     };
 
-    void add_creator(object_type_t type, creator_t * creator);
+    template <typename type_t>
+    void add_creator() {
+        add_creator(type_t::type(), type_t::creator());
+    }
+
+    void add_creator(object_type_t type,
+                     creator_t * creator);
+
+    template <typename type_t>
+    object_ref_t create() {
+        return create(type_t::type());
+    }
 
     object_ref_t create(object_type_t type);
 
@@ -128,71 +217,12 @@ protected:
 };
 
 
-struct object_ref_t
-{
-    object_ref_t()
-        : obj_(nullptr)
-    {
+template <typename type_t>
+struct object_create_t : public object_factory_t::creator_t {
+    virtual object_t * create(object_type_t) {
+        return new type_t;
     }
-
-    object_ref_t(object_t * obj)
-        : obj_(obj)
-    {
-        if (obj_) {
-            obj_->ref_.inc();
-        }
+    virtual void destroy(object_t * obj) {
+        delete static_cast<type_t*>(obj);
     }
-
-    object_ref_t(object_ref_t & copy)
-        : obj_(copy.obj_)
-    {
-        if (obj_) {
-            obj_->ref_.inc();
-        }
-    }
-
-    object_ref_t(object_ref_t && copy)
-        : obj_(copy.obj_)
-    {
-        copy.obj_ = nullptr;
-    }
-
-    void operator = (object_ref_t & rhs)
-    {
-        // discard old object
-        if (obj_) {
-            obj_->ref_.dec();
-        }
-        // assign new object
-        if (obj_ = rhs.obj_) {
-            obj_->ref_.inc();
-        }
-    }
-
-    ~object_ref_t()
-    {
-        if (obj_) {
-            obj_->ref_.dec();
-        }
-    }
-
-    bool valid() const
-    {
-        return obj_ != nullptr;
-    }
-
-    object_t & get()
-    {
-        assert(obj_);
-        return *obj_;
-    }
-
-    const object_t & get() const
-    {
-        assert(obj_);
-        return *obj_;
-    }
-
-protected:
-    object_t * obj_;
 };
