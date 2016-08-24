@@ -203,7 +203,7 @@ struct object_t
         return ref_.count();
     }
 
-    bool disposed() const
+    bool is_disposed() const
     {
         return ref_.disposed();
     }
@@ -227,6 +227,7 @@ struct object_factory_t
         add_creator(type_t::type(), type_t::creator());
     }
 
+    // creator pointer will transfer ownership
     void add_creator(object_type_t type,
                      creator_t * creator);
 

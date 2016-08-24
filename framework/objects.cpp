@@ -32,7 +32,7 @@ void object_factory_t::collect()
         // deref to get our object
         object_t * obj = *itt;
         // check if this object is disposed
-        if (obj->disposed()) {
+        if (obj->is_disposed()) {
             // find the creator for this object
             auto c_itt = creator_.find(obj->type_);
             assert(c_itt != creator_.end());
@@ -43,7 +43,7 @@ void object_factory_t::collect()
             // remove this object from the list
             itt = obj_.erase(itt);
         }
-        // object is health and alive
+        // object has referenced then it is alive
         else {
             ++itt;
         }
