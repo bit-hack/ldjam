@@ -1,3 +1,4 @@
+#include <cassert>
 #include <cstdint>
 #include <array>
 #include <list>
@@ -12,6 +13,7 @@ struct body_t
     body_t(const vec2f_t & pos, const float radius)
         : p(pos)
         , r(radius)
+        , vel(vec2f_t{0.f, 0.f})
     {
     }
 
@@ -24,6 +26,8 @@ struct body_t
     {
         return r;
     }
+
+    vec2f_t vel;
 
 protected:
     friend struct spatial_t;
@@ -103,6 +107,9 @@ protected:
 
 struct spatial_t
 {
+    static const uint32_t width = 32;
+    static const uint32_t items = 1024;
+
     void insert(body_t * obj);
 
     void remove(const body_t * obj);
@@ -137,9 +144,6 @@ struct spatial_t
     int dbg_ocupancy(int32_t x, int32_t y);
 
 protected:
-
-    static const uint32_t width = 32;
-    static const uint32_t items = 1024;
 
     struct slot_t
     {

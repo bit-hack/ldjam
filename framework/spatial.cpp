@@ -183,7 +183,7 @@ void spatial_t::query_collisions(body_pair_set_t & out)
             }
         }
     }
-#if 1
+#if 0
     printf("?> %d\n", compares);
 #endif
 }
