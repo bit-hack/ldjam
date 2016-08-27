@@ -107,6 +107,8 @@ struct obj_explode_t: public object_ex_t<e_explode, obj_explode_t>
     surge_t & surge_;
     float age_;
     bool alive_;
+    float scale_;
+    float life_;
 
     struct particle_t {
         vec2f_t pos_;
@@ -129,7 +131,7 @@ struct obj_explode_t: public object_ex_t<e_explode, obj_explode_t>
         if (!alive_) {
             return;
         }
-        if (age_ >= 64.f) {
+        if (age_ >= life_) {
             destroy();
             return;
         }
@@ -143,15 +145,16 @@ struct obj_explode_t: public object_ex_t<e_explode, obj_explode_t>
         }
     }
     
-    void init(const vec2f_t & pos) {
+    void init(const vec2f_t & pos, float scale) {
+        scale_ = scale;
         prng::seed_t seed = prng::seed_t(time_func());
         for (particle_t & p:part_) {
             p.pos_ = pos;
-            p.vel_ = vec2f_t{ prng::grandfs(seed), prng::grandfs(seed) + .5f };
-
+            p.vel_ = vec2f_t{ prng::grandfs(seed), prng::grandfs(seed) + .5f } * scale;
             float v = (p.vel_.x*p.vel_.x+p.vel_.y*p.vel_.y);
-            p.size_ = 1.f / (v + (1.f - v) * .1f);
+            p.size_ = (1.f / (v + (1.f - v) * .1f)) * scale;
         }
+        life_ = 64.f * scale;
     }
 
     void destroy() {
@@ -392,7 +395,7 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
             // screen shake feels awesome
             surge_.draw_.shake_ += 4.f;
             object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
-            exp->cast<obj_explode_t>().init(body_.pos());
+            exp->cast<obj_explode_t>().init(body_.pos(), 2.f);
         }
     }
 
@@ -452,6 +455,8 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
     float track_;
     delta_time_t dive_timer_;
     prng::seed_t seed_;
+    uint32_t health_;
+    vec2f_t knockback_;
 
     obj_enemy_t(object_service_t service)
         : object_ex_t()
@@ -461,10 +466,23 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         , track_(0.f)
         , dive_timer_(time_func, 400)
         , seed_(time_func())
+        , health_(1)
+        , knockback_(vec2f_t::zero())
     {
         assert(service);
         fsm_.push_back(&obj_enemy_t::fsm_float);
         fsm_.push_back(&obj_enemy_t::fsm_spline);
+    }
+
+    void on_hit() {
+        // sleep feels cool
+        SDL_Delay(10);
+        // screen shake feels awesome
+        surge_.draw_.shake_ += 1.f;
+        object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
+        exp->cast<obj_explode_t>().init(body_.pos(), .5f);
+
+        knockback_ = vec2f_t{prng::grandfs(seed_), -prng::randfu(seed_)} * 9.f;
     }
 
     void on_death() {
@@ -474,7 +492,7 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         // screen shake feels awesome
         surge_.draw_.shake_ += 4.f;
         object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
-        exp->cast<obj_explode_t>().init(body_.pos());
+        exp->cast<obj_explode_t>().init(body_.pos(), 1.f);
         // see if we should drop a powerup
         {
             prng::seed_t seed = time_func();
@@ -497,8 +515,13 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
             if (obj.is_a(e_bullet) && obj.cast<obj_bullet_t>().alive_) {
                 obj.cast<obj_bullet_t>().destroy();
                 if (alive_) {
-                    on_death();
-                    return true;
+                    if (--health_) {
+                        on_hit();
+                    }
+                    else {
+                        on_death();
+                        return true;
+                    }
                 }
             }
             if (obj.is_a(e_player)) {
@@ -511,7 +534,7 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
 
     void draw() {
         auto draw = surge_.draw_;
-        const vec2f_t p = body_.pos();
+        const vec2f_t p = body_.pos() + knockback_;
         draw.draw_colour(256, 128, 64);
         draw.draw_rect(p.x-4, p.y-4, 8, 8);
     }
@@ -620,17 +643,19 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
     }
 
     virtual void tick() override {
+        knockback_ *= .6f;
         assert(fsm_.size());
         state_t func = fsm_.back();
         // dispatch to finite state machine
         (*this.*func)();
     }
 
-    void init(const vec2f_t & p, float seed, uint32_t spline) {
+    void init(const vec2f_t & p, float seed, uint32_t spline, uint32_t health) {
         ideal_pos_ = p;
         dt_ = seed;
         body_.move(ideal_pos_);
         spline_ = &s_splines[spline];
+        health_ = health;
     }
 
     void destroy() {
@@ -676,7 +701,8 @@ struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
 
         e->cast<obj_enemy_t>().init(pos,
                                     (pos.x / 100.f + pos.y / 80.f) * seed,
-                                    prng::bitmix(temp) % s_splines.size());
+                                    prng::bitmix(temp) % s_splines.size(),
+                                    surge_.difficulty_);
         surge_.enemy_.push_back(e);
         ++made_;
     }
@@ -706,7 +732,7 @@ struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
 surge_t::surge_t(draw_t & draw)
     : draw_(draw)
-    , difficulty_(1.f)
+    , difficulty_(1)
 {
     factory_.add_creator<obj_player_t>();
     factory_.add_creator<obj_enemy_t>();
@@ -737,7 +763,7 @@ void surge_t::tick()
     if (enemy_.size()==0&&!wave_.valid()) {
         stars_->cast<obj_stars_t>().boost();
         wave_ = factory_.create<obj_wave_t>(this);
-        difficulty_ += 1.f;
+        ++difficulty_;
     }
 
     if (!player_.valid()) {

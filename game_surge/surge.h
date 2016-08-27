@@ -13,7 +13,7 @@ struct surge_t {
     object_factory_t factory_;
     spatial_t spatial_;
 
-    float difficulty_;
+    uint32_t difficulty_;
 
     std::vector<object_ref_t> enemy_;
     object_ref_t player_;
