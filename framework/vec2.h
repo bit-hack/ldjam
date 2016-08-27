@@ -76,6 +76,13 @@ struct vec2_t
         return length(b - a);
     }
 
+    static type_t distance_sqr(
+            const vec2_t & a,
+            const vec2_t & b)
+    {
+        return (b-a)*(b-a);
+    }
+
     static vec2_t zero() {
         return vec2_t {
             0, 0

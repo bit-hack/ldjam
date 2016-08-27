@@ -10,10 +10,11 @@
 
 struct body_t
 {
-    body_t(const vec2f_t & pos, const float radius)
+    body_t(const vec2f_t & pos, const float radius, struct object_t * object)
         : p(pos)
         , r(radius)
         , vel(vec2f_t{0.f, 0.f})
+        , obj_(object)
     {
     }
 
@@ -28,6 +29,8 @@ struct body_t
     }
 
     vec2f_t vel;
+
+    struct object_t * obj_;
 
 protected:
     friend struct spatial_t;

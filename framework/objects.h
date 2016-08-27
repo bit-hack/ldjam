@@ -80,6 +80,13 @@ struct object_ref_t
         inc();
     }
 
+    void operator = (const object_ref_t & rhs)
+    {
+        dec();
+        obj_ = rhs.obj_;
+        inc();
+    }
+
     ~object_ref_t()
     {
         dec();
