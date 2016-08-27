@@ -5,6 +5,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
 add_subdirectory(framework)
 add_subdirectory(testing)
+add_subdirectory(game_surge)
 
 set(SOURCE_FILES main.cpp)
 add_executable(ldjam ${SOURCE_FILES})
