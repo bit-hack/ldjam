@@ -11,6 +11,7 @@ struct surge_t {
 
     draw_t & draw_;
     object_factory_t factory_;
+    spatial_t spatial_;
 
     std::vector<object_ref_t> enemy_;
     object_ref_t player_;

@@ -53,7 +53,7 @@ void object_factory_t::collect()
 
 void object_factory_t::tick()
 {
-    for (auto itt = obj_.begin(); itt!=obj_.end();) {
+    for (auto itt = obj_.begin(); itt!=obj_.end(); ++itt) {
         // deref to get our object
         object_t * obj = *itt;
         // check if this object is disposed

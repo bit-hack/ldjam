@@ -58,8 +58,8 @@ struct object_ref_t
     {
         inc();
     }
-
-    object_ref_t(object_ref_t & copy)
+    
+    object_ref_t(const object_ref_t & copy)
             : obj_(copy.obj_)
     {
         inc();
