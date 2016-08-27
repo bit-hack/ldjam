@@ -1,3 +1,4 @@
+#define _SDL_main_h
 #include <SDL/SDL.h>
 #include <array>
 #include <list>
@@ -59,7 +60,10 @@ void app_t::line(int x, int y, int x2, int y2, uint32_t rgb)
     int incrementVal, endVal;
     int shortLen = y2 - y, longLen  = x2 - x;
     if (abs(shortLen) > abs(longLen)) {
-        std::swap<int>(shortLen, longLen);
+        //std::swap<int>(shortLen, longLen);
+        int temp = longLen;
+        longLen = shortLen;
+        shortLen = temp;
         yLonger = true;
     }
     endVal = longLen;

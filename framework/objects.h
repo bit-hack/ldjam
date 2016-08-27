@@ -12,6 +12,7 @@ struct object_ref_t;
 
 typedef uint32_t object_type_t;
 
+typedef void * object_service_t;
 
 struct ref_t
 {
@@ -208,6 +209,8 @@ struct object_t
         return ref_.disposed();
     }
 
+    virtual void tick() {};
+
 protected:
     friend struct object_ref_t;
     ref_t ref_;
@@ -218,7 +221,8 @@ struct object_factory_t
 {
     struct creator_t
     {
-        virtual object_t * create(object_type_t) = 0;
+        virtual object_t * create(object_type_t,
+                                  object_service_t) = 0;
         virtual void destroy(object_t*) = 0;
     };
 
@@ -232,14 +236,18 @@ struct object_factory_t
                      creator_t * creator);
 
     template <typename type_t>
-    object_ref_t create() {
-        return create(type_t::type());
+    object_ref_t create(object_service_t service=nullptr) {
+        return create(type_t::type(), service);
     }
 
-    object_ref_t create(object_type_t type);
+    object_ref_t create(object_type_t type,
+                        object_service_t service=nullptr);
 
     // prune any dead objects
     void collect();
+
+    // tick all objects
+    void tick();
 
 protected:
     std::list<object_t *> obj_;
@@ -252,11 +260,30 @@ protected:
 template <typename type_t>
 struct object_create_t : public object_factory_t::creator_t
 {
-    virtual object_t * create(object_type_t) {
-        return new type_t;
+    virtual object_t * create(object_type_t, object_service_t service) {
+        return new type_t(service);
     }
 
     virtual void destroy(object_t * obj) {
         delete static_cast<type_t*>(obj);
+    }
+};
+
+template <object_type_t id_t, typename type_t>
+struct object_ex_t: public object_t {
+
+    object_ex_t()
+        : object_t(type())
+    {
+    }
+
+    static object_type_t type()
+    {
+        return id_t;
+    }
+
+    static object_factory_t::creator_t * creator()
+    {
+        return new object_create_t<type_t>();
     }
 };

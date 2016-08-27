@@ -36,6 +36,7 @@ int run_unit_tests()
     register_test_objects(testing);
     register_test_timer(testing);
     testing.start();
+    return 0;
 }
 
 
