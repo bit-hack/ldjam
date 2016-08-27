@@ -5,15 +5,11 @@
 
 
 extern void register_test_objects(testing_t & testing);
+extern void register_test_timer(testing_t & testing);
 extern int run_spatial_tests();
 
 typedef std::map<const std::string, int (*)()> test_set_t;
 
-
-void register_tests(testing_t & testing)
-{
-    register_test_objects(testing);
-}
 
 void testing_t::add_test(const std::string & name, test_func_t test)
 {
@@ -37,7 +33,8 @@ void testing_t::start()
 int run_unit_tests()
 {
     testing_t testing;
-    register_tests(testing);
+    register_test_objects(testing);
+    register_test_timer(testing);
     testing.start();
 }
 

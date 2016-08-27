@@ -193,9 +193,32 @@ void spatial_t::query_radius(
     float r,
     body_set_t & out)
 {
-#if 0
-    // ideal distance
-    const float id = (obj->r + r) * (obj->r + r);
+    auto test = [](float x,
+                   float y,
+                   float radius,
+                   body_set_t & out) {
+
+    };
+
+#if 1
+    float x = 0, y = r;
+    float dp = 1.f-r;
+    test(p.x+y, p.y, r, out);
+    test(p.x-y, p.y, r, out);
+    test(p.x, p.y+y, r, out);
+    test(p.x, p.y-y, r, out);
+    do {
+        dp = (dp < 0) ? dp+2.f*(++x)+3.f :
+                        dp+2.f*(++x)-2.f*(--y)+5.f;
+        test(p.x+x, p.x+y, r, out);
+        test(p.x-x, p.x+y, r, out);
+        test(p.x+x, p.x-y, r, out);
+        test(p.x-x, p.x-y, r, out);
+        test(p.x+y, p.x+x, r, out);
+        test(p.x-y, p.x+x, r, out);
+        test(p.x+y, p.x-x, r, out);
+        test(p.x-y, p.x-x, r, out);
+    } while (x < y);
 #else
     assert(!"not yet implemented");
 #endif

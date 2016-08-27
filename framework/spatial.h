@@ -173,6 +173,8 @@ protected:
 
     bound_t object_bound(const body_t * obj) const;
 
+    void slot_test(int32_t x, int32_t y, float r, body_set_t & out);
+
     void slot_erase(int32_t x, int32_t y, const body_t * obj);
 
     void slot_insert(int32_t x, int32_t y, body_t * obj);
