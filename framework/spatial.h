@@ -13,7 +13,7 @@ struct body_t
     body_t(const vec2f_t & pos, const float radius, struct object_t * object)
         : p(pos)
         , r(radius)
-        , vel(vec2f_t{0.f, 0.f})
+        , vel_(vec2f_t{0.f, 0.f})
         , obj_(object)
     {
     }
@@ -28,7 +28,7 @@ struct body_t
         return r;
     }
 
-    vec2f_t vel;
+    vec2f_t vel_;
 
     struct object_t * obj_;
 
@@ -189,4 +189,47 @@ protected:
         x /= width;
         y /= width;
     }
+};
+
+struct body_ex_t {
+
+    body_t body_;
+
+    body_ex_t(spatial_t & spatial,
+              const vec2f_t & pos,
+              float radius,
+              struct object_t * obj)
+        : spatial_(spatial)
+        , body_(pos, radius, obj)
+    {
+        spatial_.insert(&body_);
+    }
+
+    body_ex_t(const body_ex_t & other)
+        : spatial_(other.spatial_)
+        , body_(other.body_)
+    {
+        spatial_.insert(&body_);
+    }
+
+    void operator = (const body_ex_t &) = delete;
+
+    ~body_ex_t() {
+        spatial_.remove(&body_);
+    }
+
+    void move(const vec2f_t & p) {
+        spatial_.move(&body_, p);
+    }
+
+    const vec2f_t pos() const {
+        return body_.pos();
+    }
+
+    vec2f_t & vel() {
+        return body_.vel_;
+    }
+
+protected:
+    spatial_t & spatial_;
 };

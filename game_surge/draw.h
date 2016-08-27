@@ -40,8 +40,11 @@ struct draw_t
     }
 
     bool init(const uint32_t w, const uint32_t h) {
+
+        const int C_FLAGS = 0 /* | SDL_WINDOW_FULLSCREEN_DESKTOP */;
+
         assert(!(render_ || window_));
-        if (SDL_CreateWindowAndRenderer(w*2, h*2, 0, &window_, &render_)) {
+        if (SDL_CreateWindowAndRenderer(w*2, h*2, C_FLAGS, &window_, &render_)) {
             return false;
         }
         if (!(window_ && render_)) {

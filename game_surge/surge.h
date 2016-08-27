@@ -18,6 +18,7 @@ struct surge_t {
     std::vector<object_ref_t> enemy_;
     object_ref_t player_;
     object_ref_t wave_;
+    object_ref_t stars_;
 
     surge_t(draw_t & draw);
 

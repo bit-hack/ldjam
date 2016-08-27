@@ -61,7 +61,7 @@ struct vec2_t
 
     static type_t length(const vec2_t & v)
     {
-        return sqrt(v.x*v.x + v.y*v.y);
+        return ::sqrt(v.x*v.x + v.y*v.y);
     }
 
     static vec2_t normalize(const vec2_t & v)

@@ -13,4 +13,13 @@ namespace {
         return in - float(int(in));
     }
 
+    template <typename type_t>
+    type_t minv(const type_t a, const type_t b) {
+        return (a<b) ? a : b;
+    }
+
+    template <typename type_t>
+    type_t maxv(const type_t a, const type_t b) {
+        return (a>b) ? a : b;
+    }
 } // namespace {}

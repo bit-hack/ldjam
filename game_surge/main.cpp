@@ -34,6 +34,11 @@ struct game_t {
             if (event.type==SDL_QUIT) {
                 return false;
             }
+            if (event.type==SDL_KEYDOWN) {
+                if (event.key.keysym.scancode==SDL_SCANCODE_ESCAPE) {
+                    return false;
+                }
+            }
         }
         return true;
     }
