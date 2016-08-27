@@ -27,6 +27,11 @@ namespace prng {
             return uint64_t(x * 2685821657736338717ull);
         }
 
+/*  */
+        bool rand_chance(seed_t &x, uint64_t chance) {
+            return (randllu(x)%chance)==0;
+        }
+
 /* random value between 0.f and 1.f */
         float randfu(seed_t &seed) {
             union {

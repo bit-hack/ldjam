@@ -19,6 +19,15 @@ namespace
         y  = y * (threehalfs - (x2 * y * y));
         return y;
     }
+
+    float hermite(float y0, float y1, float y2, float y3, float x)
+    {
+        float c0 = y1;
+        float c1 = 0.5f * (y2 - y0);
+        float c3 = 1.5f * (y1 - y2) + 0.5f * (y3 - y0);
+        float c2 = y0 - y1 + c1 - c3;
+        return ((c3 * x + c2) * x + c1) * x + c0;
+    }
 }
 
 template <typename type_t>
@@ -118,6 +127,18 @@ struct vec2_t
     )
     {
         return a + (b - a) * i;
+    }
+
+    static vec2_t hlerp(
+        const vec2_t &pm,
+        const vec2_t &p0,
+        const vec2_t &p1,
+        const vec2_t &p2,
+        const type_t i
+    )
+    {
+        return vec2_t{hermite(pm.x, p0.x, p1.x, p2.x, i),
+                      hermite(pm.y, p0.y, p1.y, p2.y, i)};
     }
 };
 

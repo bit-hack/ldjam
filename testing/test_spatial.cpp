@@ -145,7 +145,7 @@ int run_spatial_tests()
         const vec2f_t p = {prng::randfu(seed) * 512,
                            prng::randfu(seed) * 512};
         const float r = prng::randfu(seed) * 16 + 4;
-        body_t * obj = new body_t(p, r);
+        body_t * obj = new body_t(p, r, nullptr);
         obj->vel.x = out[0];
         obj->vel.y = out[1];
         list_.push_front(obj);

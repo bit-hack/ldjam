@@ -71,6 +71,7 @@ struct object_ref_t
         copy.obj_ = nullptr;
     }
 
+#if 0
     void operator = (object_ref_t & rhs)
     {
         // discard old object
@@ -79,6 +80,7 @@ struct object_ref_t
         obj_ = rhs.obj_;
         inc();
     }
+#endif
 
     void operator = (const object_ref_t & rhs)
     {
