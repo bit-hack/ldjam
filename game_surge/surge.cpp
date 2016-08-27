@@ -655,7 +655,7 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         dt_ = seed;
         body_.move(ideal_pos_);
         spline_ = &s_splines[spline];
-        health_ = health;
+        health_ = health / 2;
     }
 
     void destroy() {
