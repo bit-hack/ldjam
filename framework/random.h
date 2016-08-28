@@ -148,7 +148,7 @@ namespace prng {
  *
  * Thomas Wang's 64 bit Mix Function
 **/
-        uint64_t bitmix(seed_t &key) {
+        uint64_t bitmix(seed_t key) {
             key += ~(key << 32);
             key ^= (key >> 22);
             key += ~(key << 13);

@@ -226,5 +226,6 @@ namespace {
     }
 
     typedef vec2_t<float> vec2f_t;
+    typedef vec2_t<int32_t> vec2i_t;
 
 } // namespace {}

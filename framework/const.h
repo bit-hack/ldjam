@@ -27,4 +27,9 @@ namespace {
     constexpr type_t smoothstep(const type_t x) {
         return x*x*(3-2*x);
     }
+
+    template <typename type_t>
+    constexpr type_t clampv(const type_t lo, const type_t in, const type_t hi) {
+        return (in<lo) ? lo : (in>hi) ? hi : in;
+    }
 } // namespace {}

@@ -42,7 +42,8 @@ enum {
     e_explode,
     e_stars,
     e_bomb,
-    e_boss
+    e_boss,
+    e_boss_missile,
 };
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
@@ -115,6 +116,7 @@ struct obj_explode_t: public object_ex_t<e_explode, obj_explode_t>
         vec2f_t pos_;
         vec2f_t vel_;
         float size_;
+        bool bob_;
     };
 
     std::array<particle_t, 32> part_;
@@ -138,24 +140,34 @@ struct obj_explode_t: public object_ex_t<e_explode, obj_explode_t>
         }
         age_ += 3.f;
         auto draw = surge_.draw_;
-        draw.draw_colour(128, 192, 255);
         for (particle_t & p:part_) {
             vec2f_t pos = p.pos_+p.vel_ * age_;
             p.vel_.y += 0.05f;
+#if 0
+            draw.draw_colour(128, 192, 255);
             draw.draw_rect(pos.x-p.size_, pos.y-p.size_, p.size_*2, p.size_*2);
+#else
+            uint32_t size = clampv<uint32_t>(0, 5.f - p.size_, 4);
+
+//            if (p.bob_) {
+                draw.draw_sprite(sprite_t(e_sprite_smoke_1+size), pos);
+//            }
+            p.bob_ ^= true;
+#endif
         }
     }
     
     void init(const vec2f_t & pos, float scale) {
         scale_ = scale;
-        prng::seed_t seed = prng::seed_t(time_func());
+        prng::seed_t seed = prng::seed_t(prng::bitmix(time_func()));
         for (particle_t & p:part_) {
             p.pos_ = pos;
             p.vel_ = vec2f_t{ prng::grandfs(seed), prng::grandfs(seed) + .5f } * scale;
             float v = (p.vel_.x*p.vel_.x+p.vel_.y*p.vel_.y);
             p.size_ = (1.f / (v + (1.f - v) * .1f)) * scale;
+            p.bob_ = (prng::randllu(seed) & 1) == 1;
         }
-        life_ = 64.f * scale;
+        life_ = 48.f * scale;
     }
 
     void destroy() {
@@ -186,8 +198,12 @@ struct obj_bullet_t : public object_ex_t<e_bullet, obj_bullet_t>
     virtual void tick() override {
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos();
+#if 0
         draw.draw_colour(128, 192, 255);
-        draw.draw_rect(p.x-1, p.y-1, 3, 3);
+        draw.draw_rect(p.x-2, p.y-2, 5, 5);
+#else
+        draw.draw_sprite(e_sprite_bullet, p);
+#endif
         body_.move(body_.pos() + dir_);
         if (p.y < -32.f) {
             destroy();
@@ -228,8 +244,12 @@ struct obj_powerup_t: public object_ex_t<e_powerup, obj_powerup_t>
         }
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos();
+#if 0
         draw.draw_colour(128, 256, 128);
         draw.draw_rect(p.x-4, p.y-4, 8, 8);
+#else
+        draw.draw_sprite(e_sprite_powerup_1, p);
+#endif
         body_.move(body_.pos()+vec2f_t{0.f, 1.f});
         if (body_.pos().y > 260) {
             destroy();
@@ -256,6 +276,7 @@ struct obj_bomb_t: public object_ex_t<e_bomb, obj_bomb_t>
     bool alive_;
     vec2f_t vel_;
     prng::seed_t seed_;
+    float dt_;
 
     obj_bomb_t(object_service_t service)
         : object_ex_t()
@@ -263,6 +284,7 @@ struct obj_bomb_t: public object_ex_t<e_bomb, obj_bomb_t>
         , alive_(true)
         , body_(surge_.spatial_, vec2f_t{160, 200}, 6, this)
         , seed_(time_func())
+        , dt_(0.f)
     {
     }
 
@@ -272,8 +294,14 @@ struct obj_bomb_t: public object_ex_t<e_bomb, obj_bomb_t>
         }
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos();
+
+        dt_ += (dt_>C_2PI) ? -C_2PI : 1.4f;
+#if 0
         draw.draw_colour(255, 128, 128);
         draw.draw_rect(p.x-1, p.y-1, 3, 3);
+#else
+        draw.draw_sprite(e_sprite_bomb, p+vec2f_t{ sinf(dt_) * 2.5f, 0.f });
+#endif
         body_.move(body_.pos()+body_.vel());
         if (body_.pos().y > 260) {
             destroy();
@@ -305,6 +333,10 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
     body_ex_t body_;
     float speed_;
     bool alive_;
+    int32_t bob_;
+    prng::seed_t seed_;
+    float dt_;
+    sprite_t sprite_;
 
     void defaults() {
         speed_ = 2.5f;
@@ -317,9 +349,13 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
         , surge_(*static_cast<surge_t*>(service))
         , spawn_timer_(time_func, 1000/15)
         , shoot_timer_(time_func, 120*4)
-        , body_(surge_.spatial_, vec2f_t{160, 200}, 6, this)
+        , body_(surge_.spatial_, vec2f_t{160, 260}, 6, this)
         , speed_(3.f)
         , alive_(true)
+        , bob_(0)
+        , seed_(time_func())
+        , dt_(0.f)
+        , sprite_(e_sprite_player_c)
     {
         assert(service);
         fsm_.push_back(&obj_player_t::fsm_spawn);
@@ -339,26 +375,54 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
 
     void move() {
         const uint8_t * key = SDL_GetKeyboardState(nullptr);
-        vec2f_t v = {0.f, 0.f};
+
+        float ydiff = 200 - body_.pos().y;
+
+        sprite_ = e_sprite_player_c;
+
+        vec2f_t v = {0.f, ydiff * 0.01f};
         if (key[SDL_SCANCODE_LEFT]) {
             if (body_.pos().x > 32)
                 v.x -= speed_;
+        sprite_ = e_sprite_player_l;
         }
         if (key[SDL_SCANCODE_RIGHT]) {
             if (body_.pos().x < (320-32))
                 v.x += speed_;
+            sprite_ = e_sprite_player_r;
         }
-        if (key[SDL_SCANCODE_X]) {
-            shoot();
+        if (fsm_.back()!=&obj_player_t::fsm_spawn) {
+            if (key[SDL_SCANCODE_X]) {
+                shoot();
+            }
         }
+        
         body_.move(body_.pos()+v);
     }
 
     void draw() {
         auto draw = surge_.draw_;
-        const vec2f_t p = body_.pos();
+        dt_ += (dt_>C_2PI) ? -C_2PI : 0.05f;
+
+        const vec2f_t p = body_.pos()+vec2f_t{0.f, sinf(dt_)*2.f};
+
+#if 0
         draw.draw_colour(192, 192, 192);
         draw.draw_rect(p.x-4, p.y-4, 8, 8);
+        
+        if (bob_) {
+            draw.draw_colour(192, 192, 255);
+            draw.draw_rect(p.x-3, p.y+2, 6, 6);
+            draw.draw_rect(p.x-2, p.y+8, 4, 4);
+        }
+#else
+
+        draw.draw_sprite(sprite_, p);
+        if (bob_) {
+            draw.draw_sprite(e_sprite_thrust_1, p+vec2f_t{-1, 11.f});
+        }
+#endif
+        bob_ ^= 1;
     }
 
     void fsm_tick() {
@@ -429,6 +493,9 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
                 obj.cast<obj_bomb_t>().destroy();
                 continue;
             }
+            if (obj.is_a(e_boss_missile)) {
+                kill();
+            }
         }
         return false;
     }
@@ -444,6 +511,8 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
 struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
 {
+    static const uint32_t C_POWERUP_CHANCE = 40;
+
     typedef void (obj_enemy_t::*state_t)();
 
     std::vector<state_t> fsm_;
@@ -497,7 +566,7 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         // see if we should drop a powerup
         {
             prng::seed_t seed = time_func();
-            if (prng::rand_chance(seed, 10)) {
+            if (prng::rand_chance(seed, C_POWERUP_CHANCE)) {
                 object_ref_t power = surge_.factory_.create<obj_powerup_t>(&surge_);
                 power->cast<obj_powerup_t>().init(body_.pos());
             }
@@ -667,9 +736,68 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
     }
 };
 
+// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
+struct obj_boss_missile_t: public object_ex_t<e_boss_missile, obj_boss_missile_t>
+{
+    surge_t & surge_;
+    body_ex_t body_;
+    bool alive_;
+    vec2f_t vel_;
+    prng::seed_t seed_;
+    float speed_;
+    uint32_t age_;
+
+    obj_boss_missile_t(object_service_t service)
+        : object_ex_t()
+        , surge_(*static_cast<surge_t*>(service))
+        , alive_(true)
+        , body_(surge_.spatial_, vec2f_t{160, 200}, 6, this)
+        , seed_(time_func())
+        , speed_(5.5f)
+        , age_(0)
+    {
+    }
+
+    virtual void tick() override {
+        if (!alive_) {
+            return;
+        }
+        if (!surge_.player_.valid() || (++age_>60.f)) {
+            destroy();
+            return;
+        }
+        auto draw = surge_.draw_;
+        const vec2f_t p = body_.pos();
+        draw.draw_colour(255, 128, 128);
+        draw.draw_rect(p.x-2, p.y-2, 5, 5);
+        body_.move(body_.pos()+body_.vel());
+        if (body_.pos().y > 240) {
+            destroy();
+        }
+        vec2f_t diff = vec2f_t::normalize(surge_.player_->cast<obj_player_t>().body_.pos() - body_.pos());
+        body_.vel() = vec2f_t::normalize(body_.vel()+diff * 0.3f) * speed_;
+    }
+
+    void init(const vec2f_t & pos, prng::seed_t seed) {
+        seed_ = seed;
+        body_.move(pos);
+        body_.vel() = vec2f_t::normalize(vec2f_t{prng::grandfs(seed_),
+                                                 prng::grandfs(seed_)+0.4f}) * speed_;
+    }
+
+    void destroy() {
+        if (alive_) {
+            alive_ = false;
+            ref_.dec();
+        }
+    }
+};
+
 // 
 struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
 {
+    static const uint32_t C_PARTS = 18;
+
     struct state_t {
         float phase_;
         float ratio_a_;
@@ -683,10 +811,10 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
     delta_time_t pattern_timer_;
     prng::seed_t seed_;
     float dt_;
-    
-    const uint32_t C_PARTS = 18;
-
-    std::vector<body_ex_t> parts_;
+    uint32_t part_count_;
+    std::array<vec2f_t, C_PARTS> part_;
+    float intro_;
+    delta_time_t shoot_timer_;
 
     obj_boss_t(object_service_t service)
         : object_ex_t()
@@ -695,10 +823,14 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
         , pattern_timer_(time_func, 1000 * 4)
         , seed_(0xbeeeeef)
         , dt_(0.f)
+        , part_count_(C_PARTS)
+        , intro_(0.f)
+        , shoot_timer_(time_func, 1000 * 2)
     {
         assert(service);
         next_state();
         next_state();
+        ref_.dec();
     }
     
     void get_state(state_t & out) const {
@@ -725,50 +857,113 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
     vec2f_t get_pos(float delta) const {
         state_t s;
         get_state(s);
-        return vec2f_t{
+        vec2f_t temp = vec2f_t{
             sinf(dt_ + delta * (s.ratio_a_)),
-            cosf(dt_ + delta * (s.ratio_b_) + s.phase_ * C_PI) + sinf(dt_*8.f + delta*16.f) * 0.1f,
+            cosf(dt_ + delta * (s.ratio_b_) +
+                 s.phase_ * C_PI) +
+            sinf(dt_*8.f + delta*16.f) * 0.1f,
         };
+        return vec2f_t::lerp(vec2f_t{ 160, -64 }, 
+                             vec2f_t::scale(temp, vec2f_t{110, 50})+vec2f_t{160, 90},
+                             intro_);
+    }
+
+    uint32_t scale(uint32_t index) const {
+        return 6 + (index+1) / 2;
     }
 
     void draw() {
         const float offs = C_PI/float(C_PARTS) * 0.4f;
-        for (uint32_t i = 0; i<C_PARTS; ++i) {
-            vec2f_t pos = vec2f_t::scale(get_pos(offs*float(i)), 
-                                         vec2f_t {110, 50}) +vec2f_t{160, 90};
-
-
-            uint32_t size = 6 + (i+1) / 2;
-
+        for (uint32_t i = 0; i<part_count_; ++i) {
+            vec2f_t pos = part_[i];
+            uint32_t size = scale(i);
             auto draw = surge_.draw_;
             draw.draw_colour(256, 128, 64);
             draw.draw_rect(pos.x-size/2, pos.y-size/2, size, size);
         }
     }
 
+    void on_hit(vec2f_t pos) {
+        // sleep feels cool
+        SDL_Delay(10);
+        // screen shake feels awesome
+        surge_.draw_.shake_ += 1.f;
+        object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
+        exp->cast<obj_explode_t>().init(pos, .5f);
+    }
+
+    void on_destroy(vec2f_t pos) {
+        // sleep feels cool
+        SDL_Delay(10);
+        // screen shake feels awesome
+        surge_.draw_.shake_ += 4.f;
+        object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
+        exp->cast<obj_explode_t>().init(pos, 1.f);
+        shoot_timer_.interval_ -= 30;
+    }
+
+    virtual void shoot() {
+        if (part_count_==0) {
+            return;
+        }
+        const vec2f_t pos = part_[part_count_-1];
+        object_ref_t missile = surge_.factory_.create<obj_boss_missile_t>(&surge_);
+        missile->cast<obj_boss_missile_t>().init(pos, prng::randllu(seed_));
+    }
+
     virtual void tick() override {
         if (!alive_) {
             return;
         }
-
-//        dt_ -= ((dt_ += 0.06f) < C_2PI) ? 0.f : C_2PI;
-        dt_ += 0.06f;
-        if (dt_>C_2PI) {
-            dt_ -= C_2PI;
-        }
+        
+        intro_ += (intro_ < 1.f) ? 0.01f : 0.f;
+        dt_ -= ((dt_ += 0.06f) < C_2PI) ? 0.f : C_2PI;
 
         while (pattern_timer_.deltaf() >= 1.f) {
             next_state();
             pattern_timer_.step();
         }
+
+        body_set_t set;
+        const float offs = C_PI/float(C_PARTS) * 0.4f;
+        for (uint32_t i = 0; i<part_count_; ++i) {
+            part_[i] = get_pos(offs*float(i));
+            set.clear();
+            surge_.spatial_.query_radius(part_[i], scale(i), set);
+
+            for (auto itt:set) {
+                if (!itt->obj_) {
+                    continue;
+                }
+                object_t & obj = *(itt->obj_);
+                if (obj.is_a(e_bullet) && obj.cast<obj_bullet_t>().alive_) {
+                    obj.cast<obj_bullet_t>().destroy();
+
+                    if (i==(part_count_-1)) {
+                        on_destroy(part_[i]);
+                        --part_count_;
+                    }
+                    else {
+                        on_hit(part_[i]);
+                    }
+                }
+            }
+        }
+
+        if (shoot_timer_.deltai()) {
+            shoot_timer_.reset();
+            shoot();
+            shoot();
+        }
+
+        if (part_count_==0) {
+            surge_.boss_.dispose();
+        }
+
         draw();
     }
 
     void init() {
-        const float offs = C_PI/float(C_PARTS);
-        for (uint32_t i = 0; i<C_PARTS; ++i) {
-            parts_.push_back(body_ex_t(surge_.spatial_, get_pos(offs*float(i)), 6, this));
-        }
         pattern_timer_.reset();
     }
 
@@ -811,12 +1006,10 @@ struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
         object_ref_t e = surge_.factory_.create<obj_enemy_t>(&surge_);
         vec2f_t pos = vec2f_t{C_OFFSET + (made_ % C_WIDTH) * C_SPACING,
                               C_OFFSET + (made_ / C_WIDTH) * C_SPACING};
-
-        prng::seed_t temp = seed_;
-
+        
         e->cast<obj_enemy_t>().init(pos,
                                     (pos.x / 100.f + pos.y / 80.f) * seed,
-                                    prng::bitmix(temp) % s_splines.size(),
+                                    prng::bitmix(seed_) % s_splines.size(),
                                     surge_.difficulty_);
         surge_.enemy_.push_back(e);
         ++made_;
@@ -858,9 +1051,9 @@ surge_t::surge_t(draw_t & draw)
     factory_.add_creator<obj_stars_t>();
     factory_.add_creator<obj_bomb_t>();
     factory_.add_creator<obj_boss_t>();
+    factory_.add_creator<obj_boss_missile_t>();
 
     stars_ = factory_.create<obj_stars_t>(this);
-    boss_ = factory_.create<obj_boss_t>(this);
 }
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
@@ -879,7 +1072,13 @@ void surge_t::tick()
 
     if (enemy_.size()==0 && !wave_.valid() && !boss_.valid()) {
         stars_->cast<obj_stars_t>().boost();
-        wave_ = factory_.create<obj_wave_t>(this);
+
+        if ((difficulty_%4 == 0) && difficulty_) {
+            boss_ = factory_.create<obj_boss_t>(this);
+        }
+        else {
+            wave_ = factory_.create<obj_wave_t>(this);
+        }
         ++difficulty_;
     }
 
