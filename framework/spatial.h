@@ -10,6 +10,8 @@
 
 struct body_t
 {
+    body_t() = default;
+
     body_t(const vec2f_t & pos, const float radius, struct object_t * object)
         : p(pos)
         , r(radius)

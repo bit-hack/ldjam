@@ -14,12 +14,17 @@ namespace {
     }
 
     template <typename type_t>
-    type_t minv(const type_t a, const type_t b) {
+    constexpr type_t minv(const type_t a, const type_t b) {
         return (a<b) ? a : b;
     }
 
     template <typename type_t>
-    type_t maxv(const type_t a, const type_t b) {
+    constexpr type_t maxv(const type_t a, const type_t b) {
         return (a>b) ? a : b;
+    }
+
+    template <typename type_t>
+    constexpr type_t smoothstep(const type_t x) {
+        return x*x*(3-2*x);
     }
 } // namespace {}

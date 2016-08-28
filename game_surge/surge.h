@@ -19,6 +19,7 @@ struct surge_t {
     object_ref_t player_;
     object_ref_t wave_;
     object_ref_t stars_;
+    object_ref_t boss_;
 
     surge_t(draw_t & draw);
 

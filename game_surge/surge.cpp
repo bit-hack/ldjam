@@ -41,7 +41,8 @@ enum {
     e_powerup,
     e_explode,
     e_stars,
-    e_bomb
+    e_bomb,
+    e_boss
 };
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
@@ -666,6 +667,120 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
     }
 };
 
+// 
+struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
+{
+    struct state_t {
+        float phase_;
+        float ratio_a_;
+        float ratio_b_;
+    };
+
+    std::array<state_t, 2> state_;
+
+    surge_t & surge_;
+    bool alive_;
+    delta_time_t pattern_timer_;
+    prng::seed_t seed_;
+    float dt_;
+    
+    const uint32_t C_PARTS = 18;
+
+    std::vector<body_ex_t> parts_;
+
+    obj_boss_t(object_service_t service)
+        : object_ex_t()
+        , surge_(*static_cast<surge_t*>(service))
+        , alive_(true)
+        , pattern_timer_(time_func, 1000 * 4)
+        , seed_(0xbeeeeef)
+        , dt_(0.f)
+    {
+        assert(service);
+        next_state();
+        next_state();
+    }
+    
+    void get_state(state_t & out) const {
+        float dt = pattern_timer_.deltaf();
+        if (dt>1.f) dt = 1.f;
+        if (dt<0.f) dt = 0.f;
+        dt = smoothstep(dt);
+        out.phase_   = lerp(state_[0].phase_,   state_[1].phase_,   dt);
+        out.ratio_a_ = lerp(state_[0].ratio_a_, state_[1].ratio_a_, dt);
+        out.ratio_b_ = lerp(state_[0].ratio_b_, state_[1].ratio_b_, dt);
+    }
+
+    void next_state() {
+        state_[0] = state_[1];
+        state_[1].phase_ = prng::randfu(seed_);
+        switch (prng::randllu(seed_)%4) {
+        case (0): state_[1].ratio_a_ = 1.f; state_[1].ratio_b_ = 1.f; break;
+        case (1): state_[1].ratio_a_ = 1.f; state_[1].ratio_b_ = 2.f; break;
+        case (2): state_[1].ratio_a_ = 1.f; state_[1].ratio_b_ = 3.f; break;
+        case (3): state_[1].ratio_a_ = 2.f; state_[1].ratio_b_ = 3.f; break;
+        }
+    }
+
+    vec2f_t get_pos(float delta) const {
+        state_t s;
+        get_state(s);
+        return vec2f_t{
+            sinf(dt_ + delta * (s.ratio_a_)),
+            cosf(dt_ + delta * (s.ratio_b_) + s.phase_ * C_PI) + sinf(dt_*8.f + delta*16.f) * 0.1f,
+        };
+    }
+
+    void draw() {
+        const float offs = C_PI/float(C_PARTS) * 0.4f;
+        for (uint32_t i = 0; i<C_PARTS; ++i) {
+            vec2f_t pos = vec2f_t::scale(get_pos(offs*float(i)), 
+                                         vec2f_t {110, 50}) +vec2f_t{160, 90};
+
+
+            uint32_t size = 6 + (i+1) / 2;
+
+            auto draw = surge_.draw_;
+            draw.draw_colour(256, 128, 64);
+            draw.draw_rect(pos.x-size/2, pos.y-size/2, size, size);
+        }
+    }
+
+    virtual void tick() override {
+        if (!alive_) {
+            return;
+        }
+
+//        dt_ -= ((dt_ += 0.06f) < C_2PI) ? 0.f : C_2PI;
+        dt_ += 0.06f;
+        if (dt_>C_2PI) {
+            dt_ -= C_2PI;
+        }
+
+        while (pattern_timer_.deltaf() >= 1.f) {
+            next_state();
+            pattern_timer_.step();
+        }
+        draw();
+    }
+
+    void init() {
+        const float offs = C_PI/float(C_PARTS);
+        for (uint32_t i = 0; i<C_PARTS; ++i) {
+            parts_.push_back(body_ex_t(surge_.spatial_, get_pos(offs*float(i)), 6, this));
+        }
+        pattern_timer_.reset();
+    }
+
+    void destroy() {
+        if (alive_) {
+            alive_ = false;
+            ref_.dec();
+            surge_.wave_.dispose();
+        }
+    }
+};
+
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
 struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
 {
@@ -742,8 +857,10 @@ surge_t::surge_t(draw_t & draw)
     factory_.add_creator<obj_powerup_t>();
     factory_.add_creator<obj_stars_t>();
     factory_.add_creator<obj_bomb_t>();
+    factory_.add_creator<obj_boss_t>();
 
     stars_ = factory_.create<obj_stars_t>(this);
+    boss_ = factory_.create<obj_boss_t>(this);
 }
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
@@ -760,7 +877,7 @@ void surge_t::tick()
         }
     }
 
-    if (enemy_.size()==0&&!wave_.valid()) {
+    if (enemy_.size()==0 && !wave_.valid() && !boss_.valid()) {
         stars_->cast<obj_stars_t>().boost();
         wave_ = factory_.create<obj_wave_t>(this);
         ++difficulty_;

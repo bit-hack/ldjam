@@ -140,6 +140,14 @@ struct vec2_t
         return vec2_t{hermite(pm.x, p0.x, p1.x, p2.x, i),
                       hermite(pm.y, p0.y, p1.y, p2.y, i)};
     }
+
+    static vec2_t scale(
+        const vec2_t & a,
+        const vec2_t & b
+    )
+    {
+        return vec2_t{a.x * b.x, a.y * b.y};
+    }
 };
 
 namespace {
