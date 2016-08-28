@@ -10,6 +10,7 @@
 #include "../framework/vec2.h"
 #include "../framework/random.h"
 #include "../framework/timer.h"
+#include "../framework/const.h"
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
 extern uint64_t time_func();
@@ -20,16 +21,25 @@ enum sprite_t {
     e_sprite_player_r,
     e_sprite_bullet,
     e_sprite_bomb,
+
     e_sprite_thrust_1,
     e_sprite_thrust_2,
     e_sprite_powerup_1,
     e_sprite_powerup_2,
-    e_sprite_unknown_1,
+    e_sprite_boss_missile,
+
     e_sprite_smoke_1,
     e_sprite_smoke_2,
     e_sprite_smoke_3,
     e_sprite_smoke_4,
     e_sprite_smoke_5,
+    
+    e_sprite_enemy_1,
+    e_sprite_enemy_2,
+
+    e_sprite_boss_1,
+    e_sprite_boss_2,
+
     E_SPRITE_COUNT__
 };
 
@@ -66,7 +76,7 @@ struct draw_t
             prng::randfs(seed_)};
     }
 
-    bool init(const uint32_t w, const uint32_t h, bool fullscreen=true) {
+    bool init(const uint32_t w, const uint32_t h, bool fullscreen=false) {
 
         const int C_FLAGS = fullscreen?SDL_WINDOW_FULLSCREEN_DESKTOP:0;
 
@@ -80,7 +90,7 @@ struct draw_t
         SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
         SDL_RenderSetLogicalSize(render_, w, h);
 
-        image_ = SDL_LoadBMP("art/sprites.bmp");
+        image_ = SDL_LoadBMP("sprites.bmp");
         if (!image_) {
             printf("Unable to open sprites!!\n");
             return false;
@@ -111,10 +121,9 @@ struct draw_t
                 prng::randfs(seed_),
                 prng::randfs(seed_)};
         }
-
     }
 
-    void draw_sprite(sprite_t sprite, const vec2f_t & pos) {
+    void draw_sprite(sprite_t sprite, const vec2f_t & pos, const float scale=1.f) {
 
         switch (sprite) {
         case (e_sprite_smoke_1):
@@ -133,7 +142,11 @@ struct draw_t
         offs *= shake_;
         offs += pos;
         const SDL_Rect src = s_sprite_offset[sprite];
-        const SDL_Rect dst = SDL_Rect{int32_t(offs.x - src.w/2), int32_t(offs.y - src.h/2), src.w, src.h};
+        const SDL_Rect dst = SDL_Rect{
+            int32_t(offs.x-lerp<float>(0, src.w/2, scale)),
+            int32_t(offs.y-lerp<float>(0, src.h/2, scale)),
+            int32_t(src.w * scale),
+            int32_t(src.h * scale)};
         SDL_RenderCopy(render_, texture_, &src, &dst);
     }
 

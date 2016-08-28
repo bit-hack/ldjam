@@ -185,12 +185,14 @@ struct obj_bullet_t : public object_ex_t<e_bullet, obj_bullet_t>
     body_ex_t body_;
     vec2f_t dir_;
     bool alive_;
+    float dt_;
 
     obj_bullet_t(object_service_t service)
         : object_ex_t()
         , surge_(*static_cast<surge_t*>(service))
         , body_(surge_.spatial_, vec2f_t{160, 120}, 4, this)
         , alive_(true)
+        , dt_(0.f)
     {
         assert(service);
     }
@@ -198,11 +200,13 @@ struct obj_bullet_t : public object_ex_t<e_bullet, obj_bullet_t>
     virtual void tick() override {
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos();
+
+        dt_ += (dt_>C_2PI) ? -C_2PI : 3.0f;
 #if 0
         draw.draw_colour(128, 192, 255);
         draw.draw_rect(p.x-2, p.y-2, 5, 5);
 #else
-        draw.draw_sprite(e_sprite_bullet, p);
+        draw.draw_sprite(e_sprite_bullet, p+vec2f_t{sinf(dt_), 0.f});
 #endif
         body_.move(body_.pos() + dir_);
         if (p.y < -32.f) {
@@ -295,12 +299,12 @@ struct obj_bomb_t: public object_ex_t<e_bomb, obj_bomb_t>
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos();
 
-        dt_ += (dt_>C_2PI) ? -C_2PI : 1.4f;
+        dt_ += (dt_>C_2PI) ? -C_2PI : 3.0f;
 #if 0
         draw.draw_colour(255, 128, 128);
         draw.draw_rect(p.x-1, p.y-1, 3, 3);
 #else
-        draw.draw_sprite(e_sprite_bomb, p+vec2f_t{ sinf(dt_) * 2.5f, 0.f });
+        draw.draw_sprite(e_sprite_bomb, p+vec2f_t{ sinf(dt_) * 1.f, 0.f });
 #endif
         body_.move(body_.pos()+body_.vel());
         if (body_.pos().y > 260) {
@@ -511,7 +515,7 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
 struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
 {
-    static const uint32_t C_POWERUP_CHANCE = 40;
+    static const uint32_t C_POWERUP_CHANCE = 28;
 
     typedef void (obj_enemy_t::*state_t)();
 
@@ -565,8 +569,7 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         exp->cast<obj_explode_t>().init(body_.pos(), 1.f);
         // see if we should drop a powerup
         {
-            prng::seed_t seed = time_func();
-            if (prng::rand_chance(seed, C_POWERUP_CHANCE)) {
+            if (prng::rand_chance(seed_, C_POWERUP_CHANCE)) {
                 object_ref_t power = surge_.factory_.create<obj_powerup_t>(&surge_);
                 power->cast<obj_powerup_t>().init(body_.pos());
             }
@@ -605,8 +608,13 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
     void draw() {
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos() + knockback_;
+#if 0
         draw.draw_colour(256, 128, 64);
         draw.draw_rect(p.x-4, p.y-4, 8, 8);
+#else
+        draw.draw_sprite(e_sprite_enemy_2, p);
+        draw.draw_sprite(e_sprite_enemy_1, p+vec2f_t{ sinf(dt_)*2.f, cosf(dt_)*2.f });
+#endif
     }
 
     vec2f_t calc_pos() const {
@@ -634,8 +642,11 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         draw();
         //
         while (dive_timer_.deltai()) {
+
+            uint32_t chance = maxv<int32_t>(15, 100-int32_t(health_*10));
+
             dive_timer_.step();
-            if (prng::rand_chance(seed_, 20)) {
+            if (prng::rand_chance(seed_, chance)) {
                 fsm_.push_back(&obj_enemy_t::fsm_dive);
                 dive_timer_.reset();
                 body_.vel() = vec2f_t::zero();
@@ -659,6 +670,9 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
             dive_timer_.reset();
             fsm_.pop_back();
             return;
+        }
+        if ((health_>1) && prng::rand_chance(seed_, 240)) {
+            drop_bomb();
         }
         // spline movement
         spline_t & spline = *spline_;
@@ -705,10 +719,15 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
             body_.move(ideal_pos_+vec2f_t{0.f, -128.f});
             track_ = 0.f;
         }
-        vec2f_t & vel = body_.vel();
-        vel += (vec2f_t{0.f, 0.2f} + vec2f_t{prng::grandfs(seed_), prng::grandfs(seed_)}) * 0.3f;
-        vel = vec2f_t::normalize(vel) * 1.5f;
-        body_.move(body_.pos() + vel);
+        if (health_>1 && prng::rand_chance(seed_, 40)) {
+            drop_bomb();
+        }
+        {
+            vec2f_t & vel = body_.vel();
+            vel += (vec2f_t{0.f, 0.2f} +vec2f_t{prng::grandfs(seed_), prng::grandfs(seed_)}) * 0.3f;
+            vel = vec2f_t::normalize(vel) * 1.5f;
+            body_.move(body_.pos()+vel);
+        }
         draw();
     }
 
@@ -768,8 +787,12 @@ struct obj_boss_missile_t: public object_ex_t<e_boss_missile, obj_boss_missile_t
         }
         auto draw = surge_.draw_;
         const vec2f_t p = body_.pos();
+#if 0
         draw.draw_colour(255, 128, 128);
         draw.draw_rect(p.x-2, p.y-2, 5, 5);
+#else
+        draw.draw_sprite(e_sprite_boss_missile, p);
+#endif
         body_.move(body_.pos()+body_.vel());
         if (body_.pos().y > 240) {
             destroy();
@@ -873,13 +896,24 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
     }
 
     void draw() {
-        const float offs = C_PI/float(C_PARTS) * 0.4f;
+        const float offs = 1.f/float(part_count_);
         for (uint32_t i = 0; i<part_count_; ++i) {
             vec2f_t pos = part_[i];
             uint32_t size = scale(i);
             auto draw = surge_.draw_;
+#if 0
             draw.draw_colour(256, 128, 64);
             draw.draw_rect(pos.x-size/2, pos.y-size/2, size, size);
+#else
+            if (i+1==part_count_) {
+                // head section
+                draw.draw_sprite(e_sprite_boss_2, pos, 1.f);
+            }
+            else {
+                // body
+                draw.draw_sprite(e_sprite_boss_1, pos, 0.3f + 0.7f*i*offs);
+            }
+#endif
         }
     }
 
@@ -892,6 +926,8 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
         exp->cast<obj_explode_t>().init(pos, .5f);
     }
 
+    static const uint32_t C_POWERUP_CHANCE = 10;
+
     void on_destroy(vec2f_t pos) {
         // sleep feels cool
         SDL_Delay(10);
@@ -900,12 +936,22 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
         object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
         exp->cast<obj_explode_t>().init(pos, 1.f);
         shoot_timer_.interval_ -= 30;
+        // see if we should drop a powerup
+        {
+            if (prng::rand_chance(seed_, C_POWERUP_CHANCE)) {
+                object_ref_t power = surge_.factory_.create<obj_powerup_t>(&surge_);
+                power->cast<obj_powerup_t>().init(pos);
+            }
+        }
     }
 
     virtual void shoot() {
         if (part_count_==0) {
             return;
         }
+        // screen shake feels awesome
+        surge_.draw_.shake_ += 1.f;
+        // ping out a missile
         const vec2f_t pos = part_[part_count_-1];
         object_ref_t missile = surge_.factory_.create<obj_boss_missile_t>(&surge_);
         missile->cast<obj_boss_missile_t>().init(pos, prng::randllu(seed_));
@@ -974,6 +1020,12 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
             surge_.wave_.dispose();
         }
     }
+};
+
+// 
+struct obj_boss_2_t: public object_ex_t<e_boss, obj_boss_2_t>
+{
+
 };
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
@@ -1073,7 +1125,7 @@ void surge_t::tick()
     if (enemy_.size()==0 && !wave_.valid() && !boss_.valid()) {
         stars_->cast<obj_stars_t>().boost();
 
-        if ((difficulty_%4 == 0) && difficulty_) {
+        if ((difficulty_%4 == 0) && difficulty_ || false) {
             boss_ = factory_.create<obj_boss_t>(this);
         }
         else {
