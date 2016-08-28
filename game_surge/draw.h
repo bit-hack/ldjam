@@ -36,9 +36,9 @@ enum sprite_t {
     
     e_sprite_enemy_1,
     e_sprite_enemy_2,
-
     e_sprite_boss_1,
     e_sprite_boss_2,
+    e_sprite_life,
 
     E_SPRITE_COUNT__
 };
@@ -55,6 +55,7 @@ struct draw_t
     prng::seed_t seed_;
     SDL_Surface * image_;
     SDL_Texture * texture_;
+    SDL_Texture * title_;
 
     float shake_;
     std::array<vec2f_t, 2> shake_offset_;
@@ -67,6 +68,7 @@ struct draw_t
         , seed_(0xbeef)
         , image_(nullptr)
         , texture_(nullptr)
+        , title_(nullptr)
     {
         shake_offset_[0] = vec2f_t{
             prng::randfs(seed_),
@@ -103,6 +105,17 @@ struct draw_t
             return false;
         }
 
+        SDL_Surface * temp = SDL_LoadBMP("title.bmp");
+        SDL_SetColorKey(temp, SDL_TRUE, 0x0);
+        if (!temp) {
+            return false;
+        }
+                
+        title_ = SDL_CreateTextureFromSurface(render_, temp);
+        if (!title_) {
+            return false;
+        }
+        
         return true;
     }
 
@@ -161,5 +174,12 @@ struct draw_t
 
         SDL_Rect r = { x + offs.x, y + offs.y, w, h };
         SDL_RenderDrawRect(render_, &r);
+    }
+
+    void draw_title() {
+        if (!title_) {
+            return;
+        }
+        SDL_RenderCopy(render_, title_, nullptr, nullptr);
     }
 };

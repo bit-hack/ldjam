@@ -17,14 +17,16 @@ struct game_t {
     
     static const int C_FPS = 30;
 
+    audio_t audio_;
     draw_t draw_;
     delta_time_t frame_timer_;
     surge_t surge_;
 
     game_t()
         : draw_()
+        , audio_()
         , frame_timer_(time_func, 1000/C_FPS)
-        , surge_(draw_)
+        , surge_(draw_, audio_)
     {
     }
 
@@ -52,7 +54,7 @@ struct game_t {
     {
         SDL_SetMainReady();
 
-        if (SDL_Init(SDL_INIT_VIDEO)) {
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
             return 1;
         }
 
@@ -60,6 +62,7 @@ struct game_t {
             return 1;
         }
 
+        audio_.init();
         surge_.init();
 
         while (true) {

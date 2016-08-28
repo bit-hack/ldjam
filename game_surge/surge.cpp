@@ -168,6 +168,9 @@ struct obj_explode_t: public object_ex_t<e_explode, obj_explode_t>
             p.bob_ = (prng::randllu(seed) & 1) == 1;
         }
         life_ = 48.f * scale;
+
+        surge_.audio_.play_sound(sound_t(e_sound_explode_1 + (prng::randllu(seed)%4)));
+
     }
 
     void destroy() {
@@ -233,12 +236,14 @@ struct obj_powerup_t: public object_ex_t<e_powerup, obj_powerup_t>
     surge_t & surge_;
     body_ex_t body_;
     bool alive_;
+    bool blip_;
 
     obj_powerup_t(object_service_t service)
         : object_ex_t()
         , surge_(*static_cast<surge_t*>(service))
         , alive_(true)
         , body_(surge_.spatial_, vec2f_t{160, 200}, 6, this)
+        , blip_(true)
     {
     }
 
@@ -252,16 +257,20 @@ struct obj_powerup_t: public object_ex_t<e_powerup, obj_powerup_t>
         draw.draw_colour(128, 256, 128);
         draw.draw_rect(p.x-4, p.y-4, 8, 8);
 #else
-        draw.draw_sprite(e_sprite_powerup_1, p);
+        if (blip_^=true)
+            draw.draw_sprite(e_sprite_powerup_1, p);
 #endif
         body_.move(body_.pos()+vec2f_t{0.f, 1.f});
         if (body_.pos().y > 260) {
             destroy();
+            // 
+            surge_.audio_.play_sound(e_sound_powerup_miss);
         }
     }
 
     void init(const vec2f_t & pos) {
         body_.move(pos);
+        surge_.audio_.play_sound(e_sound_powerup_drop);
     }
 
     void destroy() {
@@ -315,6 +324,7 @@ struct obj_bomb_t: public object_ex_t<e_bomb, obj_bomb_t>
     void init(const vec2f_t & pos) {
         body_.move(pos);
         body_.vel() = vec2f_t::normalize(vec2f_t{prng::grandfs(seed_), 2.f}) * 2.7f;
+        surge_.audio_.play_sound(e_sound_fire);
     }
 
     void destroy() {
@@ -369,6 +379,7 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
 
     void shoot() {
         if (shoot_timer_.deltai()) {
+            surge_.audio_.play_sound(e_sound_fire);
             shoot_timer_.reset();
             object_ref_t bullet = surge_.factory_.create(e_bullet, &surge_);
             prng::seed_t seed = time_func();
@@ -384,7 +395,7 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
 
         sprite_ = e_sprite_player_c;
 
-        vec2f_t v = {0.f, ydiff * 0.01f};
+        vec2f_t v = {0.f, ydiff * 0.03f};
         if (key[SDL_SCANCODE_LEFT]) {
             if (body_.pos().x > 32)
                 v.x -= speed_;
@@ -469,6 +480,7 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
     }
 
     void on_powerup() {
+        surge_.audio_.play_sound(e_sound_powerup_pickup);
         switch (rand() % 2) {
         case (0):
             speed_ = minv<float>(speed_+1.f, 3.f);
@@ -506,6 +518,8 @@ struct obj_player_t : public object_ex_t<e_player, obj_player_t>
 
     void destroy() {
         if (alive_) {
+            --surge_.lives_;
+            surge_.audio_.play_sound(e_sound_player_die);
             alive_ = false;
             surge_.player_.dispose();
         }
@@ -557,6 +571,8 @@ struct obj_enemy_t: public object_ex_t<e_enemy, obj_enemy_t>
         exp->cast<obj_explode_t>().init(body_.pos(), .5f);
 
         knockback_ = vec2f_t{prng::grandfs(seed_), -prng::randfu(seed_)} * 9.f;
+
+        surge_.audio_.play_sound(e_sound_armour);
     }
 
     void on_death() {
@@ -924,6 +940,8 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
         surge_.draw_.shake_ += 1.f;
         object_ref_t exp = surge_.factory_.create<obj_explode_t>(&surge_);
         exp->cast<obj_explode_t>().init(pos, .5f);
+        // 
+        surge_.audio_.play_sound(e_sound_armour);
     }
 
     static const uint32_t C_POWERUP_CHANCE = 10;
@@ -943,10 +961,15 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
                 power->cast<obj_powerup_t>().init(pos);
             }
         }
+        // 
+        surge_.audio_.play_sound(e_sound_boss_hurt);
     }
 
     virtual void shoot() {
         if (part_count_==0) {
+            return;
+        }
+        if (!surge_.player_.valid()) {
             return;
         }
         // screen shake feels awesome
@@ -955,6 +978,8 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
         const vec2f_t pos = part_[part_count_-1];
         object_ref_t missile = surge_.factory_.create<obj_boss_missile_t>(&surge_);
         missile->cast<obj_boss_missile_t>().init(pos, prng::randllu(seed_));
+        
+        surge_.audio_.play_sound(e_sound_boss_fire);
     }
 
     virtual void tick() override {
@@ -1022,12 +1047,6 @@ struct obj_boss_t: public object_ex_t<e_boss, obj_boss_t>
     }
 };
 
-// 
-struct obj_boss_2_t: public object_ex_t<e_boss, obj_boss_2_t>
-{
-
-};
-
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
 struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
 {
@@ -1074,6 +1093,7 @@ struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
         if (spawn_timer_.deltai()) {
             spawn_timer_.step();
             spawn();
+            surge_.audio_.play_sound(e_sound_wave_spawn);
         }
         if (made_>=C_COUNT) {
             destroy();
@@ -1090,9 +1110,11 @@ struct obj_wave_t : public object_ex_t<e_wave, obj_wave_t>
 };
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- 
-surge_t::surge_t(draw_t & draw)
+surge_t::surge_t(draw_t & draw, audio_t & audio)
     : draw_(draw)
+    , audio_(audio)
     , difficulty_(1)
+    , lives_(0)
 {
     factory_.add_creator<obj_player_t>();
     factory_.add_creator<obj_enemy_t>();
@@ -1113,7 +1135,7 @@ void surge_t::tick()
 {
     for (auto itt = enemy_.begin(); itt!=enemy_.end();) {
         object_ref_t & ref = *itt;
-        if (ref.valid() && !ref->cast<obj_enemy_t>().alive_) {
+        if (ref.valid()&&!ref->cast<obj_enemy_t>().alive_) {
             ref.dispose();
             itt = enemy_.erase(itt);
         }
@@ -1122,24 +1144,58 @@ void surge_t::tick()
         }
     }
 
-    if (enemy_.size()==0 && !wave_.valid() && !boss_.valid()) {
-        stars_->cast<obj_stars_t>().boost();
+    if (player_.valid()) {
+        if (enemy_.size()==0&&!wave_.valid()&&!boss_.valid()) {
+            stars_->cast<obj_stars_t>().boost();
 
-        if ((difficulty_%4 == 0) && difficulty_ || false) {
-            boss_ = factory_.create<obj_boss_t>(this);
+            if ((difficulty_%4==0)&&difficulty_||false) {
+                audio_.play_sound(e_sound_boss_spawn);
+                boss_ = factory_.create<obj_boss_t>(this);
+            }
+            else {
+                wave_ = factory_.create<obj_wave_t>(this);
+            }
+            ++difficulty_;
         }
-        else {
-            wave_ = factory_.create<obj_wave_t>(this);
-        }
-        ++difficulty_;
     }
 
-    if (!player_.valid()) {
+    if (!player_.valid() && lives_) {
         player_ = factory_.create<obj_player_t>(this);
     }
 
     factory_.tick();
     factory_.collect();
+
+    for (int i = 0; i<lives_; ++i) {
+        draw_.draw_sprite(e_sprite_life, vec2f_t{4.f, 4.f+8.f*i});
+    }
+
+    if (lives_==0&&!player_.valid()) {
+        // update menu
+        draw_.draw_title();
+        //
+        const uint8_t * keys = SDL_GetKeyboardState(nullptr);
+        if (keys[SDL_SCANCODE_X]) {
+            lives_ = 3;
+            clear_enemies();
+            difficulty_ = 1;
+        }
+    }
+}
+
+void surge_t::clear_enemies() {
+    for (auto itt = enemy_.begin(); itt!=enemy_.end();) {
+        object_ref_t & ref = *itt;
+        if (ref.valid() && ref->cast<obj_enemy_t>().alive_) {
+            ref->cast<obj_enemy_t>().destroy();
+        }
+        else {
+            ++itt;
+        }
+    }
+    if (boss_.valid()) {
+        boss_.dispose();
+    }
 }
 
 void surge_t::init()

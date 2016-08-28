@@ -24,4 +24,5 @@ std::array<SDL_Rect, E_SPRITE_COUNT__> s_sprite_offset = {
     SDL_Rect{24, 72, 11, 10},
     SDL_Rect{48, 72, 24, 24},
     SDL_Rect{72, 72, 24, 24},
+    SDL_Rect{96, 72,  7,  8},
 };
