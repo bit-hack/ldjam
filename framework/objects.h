@@ -17,27 +17,22 @@ typedef void * object_service_t;
 struct ref_t
 {
     ref_t()
-        : value_(0)
-    {
+        : value_(0) {
     }
 
-    uint32_t inc()
-    {
+    uint32_t inc() {
         return ++value_;
     }
 
-    uint32_t dec()
-    {
+    uint32_t dec() {
         return --value_;
     }
 
-    bool disposed() const
-    {
+    bool disposed() const {
         return value_ <= 0;
     }
 
-    int32_t count() const
-    {
+    int32_t count() const {
         return value_;
     }
 
@@ -45,75 +40,62 @@ protected:
     int32_t value_;
 };
 
-
 struct object_ref_t
 {
     object_ref_t()
-            : obj_(nullptr)
-    {
+        : obj_(nullptr) {
     }
 
     object_ref_t(object_t * obj)
-            : obj_(obj)
-    {
+        : obj_(obj) {
         inc();
     }
     
     object_ref_t(const object_ref_t & copy)
-            : obj_(copy.obj_)
-    {
+        : obj_(copy.obj_) {
         inc();
     }
 
     object_ref_t(object_ref_t && copy)
-            : obj_(copy.obj_)
-    {
+        : obj_(copy.obj_) {
         copy.obj_ = nullptr;
     }
 
-    void operator = (const object_ref_t & rhs)
-    {
+    void operator = (const object_ref_t & rhs) {
         dec();
         obj_ = rhs.obj_;
         inc();
     }
 
-    ~object_ref_t()
-    {
+    ~object_ref_t() {
         dec();
     }
 
-    bool valid() const
-    {
+    bool valid() const {
         return obj_ != nullptr;
     }
 
-    object_t & get()
-    {
+    object_t & get() {
         assert(obj_);
         return *obj_;
     }
 
-    const object_t & get() const
-    {
+    const object_t & get() const {
         assert(obj_);
         return *obj_;
     }
 
-    object_t * operator -> ()
-    {
+    object_t * operator -> () {
         assert(obj_);
         return obj_;
     }
 
-    const object_t * operator -> () const
-    {
+    const object_t * operator -> () const {
         assert(obj_);
         return obj_;
     }
 
-    bool operator == (const object_ref_t & ref) const
-    {
+    bool operator == (const object_ref_t & ref) const {
         return obj_ == ref.obj_;
     }
 
@@ -132,12 +114,11 @@ protected:
     object_t * obj_;
 };
 
-
 struct object_t
 {
     object_t(object_type_t type)
-            : type_(type)
-    {
+        : type_(type)
+        , alive_(true) {
         // retain reference to self
         ref_.inc();
     }
@@ -146,50 +127,41 @@ struct object_t
     }
 
     template <typename type_t>
-    type_t & cast()
-    {
+    type_t & cast() {
         assert(is_a<type_t>());
         return *static_cast<type_t*>(this);
     }
 
     template <typename type_t>
-    const type_t & cast() const
-    {
+    const type_t & cast() const {
         assert(is_a<type_t>());
         return *static_cast<const type_t*>(this);
     }
 
     template <typename type_t>
-    type_t * try_cast()
-    {
-        if (is_a<type_t>())
-            return *static_cast<type_t*>(this);
-        else
-            return nullptr;
+    type_t * try_cast() {
+        return (is_a<type_t>()) ?
+               *static_cast<type_t*>(this) :
+               nullptr;
     }
 
     template <typename type_t>
-    const type_t * try_cast() const
-    {
-        if (is_a<type_t>())
-            return *static_cast<const type_t*>(this);
-        else
-            return nullptr;
+    const type_t * try_cast() const {
+        return (is_a<type_t>()) ?
+               *static_cast<const type_t*>(this) :
+               nullptr;
     }
 
-    bool is_a(object_type_t type) const
-    {
+    bool is_a(object_type_t type) const {
         return type_ == type;
     }
 
     template <typename type_t>
-    bool is_a() const
-    {
+    bool is_a() const {
         return type_ == type_t::type();
     }
 
-    bool is_a(const object_t & other) const
-    {
+    bool is_a(const object_t & other) const {
         return type_ == other.type_;
     }
 
@@ -197,23 +169,35 @@ struct object_t
 
     const object_type_t type_;
 
-    uint32_t ref_count() const
-    {
+    uint32_t ref_count() const {
         return ref_.count();
     }
 
-    bool is_disposed() const
-    {
+    bool is_disposed() const {
         return ref_.disposed();
     }
 
     virtual void tick() {};
 
+    void destroy() {
+        if (alive_) {
+            ref_.dec();
+            alive_ = false;
+        }
+    }
+
+    bool is_alive() const {
+        if (is_disposed()) {
+            return false;
+        }
+        return alive_;
+    }
+
 protected:
     friend struct object_ref_t;
     ref_t ref_;
+    bool alive_;
 };
-
 
 struct object_factory_t
 {
@@ -223,6 +207,10 @@ struct object_factory_t
                                   object_service_t) = 0;
         virtual void destroy(object_t*) = 0;
     };
+
+    object_factory_t(object_service_t service)
+        : service_(service) {
+    }
 
     template <typename type_t>
     void add_creator() {
@@ -234,12 +222,18 @@ struct object_factory_t
                      creator_t * creator);
 
     template <typename type_t>
-    object_ref_t create(object_service_t service=nullptr) {
-        return create(type_t::type(), service);
+    object_ref_t create() {
+        return create(type_t::type());
     }
 
-    object_ref_t create(object_type_t type,
-                        object_service_t service=nullptr);
+    object_ref_t create(object_type_t type);
+
+    template <typename type_t, typename... args_t>
+    object_ref_t create(args_t &&... args) {
+        object_ref_t ref = create<type_t>();
+        ref->cast<type_t>().init(std::forward<args_t>(args)...);
+        return ref;
+    };
 
     // prune any dead objects
     void collect();
@@ -252,12 +246,13 @@ protected:
 
     typedef std::unique_ptr<creator_t> up_object_creator_t;
     std::map<object_type_t, up_object_creator_t> creator_;
+
+    // service object
+    object_service_t service_;
 };
 
-
 template <typename type_t>
-struct object_create_t : public object_factory_t::creator_t
-{
+struct object_create_t : public object_factory_t::creator_t {
     virtual object_t * create(object_type_t, object_service_t service) {
         return new type_t(service);
     }
@@ -269,19 +264,15 @@ struct object_create_t : public object_factory_t::creator_t
 
 template <object_type_t id_t, typename type_t>
 struct object_ex_t: public object_t {
-
     object_ex_t()
-        : object_t(type())
-    {
+        : object_t(type()) {
     }
 
-    static object_type_t type()
-    {
+    static object_type_t type() {
         return id_t;
     }
 
-    static object_factory_t::creator_t * creator()
-    {
+    static object_factory_t::creator_t * creator() {
         return new object_create_t<type_t>();
     }
 };

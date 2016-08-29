@@ -84,7 +84,7 @@ namespace
 
     bool object_test_1(testing_t & test)
     {
-        object_factory_t factory;
+        object_factory_t factory(nullptr);
 
         factory.add_creator<test_obj_1_t>();
         factory.add_creator<test_obj_2_t>();
@@ -129,7 +129,7 @@ namespace
         test_obj_3_t::make_t * make =
             new test_obj_3_t::make_t;
 
-        object_factory_t factory;
+        object_factory_t factory(nullptr);
         factory.add_creator(e_type_obj_3, make);
 
         TEST_ASSERT(make->ref_ == 0);
@@ -148,7 +148,7 @@ namespace
 
     bool object_test_3(testing_t & test)
     {
-        object_factory_t factory;
+        object_factory_t factory(nullptr);
         factory.add_creator<test_obj_1_t>();
 
         object_ref_t ref1;
@@ -180,7 +180,7 @@ namespace
 
     bool object_test_4(testing_t & test)
     {
-        object_factory_t factory;
+        object_factory_t factory(nullptr);
         factory.add_creator<test_obj_1_t>();
         // try to create unregistered object
         object_ref_t obj1 = factory.create<test_obj_3_t>();
@@ -188,6 +188,45 @@ namespace
         // try to create registered object
         object_ref_t obj2 = factory.create<test_obj_1_t>();
         TEST_ASSERT(obj2.valid());
+
+        return true;
+    }
+
+    bool object_test_5(testing_t & test)
+    {
+        enum {
+            e_obj_test_t
+        };
+
+        struct obj_test_t : public object_ex_t<e_obj_test_t, obj_test_t>
+        {
+            int32_t * service_;
+            int32_t value_;
+
+            obj_test_t(object_service_t service)
+                : object_ex_t()
+                , service_(static_cast<int32_t*>(service))
+                , value_(0)
+            {
+            }
+
+            void init(int value) {
+            }
+        };
+
+        int32_t value;
+        object_factory_t factory(&value);
+        factory.add_creator<obj_test_t>();
+
+        object_ref_t obj_1 = factory.create<obj_test_t>();
+        TEST_ASSERT(obj_1->is_alive());
+        TEST_ASSERT(obj_1->cast<obj_test_t>().service_ == &value);
+        TEST_ASSERT(obj_1->cast<obj_test_t>().value_ == 0);
+
+        object_ref_t obj_2 = factory.create<obj_test_t>(1);
+        TEST_ASSERT(obj_2->is_alive());
+        TEST_ASSERT(obj_2->cast<obj_test_t>().service_ == &value);
+        TEST_ASSERT(obj_2->cast<obj_test_t>().value_ == 1);
 
         return true;
     }

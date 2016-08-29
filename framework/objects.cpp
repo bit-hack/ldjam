@@ -12,8 +12,7 @@ void object_factory_t::add_creator(
     creator_[type] = std::unique_ptr<creator_t>(creator);
 }
 
-object_ref_t object_factory_t::create(object_type_t type,
-                                      object_service_t service)
+object_ref_t object_factory_t::create(object_type_t type)
 {
     auto itt = creator_.find(type);
     if (itt == creator_.end()) {
@@ -21,7 +20,7 @@ object_ref_t object_factory_t::create(object_type_t type,
     }
     else {
         assert(itt->second);
-        object_t * obj = itt->second->create(type, service);
+        object_t * obj = itt->second->create(type, service_);
         obj_.push_front(obj);
         return object_ref_t(obj);
     }
@@ -57,7 +56,7 @@ void object_factory_t::tick()
         // deref to get our object
         object_t * obj = *itt;
         // check if this object is disposed
-        if (!obj->is_disposed()) {
+        if (!obj->is_disposed() && obj->is_alive()) {
             obj->tick();
         }
     }
