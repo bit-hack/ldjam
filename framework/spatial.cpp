@@ -197,8 +197,8 @@ void spatial_t::query_radius(
     const float rr = r*r;
 
     // transform bounds into hash space
-    int32_t sx0 = p.x-r, sy0 = p.y-r;
-    int32_t sx1 = p.x+r, sy1 = p.y+r;
+    int32_t sx0 = int32_t(p.x-r), sy0 = int32_t(p.y-r);
+    int32_t sx1 = int32_t(p.x+r), sy1 = int32_t(p.y+r);
     xform_in(sx0, sy0);
     xform_in(sx1, sy1);
 
@@ -224,8 +224,8 @@ void spatial_t::query_rect(
     body_set_t & out)
 {
     // transform bounds into hash space
-    int32_t sx0 = p0.x, sy0 = p0.y;
-    int32_t sx1 = p1.x, sy1 = p1.y;
+    int32_t sx0 = int32_t(p0.x), sy0 = int32_t(p0.y);
+    int32_t sx1 = int32_t(p1.x), sy1 = int32_t(p1.y);
     xform_in(sx0, sy0);
     xform_in(sx1, sy1);
 

@@ -7,6 +7,7 @@
 #include <functional>
 
 #include "vec2.h"
+#include "random.h"
 
 struct body_t
 {
@@ -46,23 +47,12 @@ struct body_pair_set_t
 
     struct hash_func_t
     {
-        static uint64_t hash(uint64_t key)
-        {
-            key += ~(key << 32);
-            key ^=  (key >> 22);
-            key += ~(key << 13);
-            key ^=  (key >>  8);
-            key +=  (key <<  3);
-            key ^=  (key >> 15);
-            key += ~(key << 27);
-            key ^=  (key >> 31);
-            return key;
-        }
-
         size_t operator () (const pair_t & in) const
         {
-            return hash(uint64_t(in.first)^
-                   hash(uint64_t(in.second)));
+            return size_t(
+                prng::bitmix(uint64_t(in.first)^
+                prng::bitmix(uint64_t(in.second)))
+            );
         }
     };
 

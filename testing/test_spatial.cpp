@@ -173,7 +173,9 @@ int run_spatial_tests()
             hash.query_rect(vec2f_t{p1, p1}, vec2f_t{p2, p2}, obj_set);
             for (auto obj : obj_set) {
                 vec2f_t p = obj->pos();
-                app.circle(p.x, p.y, obj->radius(), 0x3377aa);
+                app.circle(int32_t(p.x),
+                           int32_t(p.y), 
+                           int32_t(obj->radius()), 0x3377aa);
             }
         }
 
@@ -199,6 +201,7 @@ int run_spatial_tests()
             app.line(a->pos().x, a->pos().y, a->pos().x-nx*os, a->pos().y-ny*os, 0x203060);
             app.line(b->pos().x, b->pos().y, b->pos().x+nx*os, b->pos().y+ny*os, 0x203060);
 #endif
+
             vec2f_t v1 { -nx * os, -ny * os };
             hash.move(a, a->pos()+v1);
 
@@ -216,7 +219,10 @@ int run_spatial_tests()
                 colour = 0x00ff00;
             }
 
-            app.circle(obj->pos().x, obj->pos().y, obj->radius(), colour);
+            app.circle(int32_t(obj->pos().x),
+                       int32_t(obj->pos().y), 
+                       int32_t(obj->radius()),
+                       colour);
 
             vec2f_t v1 = {obj->vel_.x * speed,
                           obj->vel_.y * speed};
