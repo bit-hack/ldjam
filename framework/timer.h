@@ -17,7 +17,9 @@ struct delta_time_t
     float deltaf() const
     {
         assert(get_time_);
-        const uint64_t diff = get_time_() - old_;
+        uint64_t nval = get_time_();
+        if (old_>nval) return 0.f;
+        const uint64_t diff = nval - old_;
         return float(diff) / float(interval_ ? interval_ : 1);
     }
 
@@ -34,7 +36,9 @@ struct delta_time_t
 
     uint64_t deltai() const {
         assert(get_time_);
-        const uint64_t diff = get_time_() - old_;
+        uint64_t nval = get_time_();
+        if (old_>nval) return 0ull;
+        const uint64_t diff = nval - old_;
         return interval_ ? (diff / interval_) : 0ull;
     }
 

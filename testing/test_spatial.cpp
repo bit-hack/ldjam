@@ -1,3 +1,4 @@
+#define _SDL_main_h
 #include <SDL/SDL.h>
 #include <array>
 #include <list>
@@ -59,7 +60,10 @@ void app_t::line(int x, int y, int x2, int y2, uint32_t rgb)
     int incrementVal, endVal;
     int shortLen = y2 - y, longLen  = x2 - x;
     if (abs(shortLen) > abs(longLen)) {
-        std::swap<int>(shortLen, longLen);
+        //std::swap<int>(shortLen, longLen);
+        int temp = longLen;
+        longLen = shortLen;
+        shortLen = temp;
         yLonger = true;
     }
     endVal = longLen;
@@ -141,9 +145,9 @@ int run_spatial_tests()
         const vec2f_t p = {prng::randfu(seed) * 512,
                            prng::randfu(seed) * 512};
         const float r = prng::randfu(seed) * 16 + 4;
-        body_t * obj = new body_t(p, r);
-        obj->vel.x = out[0];
-        obj->vel.y = out[1];
+        body_t * obj = new body_t(p, r, nullptr);
+        obj->vel_.x = out[0];
+        obj->vel_.y = out[1];
         list_.push_front(obj);
         hash.insert(obj);
     }
@@ -214,14 +218,14 @@ int run_spatial_tests()
 
             app.circle(obj->pos().x, obj->pos().y, obj->radius(), colour);
 
-            vec2f_t v1 = {obj->vel.x * speed,
-                          obj->vel.y * speed};
+            vec2f_t v1 = {obj->vel_.x * speed,
+                          obj->vel_.y * speed};
             hash.move(obj, obj->pos()+v1);
 
-            obj->vel.x *= (obj->pos().x<000&&obj->vel.x<0) ? -1 : 1;
-            obj->vel.x *= (obj->pos().x>512&&obj->vel.x>0) ? -1 : 1;
-            obj->vel.y *= (obj->pos().y<000&&obj->vel.y<0) ? -1 : 1;
-            obj->vel.y *= (obj->pos().y>512&&obj->vel.y>0) ? -1 : 1;
+            obj->vel_.x *= (obj->pos().x<000&&obj->vel_.x<0) ? -1 : 1;
+            obj->vel_.x *= (obj->pos().x>512&&obj->vel_.x>0) ? -1 : 1;
+            obj->vel_.y *= (obj->pos().y<000&&obj->vel_.y<0) ? -1 : 1;
+            obj->vel_.y *= (obj->pos().y>512&&obj->vel_.y>0) ? -1 : 1;
         }
 
         for (int i = 0; i<512; i += spatial_t::width) {

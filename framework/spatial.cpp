@@ -193,35 +193,29 @@ void spatial_t::query_radius(
     float r,
     body_set_t & out)
 {
-    auto test = [](float x,
-                   float y,
-                   float radius,
-                   body_set_t & out) {
+    //
+    const float rr = r*r;
 
-    };
+    // transform bounds into hash space
+    int32_t sx0 = p.x-r, sy0 = p.y-r;
+    int32_t sx1 = p.x+r, sy1 = p.y+r;
+    xform_in(sx0, sy0);
+    xform_in(sx1, sy1);
 
-#if 1
-    float x = 0, y = r;
-    float dp = 1.f-r;
-    test(p.x+y, p.y, r, out);
-    test(p.x-y, p.y, r, out);
-    test(p.x, p.y+y, r, out);
-    test(p.x, p.y-y, r, out);
-    do {
-        dp = (dp < 0) ? dp+2.f*(++x)+3.f :
-                        dp+2.f*(++x)-2.f*(--y)+5.f;
-        test(p.x+x, p.x+y, r, out);
-        test(p.x-x, p.x+y, r, out);
-        test(p.x+x, p.x-y, r, out);
-        test(p.x-x, p.x-y, r, out);
-        test(p.x+y, p.x+x, r, out);
-        test(p.x-y, p.x+x, r, out);
-        test(p.x+y, p.x-x, r, out);
-        test(p.x-y, p.x-x, r, out);
-    } while (x < y);
-#else
-    assert(!"not yet implemented");
-#endif
+    // hash area covered by rect
+    for (int32_t iy=sy0; iy<=sy1; ++iy) {
+        for (int32_t ix = sx0; ix <= sx1; ++ix) {
+
+            std::list<slot_t> &cell = slot(ix, iy);
+
+            for (auto a = cell.cbegin(); a != cell.cend(); ++a) {
+
+                if (vec2f_t::distance_sqr(a->obj->p, p) < r*r) {
+                    out.insert(a->obj);
+                }
+            }
+        }
+    }
 }
 
 void spatial_t::query_rect(

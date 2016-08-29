@@ -27,6 +27,11 @@ namespace prng {
             return uint64_t(x * 2685821657736338717ull);
         }
 
+/*  */
+        bool rand_chance(seed_t &x, uint64_t chance) {
+            return (randllu(x)%chance)==0;
+        }
+
 /* random value between 0.f and 1.f */
         float randfu(seed_t &seed) {
             union {
@@ -138,5 +143,22 @@ namespace prng {
             out[1] *= mag;
             out[2] *= mag;
         }
+
+/* 64bit hash function
+ *
+ * Thomas Wang's 64 bit Mix Function
+**/
+        uint64_t bitmix(seed_t key) {
+            key += ~(key << 32);
+            key ^= (key >> 22);
+            key += ~(key << 13);
+            key ^= (key >> 8);
+            key += (key << 3);
+            key ^= (key >> 15);
+            key += ~(key << 27);
+            key ^= (key >> 31);
+            return key;
+         }
+
     } // namespace {}
 } // namespace prng

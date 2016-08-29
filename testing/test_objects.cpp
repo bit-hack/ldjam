@@ -12,7 +12,7 @@ namespace
 
     struct test_obj_1_t : public object_t
     {
-        test_obj_1_t()
+        test_obj_1_t(object_service_t)
             : object_t(type())
         {
             ref_.dec();
@@ -35,7 +35,7 @@ namespace
 
     struct test_obj_2_t : public object_t
     {
-        test_obj_2_t()
+        test_obj_2_t(object_service_t)
             : object_t(type())
         {
         }
@@ -57,9 +57,9 @@ namespace
             make_t()
                 : ref_(0)
             {}
-            virtual object_t * create(object_type_t) {
+            virtual object_t * create(object_type_t, object_service_t service) {
                 ++ref_;
-                object_t * obj = new test_obj_3_t;
+                object_t * obj = new test_obj_3_t(service);
                 return obj;
             }
             virtual void destroy(object_t * obj) {
@@ -69,7 +69,7 @@ namespace
             int ref_;
         };
 
-        test_obj_3_t()
+        test_obj_3_t(object_service_t)
             : object_t(type())
         {
             // give up our own reference
