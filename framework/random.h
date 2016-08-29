@@ -19,7 +19,8 @@ struct prng {
     typedef uint64_t seed_t;
 
     /* random unsigned 64bit value (xorshift*) */
-    static uint64_t randllu(seed_t &x) {
+    static uint64_t randllu(seed_t& x)
+    {
         x ^= x >> 12;
         x ^= x << 25;
         x ^= x >> 27;
@@ -27,12 +28,14 @@ struct prng {
     }
 
     /*  */
-    static bool rand_chance(seed_t &x, uint64_t chance) {
-        return (randllu(x)%chance)==0;
+    static bool rand_chance(seed_t& x, uint64_t chance)
+    {
+        return (randllu(x) % chance) == 0;
     }
 
     /* random value between 0.f and 1.f */
-    static float randfu(seed_t &seed) {
+    static float randfu(seed_t& seed)
+    {
         union {
             float f;
             uint32_t i;
@@ -43,7 +46,8 @@ struct prng {
     }
 
     /* random value between -1.f and 1.f */
-    static float randfs(seed_t &seed) {
+    static float randfs(seed_t& seed)
+    {
         union {
             float f;
             uint32_t i;
@@ -54,7 +58,8 @@ struct prng {
     }
 
     /* triangular noise distribution [-1,+1] tending to 0 */
-    static float trandfs(seed_t &x) {
+    static float trandfs(seed_t& x)
+    {
         static const uint32_t fmask = (1 << 23) - 1;
         union {
             float f;
@@ -67,7 +72,8 @@ struct prng {
     }
 
     /* gaussian signed random ~[-1,+1] tending to 0 */
-    static float grandfs(seed_t &x) {
+    static float grandfs(seed_t& x)
+    {
         // 1 / half_width
         static const float c_scale = 0.4246284f / 2.f;
         float sum = 0.f;
@@ -83,7 +89,8 @@ struct prng {
     * this function generates a random 2d vector inside a unit circle.
     * |out| -> [0,1]
     **/
-    static void vrand2d(seed_t &x, float (&out)[2]) {
+    static void vrand2d(seed_t& x, float(&out)[2])
+    {
         float mag;
         do {
             out[0] = randfs(x);
@@ -97,7 +104,8 @@ struct prng {
     * this function generates a random 3d vector inside a unit sphere.
     * |out| -> [0,1]
     **/
-    static void vrand3d(seed_t &x, float (&out)[3]) {
+    static void vrand3d(seed_t& x, float(&out)[3])
+    {
         float mag;
         do {
             out[0] = randfs(x);
@@ -112,7 +120,8 @@ struct prng {
     * this function generates a random 3d vector on the surface of a unit circle.
     * |out| = 1
     **/
-    static void nvrand2d(seed_t &x, float (&out)[2]) {
+    static void nvrand2d(seed_t& x, float(&out)[2])
+    {
         float mag;
         do {
             out[0] = randfs(x);
@@ -129,7 +138,8 @@ struct prng {
     * this function generates a random 3d vector on the surface of a unit sphere.
     * |out| = 1
     **/
-    static void nvrand3d(seed_t &x, float (&out)[3]) {
+    static void nvrand3d(seed_t& x, float(&out)[3])
+    {
         float mag;
         do {
             out[0] = randfs(x);
@@ -147,7 +157,8 @@ struct prng {
     *
     * Thomas Wang's 64 bit Mix Function
     **/
-    static uint64_t bitmix(seed_t key) {
+    static uint64_t bitmix(seed_t key)
+    {
         key += ~(key << 32);
         key ^= (key >> 22);
         key += ~(key << 13);
@@ -157,5 +168,5 @@ struct prng {
         key += ~(key << 27);
         key ^= (key >> 31);
         return key;
-        }
+    }
 }; //  struct prng

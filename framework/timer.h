@@ -2,9 +2,7 @@
 #include <cassert>
 #include <cstdint>
 
-
-struct delta_time_t
-{
+struct delta_time_t {
     typedef uint64_t (*millisec_t)();
 
     delta_time_t(millisec_t mills, uint64_t interval)
@@ -18,7 +16,8 @@ struct delta_time_t
     {
         assert(get_time_);
         uint64_t nval = get_time_();
-        if (old_>nval) return 0.f;
+        if (old_ > nval)
+            return 0.f;
         const uint64_t diff = nval - old_;
         return float(diff) / float(interval_ ? interval_ : 1);
     }
@@ -34,10 +33,12 @@ struct delta_time_t
         old_ += interval_;
     }
 
-    uint64_t deltai() const {
+    uint64_t deltai() const
+    {
         assert(get_time_);
         uint64_t nval = get_time_();
-        if (old_>nval) return 0ull;
+        if (old_ > nval)
+            return 0ull;
         const uint64_t diff = nval - old_;
         return interval_ ? (diff / interval_) : 0ull;
     }

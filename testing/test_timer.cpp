@@ -2,13 +2,14 @@
 #include "../framework/timer.h"
 
 namespace {
-    uint64_t thing_ = 0;
-    uint64_t get_time() {
-        return thing_;
-    }
+uint64_t thing_ = 0;
+uint64_t get_time()
+{
+    return thing_;
+}
 } // namespace {}
 
-bool timer_test_1(testing_t & test)
+bool timer_test_1(testing_t& test)
 {
     delta_time_t timer = delta_time_t(get_time, 4);
     thing_ = 0;
@@ -36,7 +37,7 @@ bool timer_test_1(testing_t & test)
     return true;
 }
 
-bool timer_test_2(testing_t & test)
+bool timer_test_2(testing_t& test)
 {
     {
         thing_ = 1ull;
@@ -68,8 +69,7 @@ bool timer_test_2(testing_t & test)
     return true;
 }
 
-extern
-void register_test_timer(testing_t & testing)
+extern void register_test_timer(testing_t& testing)
 {
     testing.add_test("timer test 1", timer_test_1);
     testing.add_test("timer test 2", timer_test_2);

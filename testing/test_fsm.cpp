@@ -2,12 +2,10 @@
 
 #include "testing.h"
 
-namespace
+namespace {
+bool fsm_test_1(testing_t& test)
 {
-bool fsm_test_1(testing_t & test)
-{
-    struct test_t
-    {
+    struct test_t {
         fsm_t<test_t>::fsm_state_t state_a_;
         fsm_t<test_t>::fsm_state_t state_b_;
 
@@ -19,37 +17,43 @@ bool fsm_test_1(testing_t & test)
         test_t()
             : fsm_(this)
             , state_a_(&test_t::fsm_state_a_tick,
-                       &test_t::fsm_state_a_enter,
-                       nullptr)
+                  &test_t::fsm_state_a_enter,
+                  nullptr)
             , state_b_(&test_t::fsm_state_b_tick,
-                       nullptr,
-                       &test_t::fsm_state_b_leave)
+                  nullptr,
+                  &test_t::fsm_state_b_leave)
             , did_a_enter_(0)
             , did_a_tick_(0)
             , did_b_tick_(0)
-            , did_b_leave_(0) {
+            , did_b_leave_(0)
+        {
             fsm_.state_push(state_a_);
         }
 
-        void fsm_state_a_enter() {
+        void fsm_state_a_enter()
+        {
             ++did_a_enter_;
         }
 
-        void fsm_state_a_tick() {
+        void fsm_state_a_tick()
+        {
             ++did_a_tick_;
             fsm_.state_push(state_b_);
         }
 
-        void fsm_state_b_tick() {
+        void fsm_state_b_tick()
+        {
             ++did_b_tick_;
             fsm_.state_pop();
         }
 
-        void fsm_state_b_leave() {
+        void fsm_state_b_leave()
+        {
             ++did_b_leave_;
         }
 
-        void tick() {
+        void tick()
+        {
             fsm_.tick();
         }
 
@@ -70,7 +74,7 @@ bool fsm_test_1(testing_t & test)
 }
 };
 
-extern
-void register_test_fsm(testing_t & testing) {
+extern void register_test_fsm(testing_t& testing)
+{
     testing.add_test("fsm test 1", fsm_test_1);
 }
