@@ -6,6 +6,7 @@
 extern void register_test_objects(testing_t& testing);
 extern void register_test_timer(testing_t& testing);
 extern void register_test_fsm(testing_t& testing);
+extern void register_test_anim(testing_t& testing);
 extern int run_spatial_tests();
 
 typedef std::map<const std::string, int (*)()> test_set_t;
@@ -35,6 +36,7 @@ int run_unit_tests()
     register_test_objects(testing);
     register_test_timer(testing);
     register_test_fsm(testing);
+    register_test_anim(testing);
     testing.start();
     return 0;
 }
