@@ -5,10 +5,9 @@
 #include <string>
 #include <vector>
 #include <queue>
+#include "random.h"
 
-namespace anim
-{
-
+namespace anim {
 struct rect_t {
 
     int32_t x0, y0, x1, y1;
@@ -22,57 +21,67 @@ struct sequence_t {
         e_end_pop
     };
 
-    sequence_t(const std::string & name, end_type_t end_type)
+    sequence_t(const std::string& name, end_type_t end_type)
         : name_(name)
         , end_type_(end_type)
     {
     }
 
-    sequence_t & op_interval(int32_t speed) {
-        opcodes_.push_back(opcode_t{e_op_interval, speed, 0});
+    sequence_t& op_interval(int32_t speed)
+    {
+        opcodes_.push_back(opcode_t{ e_op_interval, speed, 0 });
         return *this;
     }
 
-    sequence_t & op_frame(int32_t frame) {
-        opcodes_.push_back(opcode_t{e_op_frame, frame, 0});
+    sequence_t& op_frame(int32_t frame)
+    {
+        opcodes_.push_back(opcode_t{ e_op_frame, frame, 0 });
         return *this;
     }
 
-    sequence_t & op_delay(int32_t ms) {
-        opcodes_.push_back(opcode_t{e_op_delay, ms, 0});
+    sequence_t& op_delay(int32_t ms)
+    {
+        opcodes_.push_back(opcode_t{ e_op_delay, ms, 0 });
         return *this;
     }
 
-    sequence_t & op_event(int32_t id) {
-        opcodes_.push_back(opcode_t{e_op_event, id, 0});
+    sequence_t& op_event(int32_t id)
+    {
+        opcodes_.push_back(opcode_t{ e_op_event, id, 0 });
         return *this;
     }
 
-    sequence_t & op_jmp(int32_t opcode) {
-        opcodes_.push_back(opcode_t{e_op_jmp, opcode, 0});
+    sequence_t& op_jmp(int32_t opcode)
+    {
+        opcodes_.push_back(opcode_t{ e_op_jmp, opcode, 0 });
         return *this;
     }
 
-    sequence_t & op_rand_frame(int32_t min, int32_t max) {
-        opcodes_.push_back(opcode_t{e_op_rand_frame, min, max});
+    sequence_t& op_rand_frame(int32_t min, int32_t max)
+    {
+        opcodes_.push_back(opcode_t{ e_op_rand_frame, min, max });
         return *this;
     }
 
-    sequence_t & op_hotspot(int32_t x, int32_t y) {
-        opcodes_.push_back(opcode_t{e_op_hotspot, x, y});
+    sequence_t& op_hotspot(int32_t x, int32_t y)
+    {
+        opcodes_.push_back(opcode_t{ e_op_hotspot, x, y });
         return *this;
     }
 
-    sequence_t & op_offset(int32_t x, int32_t y) {
-        opcodes_.push_back(opcode_t{e_op_offset, x, y});
+    sequence_t& op_offset(int32_t x, int32_t y)
+    {
+        opcodes_.push_back(opcode_t{ e_op_offset, x, y });
         return *this;
     }
 
-    void clear() {
+    void clear()
+    {
         opcodes_.clear();
     }
 
-    int32_t size() const {
+    int32_t size() const
+    {
         return int32_t(opcodes_.size());
     }
 
@@ -93,8 +102,9 @@ struct sequence_t {
         int32_t y_;
     };
 
-    const opcode_t & get_opcode(size_t index) const {
-        assert(index<opcodes_.size());
+    const opcode_t& get_opcode(size_t index) const
+    {
+        assert(index < opcodes_.size());
         return opcodes_.at(index);
     }
 
@@ -113,26 +123,30 @@ struct sheet_t {
     {
     }
 
-    void add_frame(const rect_t & frame) {
+    void add_frame(const rect_t& frame)
+    {
         frame_.push_back(frame);
     }
 
     void add_grid(const int32_t cell_width,
-                  const int32_t cell_height) {
-        for (int32_t y = 0; y<height_; y += cell_height) {
-            for (int32_t x = 0; x<width_; x += cell_width) {
+        const int32_t cell_height)
+    {
+        for (int32_t y = 0; y < height_; y += cell_height) {
+            for (int32_t x = 0; x < width_; x += cell_width) {
                 frame_.push_back(
-                    rect_t { x, y, cell_width, cell_height });
+                    rect_t{ x, y, cell_width, cell_height });
             }
         }
     }
 
-    void clear() {
+    void clear()
+    {
         frame_.clear();
     }
 
-    const rect_t & get_frame(size_t index) const {
-        assert((index<frame_.size())&&"no frame at this index");
+    const rect_t& get_frame(size_t index) const
+    {
+        assert((index < frame_.size()) && "no frame at this index");
         return frame_.at(index);
     }
 
@@ -146,43 +160,48 @@ struct anim_controller_t {
 
     anim_controller_t()
         : sheet_(nullptr)
+        , prng_(0xcafebabe)
     {
     }
 
-    void push_sequence(const sequence_t * sequence) {
+    void push_sequence(const sequence_t* sequence)
+    {
         state_.push_back(state_t(sequence));
     }
 
-    void set_sequence(const sequence_t * sequence) {
+    void set_sequence(const sequence_t* sequence)
+    {
         pop_sequence();
         push_sequence(sequence);
     }
 
-    void pop_sequence() {
+    void pop_sequence()
+    {
         if (state_.size()) {
             state_.pop_back();
         }
     }
 
-    bool tick(int32_t delta) {
+    bool tick(int32_t delta)
+    {
 
         while (state_.size()) {
 
-            state_t & state = state_.back();
+            state_t& state = state_.back();
             assert(state.sequence_);
-            const sequence_t & seq = *state.sequence_;
+            const sequence_t& seq = *state.sequence_;
 
             // remove any spent time
             state.delay_ -= delta;
             delta = 0;
 
             // if we are to soon for our next frame
-            if (state.delay_>=0) {
+            if (state.delay_ >= 0) {
                 break;
             }
 
             // if we have reached the end of a sequence
-            if (state.pc_>=seq.size()) {
+            if (state.pc_ >= seq.size()) {
                 switch (seq.end_type_) {
                 case (sequence_t::e_end_hold):
                     return true;
@@ -196,33 +215,38 @@ struct anim_controller_t {
             }
 
             // dispatch based on opcode
-            const sequence_t::opcode_t & op = seq.get_opcode(state.pc_);
+            const sequence_t::opcode_t& op = seq.get_opcode(state.pc_);
             const auto old_pc = state.pc_;
             switch (op.type_) {
-            case(sequence_t::e_op_interval):
-                state.interval_ = op.x_; 
+            case (sequence_t::e_op_interval):
+                state.interval_ = op.x_;
                 break;
-            case(sequence_t::e_op_frame):
+            case (sequence_t::e_op_frame):
                 state.rect_ = sheet_->get_frame(op.x_);
                 state.delay_ += state.interval_;
                 break;
-            case(sequence_t::e_op_delay):
+            case (sequence_t::e_op_delay):
                 state.delay_ += op.x_;
                 break;
-            case(sequence_t::e_op_event): 
+            case (sequence_t::e_op_event):
                 event_.push(op.x_);
                 break;
-            case(sequence_t::e_op_jmp):
-                assert(op.x_>=0&&op.x_<seq.size());
+            case (sequence_t::e_op_jmp):
+                assert(op.x_ >= 0 && op.x_ < seq.size());
                 state.pc_ = op.x_;
                 break;
-            case(sequence_t::e_op_rand_frame):
+            case (sequence_t::e_op_rand_frame):
+            {
+                const int32_t frame = prng_.rand_range(op.x_, op.y_);
+                state.rect_ = sheet_->get_frame(frame);
+                state.delay_ += state.interval_;
+            }
                 break;
-            case(sequence_t::e_op_hotspot):
+            case (sequence_t::e_op_hotspot):
                 state.offset_x_ = op.x_;
                 state.offset_y_ = op.y_;
                 break;
-            case(sequence_t::e_op_offset):
+            case (sequence_t::e_op_offset):
                 state.hotspot_x_ = op.x_;
                 state.hotspot_y_ = op.y_;
                 break;
@@ -231,7 +255,7 @@ struct anim_controller_t {
             }
 
             // if the pc has not changed do normal increment
-            if (old_pc==state.pc_) {
+            if (old_pc == state.pc_) {
                 ++state.pc_;
             }
         }
@@ -239,16 +263,18 @@ struct anim_controller_t {
         return true;
     }
 
-    bool retrigger() {
-        if (state_.size()==0) {
+    bool retrigger()
+    {
+        if (state_.size() == 0) {
             return false;
         }
-        state_t & state = state_.back();
+        state_t& state = state_.back();
         state.pc_ = 0;
         return true;
     }
 
-    bool get_sequence(const sequence_t * &out) const {
+    bool get_sequence(const sequence_t*& out) const
+    {
         if (state_.size()) {
             out = state_.back().sequence_;
             return true;
@@ -256,16 +282,18 @@ struct anim_controller_t {
         return false;
     }
 
-    bool get_frame(rect_t & out) const {
-        if (state_.size()==0) {
+    bool get_frame(rect_t& out) const
+    {
+        if (state_.size() == 0) {
             return false;
         }
-        const state_t & state = state_.back();
+        const state_t& state = state_.back();
         out = state.rect_;
         return true;
     }
 
-    bool get_event(uint32_t & out) {
+    bool get_event(uint32_t& out)
+    {
         if (event_.size()) {
             out = event_.front();
             event_.pop();
@@ -274,7 +302,8 @@ struct anim_controller_t {
         return false;
     }
 
-    bool get_hotspot(int32_t & x_out, int32_t & y_out) {
+    bool get_hotspot(int32_t& x_out, int32_t& y_out)
+    {
         if (state_.size()) {
             state_.back().hotspot_x_;
             state_.back().hotspot_y_;
@@ -283,7 +312,8 @@ struct anim_controller_t {
         return false;
     }
 
-    bool get_offset(int32_t & x_out, int32_t & y_out) {
+    bool get_offset(int32_t& x_out, int32_t& y_out)
+    {
         if (state_.size()) {
             state_.back().offset_x_;
             state_.back().offset_y_;
@@ -292,24 +322,25 @@ struct anim_controller_t {
         return false;
     }
 
-    void set_sheet(const sheet_t * sheet) {
+    void set_sheet(const sheet_t* sheet)
+    {
         sheet_ = sheet;
     }
 
-    bool is_playing(const sequence_t * seq) const {
+    bool is_playing(const sequence_t* seq) const
+    {
         if (state_.size())
-            return (state_.back().sequence_==seq);
+            return (state_.back().sequence_ == seq);
         else
             return false;
     }
 
 protected:
-
     struct state_t {
 
-        state_t(const sequence_t * seq)
+        state_t(const sequence_t* seq)
             : sequence_(seq)
-            , rect_{0, 0, 0, 0}
+            , rect_{ 0, 0, 0, 0 }
             , interval_(1)
             , pc_(0)
             , delay_(0)
@@ -320,7 +351,7 @@ protected:
         {
         }
 
-        const sequence_t * sequence_;
+        const sequence_t* sequence_;
         rect_t rect_;
         int32_t interval_;
         int32_t pc_;
@@ -331,7 +362,8 @@ protected:
         int32_t hotspot_y_;
     };
 
-    const sheet_t * sheet_;
+    random_t prng_;
+    const sheet_t* sheet_;
     std::vector<state_t> state_;
     std::queue<uint32_t> event_;
 };

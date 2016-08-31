@@ -11,7 +11,8 @@ set(SOURCE_FILES
     test_spatial.cpp
     test_timer.cpp
     test_fsm.cpp
-    test_anim.cpp)
+    test_anim.cpp
+    test_file.cpp)
 
 add_executable(testing ${SOURCE_FILES})
 target_link_libraries(testing PUBLIC framework SDL)

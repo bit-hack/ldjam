@@ -135,17 +135,17 @@ extern int run_spatial_tests()
         return false;
     }
 
-    prng::seed_t seed = SDL_GetTicks();
+    random_t prng(SDL_GetTicks());
 
     spatial_t hash;
 
     for (int i = 0; i < num_objects; ++i) {
 
         float out[2];
-        prng::vrand2d(seed, out);
-        const vec2f_t p = { prng::randfu(seed) * 512,
-            prng::randfu(seed) * 512 };
-        const float r = prng::randfu(seed) * 16 + 4;
+        prng.vrand2d(out);
+        const vec2f_t p = { prng.randfu() * 512,
+            prng.randfu() * 512 };
+        const float r = prng.randfu() * 16 + 4;
         body_t* obj = new body_t(p, r, nullptr);
         obj->vel_.x = out[0];
         obj->vel_.y = out[1];

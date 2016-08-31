@@ -47,7 +47,8 @@ struct body_pair_set_t {
         size_t operator()(const pair_t& in) const
         {
             return size_t(
-                prng::bitmix(uint64_t(in.first) ^ prng::bitmix(uint64_t(in.second))));
+                random_t::hash64(uint64_t(in.first) ^
+                random_t::hash64(uint64_t(in.second))));
         }
     };
 
