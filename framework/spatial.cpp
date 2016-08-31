@@ -252,8 +252,8 @@ void spatial_t::query_ray(
     assert(!"not yet implemented");
 }
 
-int spatial_t::dbg_ocupancy(int32_t x, int32_t y)
+int32_t spatial_t::dbg_ocupancy(int32_t x, int32_t y)
 {
     std::list<slot_t>& list = slot(x, y);
-    return list.size();
+    return int32_t(list.size());
 }
