@@ -9,13 +9,23 @@
 
 struct file_reader_t {
 
+    // constructor
     file_reader_t()
         : file_(nullptr)
         , pos_()
     {
     }
 
-    file_reader_t(const char * path)
+    // constructor with open
+    explicit file_reader_t(const std::string & path)
+        : file_(nullptr)
+        , pos_()
+    {
+        open(path.c_str());
+    }
+
+    // constructor with open
+    explicit file_reader_t(const char * path)
         : file_(nullptr)
         , pos_()
     {
@@ -41,18 +51,20 @@ struct file_reader_t {
         other.file_ = nullptr;
     }
 
+    // assignment operator
     void operator = (const file_reader_t & rhs)
     {
         assert(!"todo, same as copy constructor");
     }
 
+    // destructor
     ~file_reader_t()
     {
         close();
     }
 
     // open file from specific path
-    bool open(const char * path) {
+    bool open(const char * & path) {
         if (file_) {
             close();
         }
@@ -62,6 +74,11 @@ struct file_reader_t {
         file_ = fopen(path, "rb");
 #endif
         return file_ != nullptr;
+    }
+
+    //
+    bool open(const std::string & path) {
+        return open(path.c_str());
     }
 
     bool close() {
@@ -191,7 +208,17 @@ struct file_reader_t {
     }
 
 protected:
-
     std::vector<size_t> pos_;
+    FILE * file_;
+};
+
+struct file_writer_t {
+
+    file_writer_t()
+        : file_(nullptr)
+    {
+    }
+
+protected:
     FILE * file_;
 };
