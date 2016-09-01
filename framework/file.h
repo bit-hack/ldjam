@@ -298,7 +298,7 @@ struct file_writer_t {
     // copy constructor
     file_writer_t(const file_writer_t &) = delete;
 
-    // move cosntructor
+    // move constructor
     file_writer_t(file_writer_t && other)
         : file_(other.file_)
         , path_(std::move(other.path_))
@@ -364,13 +364,6 @@ struct file_writer_t {
         type_t str_size = type_t(str.size());
         write<type_t>(str_size);
         return write((void*)str.c_str(), str_size);
-    }
-
-    // write pointer type
-    template <typename type_t>
-    bool write(const type_t * & in) {
-        static_assert(false, "You dont want to be writing out a pointer")
-        return false;
     }
 
     // write specific type
