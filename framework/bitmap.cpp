@@ -66,7 +66,7 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
         for (int32_t y = int32_t(dib_v1_.height_)-1; y>=0; --y) {
             uint32_t * dst_pix = bmp.get()+(y * dib_v1_.width_);
             // read row
-            for (int32_t x = 0; x<dib_v1_.width_; ++x) {
+            for (uint32_t x = 0; x<dib_v1_.width_; ++x) {
                 // read row pixel
                 uint8_t src[3];
                 if (!file.read(src)) {
@@ -91,7 +91,7 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
         }
         break;
     default:
-        // unsupported bit depth type
+        // unsupported bitdepth
         return false;
     }
     // write out to bitmap
