@@ -172,6 +172,19 @@ struct file_reader_t {
         return false;
     }
 
+    // relative seek
+    bool jump(int32_t relative) {
+        if (!file_) {
+            return false;
+        }
+        if (relative != 0) {
+            if (fseek(file_, relative, SEEK_CUR)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // seek to specific file position
     bool seek(size_t pos)
     {

@@ -9,7 +9,10 @@ endif()
 
 set(SOURCE_FILES
     anim.h
+    bitmap.cpp
+    bitmap.h
     const.h
+    file.h
     fsm.h
     objects.cpp
     objects.h
@@ -18,7 +21,6 @@ set(SOURCE_FILES
     spatial.h
     timer.h
     vec2.h
-    vec3.h
-    file.h)
+    vec3.h)
 
 add_library(framework ${SOURCE_FILES})

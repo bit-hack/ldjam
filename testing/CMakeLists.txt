@@ -7,6 +7,7 @@ endif()
 set(SOURCE_FILES
     testing.cpp
     testing.h
+	test_bitmap.cpp
     test_objects.cpp
     test_spatial.cpp
     test_timer.cpp
