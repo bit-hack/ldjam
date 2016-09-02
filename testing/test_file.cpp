@@ -94,11 +94,19 @@ bool test_file_1(testing_t& test)
 
 bool test_file_2(testing_t& test)
 {
+#if 0
     file_reader_t file("temp.bin");
     TEST_ASSERT(file.is_open());
 
     file_reader_t new_file = std::move(file);
     TEST_ASSERT(new_file.is_open());
+#endif
+
+#if 0
+    file_writer_t file;
+    void * my_thing = (void*)10;
+    file.write(my_thing);
+#endif
 
     return true;
 }
