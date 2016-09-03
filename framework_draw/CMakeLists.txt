@@ -4,5 +4,9 @@ if (NOT MSVC)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
-set(SOURCE_FILES stb_vorbis.c stb_vorbis.h)
-add_library(audio ${SOURCE_FILES})
+set(SOURCE_FILES
+    draw.cpp
+    bitmap.cpp
+    bitmap.h)
+
+add_library(framework_draw ${SOURCE_FILES})

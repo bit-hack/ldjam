@@ -1,7 +1,6 @@
+#include "../framework_core/file.h"
 #include "bitmap.h"
-#include "file.h"
 
-#include "file.h"
 
 #if !defined(_MSC_VER)
 #define PACK__ __attribute__((__packed__))

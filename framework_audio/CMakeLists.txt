@@ -5,6 +5,9 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
-    draw.cpp)
+    stb_vorbis.c
+    stb_vorbis.h
+    wave.cpp
+    wave.h)
 
-add_library(draw ${SOURCE_FILES})
+add_library(framework_audio ${SOURCE_FILES})

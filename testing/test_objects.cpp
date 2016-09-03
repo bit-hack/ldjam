@@ -1,5 +1,5 @@
 #include "testing.h"
-#include "../framework/objects.h"
+#include "../framework_core/objects.h"
 
 namespace {
 enum {

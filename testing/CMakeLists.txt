@@ -16,4 +16,4 @@ set(SOURCE_FILES
     test_file.cpp)
 
 add_executable(testing ${SOURCE_FILES})
-target_link_libraries(testing PUBLIC framework SDL)
+target_link_libraries(testing PUBLIC framework_core framework_audio framework_draw SDL)

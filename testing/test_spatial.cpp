@@ -4,8 +4,8 @@
 #include <list>
 #include <set>
 
-#include "../framework/random.h"
-#include "../framework/spatial.h"
+#include "../framework_core/random.h"
+#include "../framework_core/spatial.h"
 
 struct app_t {
     SDL_Surface* window_;

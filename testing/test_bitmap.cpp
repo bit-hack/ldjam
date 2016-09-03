@@ -1,4 +1,4 @@
-#include "../framework/bitmap.h"
+#include "../framework_draw/bitmap.h"
 
 #include "testing.h"
 
