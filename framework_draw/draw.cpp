@@ -55,8 +55,8 @@ void draw_t::rect(const recti_t p) {
 
 void draw_t::triangle(
     const vec2f_t & a,
-    const vec3f_t & b,
-    const vec3f_t & c) {
+    const vec2f_t & b,
+    const vec2f_t & c) {
 }
 
 void draw_t::triangle(const triangle_t &) {
@@ -116,7 +116,7 @@ void draw_t::viewport(const recti_t & rect) {
     viewport_ = recti_t::intersect(vp, rect);
 }
 
-void draw_t::viewport_clear() {
+void draw_t::viewport() {
     viewport_ = _target_size();
 }
 

@@ -47,8 +47,8 @@ struct draw_t {
     void rect(const recti_t p);
 
     void triangle(const vec2f_t & a,
-                  const vec3f_t & b,
-                  const vec3f_t & c);
+                  const vec2f_t & b,
+                  const vec2f_t & c);
 
     void triangle(const triangle_t &);
 
@@ -63,7 +63,7 @@ struct draw_t {
 
     void viewport(const recti_t & rect);
 
-    void viewport_clear();
+    void viewport();
 
     void copy(struct bitmap_t & dst,
               const recti_t & src_rect,
