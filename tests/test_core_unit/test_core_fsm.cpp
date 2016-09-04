@@ -2,7 +2,8 @@
 
 #define TEST_ASSERT(X) {if (X) { return false; }}
 
-bool fsm_test_1()
+extern
+bool test_fsm_1()
 {
     struct test_t {
         fsm_t<test_t>::fsm_state_t state_a_;

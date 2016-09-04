@@ -96,6 +96,19 @@ struct random_t {
         return sum * c_scale;
     }
 
+    template <typename type_t>
+    void randfs_vec2(type_t & vec) {
+        vec.x = randfs();
+        vec.y = randfs();
+    }
+
+    template <typename type_t>
+    void randfs_vec3(type_t & vec) {
+        vec.x = randfs();
+        vec.y = randfs();
+        vec.z = randfs();
+    }
+
     /* circular rand
      *
      * this function generates a random 2d vector inside a unit circle.

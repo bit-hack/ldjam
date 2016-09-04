@@ -81,7 +81,8 @@ struct test_obj_3_t : public object_t {
     }
 };
 
-bool object_test_1()
+extern
+bool test_object_1()
 {
     object_factory_t factory(nullptr);
 
@@ -119,7 +120,8 @@ bool object_test_1()
     return true;
 };
 
-bool object_test_2()
+extern
+bool test_object_2()
 {
     object_ref_t ref1;
     TEST_ASSERT(!ref1.valid());
@@ -143,7 +145,8 @@ bool object_test_2()
     return true;
 }
 
-bool object_test_3()
+extern
+bool test_object_3()
 {
     object_factory_t factory(nullptr);
     factory.add_creator<test_obj_1_t>();
@@ -175,7 +178,8 @@ bool object_test_3()
     return true;
 }
 
-bool object_test_4()
+extern
+bool test_object_4()
 {
     object_factory_t factory(nullptr);
     factory.add_creator<test_obj_1_t>();
@@ -189,7 +193,8 @@ bool object_test_4()
     return true;
 }
 
-bool object_test_5()
+extern
+bool test_object_5()
 {
     enum {
         e_obj_test_t

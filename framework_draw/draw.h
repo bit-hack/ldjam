@@ -73,6 +73,8 @@ struct draw_t {
         return * target_;
     }
 
+    void render_2x(void *, const uint32_t pitch);
+
     uint32_t colour_;
 
 protected:

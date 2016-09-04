@@ -26,6 +26,10 @@ struct bitmap_t {
 
     void colour_key(uint32_t key);
 
+    bool valid() const {
+        return pix_.get() != nullptr;
+    }
+
 protected:
 
     std::unique_ptr<uint32_t[]> pix_;

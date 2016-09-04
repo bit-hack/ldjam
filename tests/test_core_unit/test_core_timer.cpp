@@ -9,7 +9,7 @@ uint64_t get_time()
     return thing_;
 }
 
-bool timer_test_1()
+bool test_timer_1()
 {
     delta_time_t timer = delta_time_t(get_time, 4);
     thing_ = 0;
@@ -37,7 +37,7 @@ bool timer_test_1()
     return true;
 }
 
-bool timer_test_2()
+bool test_timer_2()
 {
     {
         thing_ = 1ull;
