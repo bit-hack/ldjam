@@ -9,4 +9,4 @@ add_subdirectory(framework_core)
 add_subdirectory(framework_audio)
 add_subdirectory(framework_draw)
 
-add_subdirectory(testing)
+add_subdirectory(tests)

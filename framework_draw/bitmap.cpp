@@ -9,6 +9,17 @@
 #pragma pack(push, 1)
 #endif
 
+bool bitmap_t::create(const uint32_t width,
+                      const uint32_t height,
+                      bitmap_t & out) {
+    // allocate space for all the pixels
+    std::unique_ptr<uint32_t> bmp(new uint32_t[width * height]);
+    out.pix_.reset(bmp.release());
+    out.width_ = width;
+    out.height_ = height;
+    return true;
+}
+
 bool bitmap_t::load(const char * path, bitmap_t & out) {
     // open bitmap file
     file_reader_t file;

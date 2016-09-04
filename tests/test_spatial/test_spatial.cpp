@@ -4,8 +4,8 @@
 #include <list>
 #include <set>
 
-#include "../framework_core/random.h"
-#include "../framework_core/spatial.h"
+#include "../../framework_core/random.h"
+#include "../../framework_core/spatial.h"
 
 struct app_t {
     SDL_Surface* window_;
@@ -15,14 +15,11 @@ struct app_t {
     {
         if (SDL_Init(SDL_INIT_VIDEO))
             return false;
-
         window_ = SDL_SetVideoMode(w, h, 32, 0);
         if (!window_)
             return false;
-
         w_ = w;
         h_ = h;
-
         return true;
     }
 
@@ -125,7 +122,7 @@ void app_t::rect(int x, int y, int w, int h, uint32_t rgb)
     }
 }
 
-extern int run_spatial_tests()
+int main(int argc, char *args[])
 {
     static const uint32_t num_objects = 200;
     std::list<body_t*> list_;

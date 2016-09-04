@@ -1,9 +1,6 @@
-#include "../framework_core/anim.h"
+#include "../../framework_core/anim.h"
 
-#include "testing.h"
-
-namespace {
-bool test_anim_1(testing_t& test)
+bool test_anim_1()
 {
     enum {
         e_foot_fall
@@ -47,10 +44,4 @@ bool test_anim_1(testing_t& test)
     }
 
     return true;
-}
-};
-
-extern void register_test_anim(testing_t& testing)
-{
-    testing.add_test("anim test 1", test_anim_1);
 }

@@ -5,6 +5,11 @@ const float C_PI = 3.14159265359f;
 const float C_2PI = 6.28318530718f;
 
 template <typename type_t>
+void swapv(type_t & a, type_t & b) {
+    type_t c = a; a = b; b = c;
+}
+
+template <typename type_t>
 constexpr float lerp(type_t x, type_t y, type_t i)
 {
     return x + (y - x) * i;

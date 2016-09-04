@@ -1,9 +1,8 @@
-#include "../framework_core/fsm.h"
+#include "../../framework_core/fsm.h"
 
-#include "testing.h"
+#define TEST_ASSERT(X) {if (X) { return false; }}
 
-namespace {
-bool fsm_test_1(testing_t& test)
+bool fsm_test_1()
 {
     struct test_t {
         fsm_t<test_t>::fsm_state_t state_a_;
@@ -71,10 +70,4 @@ bool fsm_test_1(testing_t& test)
     TEST_ASSERT(test_1.did_b_leave_ == 1);
 
     return true;
-}
-};
-
-extern void register_test_fsm(testing_t& testing)
-{
-    testing.add_test("fsm test 1", fsm_test_1);
 }

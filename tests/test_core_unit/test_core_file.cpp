@@ -1,9 +1,8 @@
-#include "../framework_core/file.h"
+#include "../../framework_core/file.h"
 
-#include "testing.h"
+#define TEST_ASSERT(X) {if (X) { return false; }}
 
-namespace {
-bool test_file_1(testing_t& test)
+bool test_file_1()
 {
     const char * PATH = "out.bin";
 
@@ -92,7 +91,7 @@ bool test_file_1(testing_t& test)
     return true;
 }
 
-bool test_file_2(testing_t& test)
+bool test_file_2()
 {
 #if 0
     file_reader_t file("temp.bin");
@@ -111,7 +110,7 @@ bool test_file_2(testing_t& test)
     return true;
 }
 
-bool test_file_3(testing_t& test)
+bool test_file_3()
 {
     file_reader_t file;
     TEST_ASSERT(!file.is_open());
@@ -120,7 +119,7 @@ bool test_file_3(testing_t& test)
     return true;
 }
 
-bool test_file_4(testing_t& test)
+bool test_file_4()
 {
     const char * PATH = "out.bin";
 
@@ -178,13 +177,4 @@ bool test_file_4(testing_t& test)
     TEST_ASSERT(file.close());
     TEST_ASSERT(!file.is_open());
     return true;
-}
-};
-
-extern void register_test_file(testing_t& testing)
-{
-    testing.add_test("file write test 1", test_file_4);
-    testing.add_test("file read test 1", test_file_1);
-    testing.add_test("file read test 2", test_file_2);
-    testing.add_test("file read test 3", test_file_3);
 }

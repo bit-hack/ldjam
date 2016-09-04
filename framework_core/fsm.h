@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <stdint.h>
 
 template <typename type_t>
 struct fsm_t {
@@ -9,6 +10,7 @@ struct fsm_t {
 
     fsm_t(type_t* self)
         : self_(self)
+        , visible_state_(0)
     {
     }
 
@@ -59,7 +61,12 @@ struct fsm_t {
         }
     }
 
+    uint32_t visible_state() const {
+        return visible_state_;
+    }
+
 protected:
+    uint32_t visible_state_;
     std::vector<fsm_state_t> stack_;
     type_t* self_;
 };

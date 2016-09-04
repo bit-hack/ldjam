@@ -1,7 +1,7 @@
-#include "testing.h"
-#include "../framework_core/objects.h"
+#include "../../framework_core/objects.h"
 
-namespace {
+#define TEST_ASSERT(X) {if (X) { return false; }}
+
 enum {
     e_type_obj_1,
     e_type_obj_2,
@@ -81,7 +81,7 @@ struct test_obj_3_t : public object_t {
     }
 };
 
-bool object_test_1(testing_t& test)
+bool object_test_1()
 {
     object_factory_t factory(nullptr);
 
@@ -119,7 +119,7 @@ bool object_test_1(testing_t& test)
     return true;
 };
 
-bool object_test_2(testing_t& test)
+bool object_test_2()
 {
     object_ref_t ref1;
     TEST_ASSERT(!ref1.valid());
@@ -143,7 +143,7 @@ bool object_test_2(testing_t& test)
     return true;
 }
 
-bool object_test_3(testing_t& test)
+bool object_test_3()
 {
     object_factory_t factory(nullptr);
     factory.add_creator<test_obj_1_t>();
@@ -175,7 +175,7 @@ bool object_test_3(testing_t& test)
     return true;
 }
 
-bool object_test_4(testing_t& test)
+bool object_test_4()
 {
     object_factory_t factory(nullptr);
     factory.add_creator<test_obj_1_t>();
@@ -189,7 +189,7 @@ bool object_test_4(testing_t& test)
     return true;
 }
 
-bool object_test_5(testing_t& test)
+bool object_test_5()
 {
     enum {
         e_obj_test_t
@@ -226,13 +226,4 @@ bool object_test_5(testing_t& test)
     TEST_ASSERT(obj_2->cast<obj_test_t>().value_ == 1);
 
     return true;
-}
-} // namespace {}
-
-extern void register_test_objects(testing_t& testing)
-{
-    testing.add_test("object test 1", object_test_1);
-    testing.add_test("object test 2", object_test_2);
-    testing.add_test("object test 3", object_test_3);
-    testing.add_test("object test 4", object_test_4);
 }

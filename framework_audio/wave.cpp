@@ -29,7 +29,7 @@ namespace {
     }
 } // namespace {}
 
-bool load_wav(const char * path, sound_t & out) {
+bool sound_t::load_wav(const char * path, sound_t & out) {
 
     file_reader_t file;
     if (!file.open(path)) {

@@ -16,6 +16,7 @@ set(SOURCE_FILES
     spatial.h
     timer.h
     vec2.h
-    vec3.h)
+    vec3.h
+    rect.h)
 
 add_library(framework_core ${SOURCE_FILES})

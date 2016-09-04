@@ -5,9 +5,7 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
-    draw.cpp
-    draw.h
-    bitmap.cpp
-    bitmap.h)
+    test_spatial.cpp)
 
-add_library(framework_draw ${SOURCE_FILES})
+add_executable(test_spatial ${SOURCE_FILES})
+target_link_libraries(test_spatial PUBLIC framework_core SDL)

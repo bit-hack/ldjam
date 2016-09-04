@@ -1,28 +1,26 @@
 #pragma once
 #include <cmath>
 
-namespace {
-float sqrt(const float& x)
-{
-    return sqrtf(x);
-}
-
-float isqrt(const float& val)
-{
-    const float threehalfs = 1.5f;
-    float x2 = val * 0.5f;
-    float y = val;
-    long i = *(long*)&y;
-    i = 0x5f3759df - (i >> 1);
-    y = *(float*)&i;
-    y = y * (threehalfs - (x2 * y * y));
-    return y;
-}
-}
-
 template <typename type_t>
 struct vec3_t {
     type_t x, y, z;
+
+    static float sqrt(const float& x)
+    {
+        return sqrtf(x);
+    }
+
+    static float isqrt(const float& val)
+    {
+        const float threehalfs = 1.5f;
+        float x2 = val * 0.5f;
+        float y = val;
+        long i = *(long*)&y;
+        i = 0x5f3759df - (i >> 1);
+        y = *(float*)&i;
+        y = y * (threehalfs - (x2 * y * y));
+        return y;
+    }
 
     void operator+=(const vec3_t& v)
     {

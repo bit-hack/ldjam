@@ -2,11 +2,6 @@
 #include <cmath>
 
 namespace {
-float sqrt(const float& x)
-{
-    return sqrtf(x);
-}
-
 float isqrt(const float& val)
 {
     const float threehalfs = 1.5f;
@@ -32,6 +27,11 @@ float hermite(float y0, float y1, float y2, float y3, float x)
 template <typename type_t>
 struct vec2_t {
     type_t x, y;
+
+    static float sqrt(const float& x)
+    {
+        return sqrtf(x);
+    }
 
     void operator+=(const vec2_t& v)
     {
