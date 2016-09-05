@@ -10,7 +10,7 @@
 namespace {
     struct info_wave_t {
         const wave_t * wave_;
-        uint64_t sample_;   // 0xffff fixed point
+        uint64_t frame_;    // 0xffff fixed point
         uint64_t delta_;    // 0xffff fixed point
         uint16_t volume_;   // 0x00ff fixed point
         bool looping_;
@@ -54,7 +54,7 @@ struct audio_t::detail_t {
                 info.wave_ = msg.wave_;
                 info.volume_ = uint32_t(msg.volume_ * 0x100);
                 info.delta_ = uint64_t(msg.rate_ * 0x10000);
-                info.sample_ = 0;
+                info.frame_ = 0;
                 info.looping_ = msg.looping_;
                 waves_[info.wave_] = info;
             }
@@ -69,7 +69,7 @@ struct audio_t::detail_t {
                 info.delta_ = uint64_t(msg.rate_ * 0x10000);
                 info.looping_ = msg.looping_;
                 if (msg.retrigger_) {
-                    info.sample_ = 0;
+                    info.frame_ = 0;
                 }
             }
         }
@@ -94,7 +94,7 @@ struct audio_t::detail_t {
     // 8 bit mono
     bool _render_8_1(info_wave_t & info, uint32_t count) {
         const wave_t & wave = *(info.wave_);
-        const uint64_t end = wave.num_samples() * 0x10000;
+        const uint64_t end = uint64_t(wave.num_frames()) * 0x10000llu;
         const int8_t * src = wave.get<int8_t>();
         // get mix down buffer pointers
         int32_t * ml = mix_l_.data();
@@ -102,21 +102,20 @@ struct audio_t::detail_t {
         // repeat until all samples are done
         for (;;) {
             // render loop
-            for (;count && info.sample_ < end; --count) {
+            for (;count && info.frame_ < end; --count) {
                 // buffer index point
-                const uint64_t index = info.sample_ / 0x10000;
+                const uint64_t index = info.frame_ / 0x10000;
                 // index wave file
-                assert(index < wave.length());
                 const int8_t sample = src[index];
                 // write to sample buffer
-                *(ml++) = sample * info.volume_;
-                *(mr++) = sample * info.volume_;
+                *(ml++) += sample * info.volume_;
+                *(mr++) += sample * info.volume_;
                 // advance sample pointer
-                info.sample_ += info.delta_;
+                info.frame_ += info.delta_;
             }
             // obey looping
             if (count > 0 && info.looping_)
-                info.sample_ = 0;
+                info.frame_ = 0;
             else
                 break;
         }
@@ -133,7 +132,7 @@ struct audio_t::detail_t {
     // 16 bit mono
     bool _render_16_1(info_wave_t & info, uint32_t count) {
         const wave_t & wave = *(info.wave_);
-        const uint64_t end = wave.num_samples() * 0x10000;
+        const uint64_t end = uint64_t(wave.num_frames()) * 0x10000llu;
         const int16_t * src = wave.get<int16_t>();
         // get mix down buffer pointers
         int32_t * ml = mix_l_.data();
@@ -141,21 +140,20 @@ struct audio_t::detail_t {
         // repeat until all samples are done
         for (;;) {
             // render loop
-            for (;count && info.sample_ < end; --count) {
+            for (;count && info.frame_ < end; --count) {
                 // buffer index point
-                const uint64_t index = info.sample_ / 0x10000;
+                const uint64_t index = info.frame_ / 0x10000;
                 // index wave file
-                assert(index < wave.length());
                 const int16_t sample = (src[index] * info.volume_) / 0x100;
                 // write to sample buffer
-                *(ml++) = sample;
-                *(mr++) = sample;
+                *(ml++) += sample;
+                *(mr++) += sample;
                 // advance sample pointer
-                info.sample_ += info.delta_;
+                info.frame_ += info.delta_;
             }
             // obey looping
             if (count > 0 && info.looping_)
-                info.sample_ = 0;
+                info.frame_ = 0;
             else
                 break;
         }
@@ -166,7 +164,34 @@ struct audio_t::detail_t {
     // 16 bit stereo
     bool _render_16_2(info_wave_t & info, uint32_t count) {
         const wave_t & wave = *(info.wave_);
-        return false;
+        const uint64_t end = uint64_t(wave.num_frames()) * 0x10000llu;
+        const int16_t * src = wave.get<int16_t>();
+        // get mix down buffer pointers
+        int32_t * ml = mix_l_.data();
+        int32_t * mr = mix_r_.data();
+        // repeat until all samples are done
+        for (;;) {
+            // render loop
+            for (;count && info.frame_ < end; --count) {
+                // buffer index point
+                const uint64_t index = info.frame_ / 0x10000;
+                // index wave file
+                const int16_t sample_l = (src[index*2+0] * info.volume_) / 0x100;
+                const int16_t sample_r = (src[index*2+1] * info.volume_) / 0x100;
+                // write to sample buffer
+                *(ml++) += sample_l;
+                *(mr++) += sample_r;
+                // advance sample pointer
+                info.frame_ += info.delta_;
+            }
+            // obey looping
+            if (count > 0 && info.looping_)
+                info.frame_ = 0;
+            else
+                break;
+        }
+        // success
+        return true;
     }
 
     bool _render(info_wave_t & wave, uint32_t count) {

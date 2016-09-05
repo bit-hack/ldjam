@@ -1,9 +1,13 @@
 #include <SDL/SDL.h>
+#include "../../framework_core/random.h"
 #include "../../framework_audio/audio.h"
 
 namespace {
 
+std::array<wave_t, 2> s_wave;
 audio_t s_audio;
+SDL_Surface * s_screen;
+random_t s_rand(0x12345);
 
 void callback(void *user, uint8_t *data, int size) {
     int16_t * stream = reinterpret_cast<int16_t*>(data);
@@ -13,12 +17,16 @@ void callback(void *user, uint8_t *data, int size) {
 
 bool init() {
 
-    if (SDL_Init(SDL_INIT_AUDIO)) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO)) {
+        return false;
+    }
+
+    s_screen = SDL_SetVideoMode(320, 240, 32, 0);
+    if (!s_screen) {
         return false;
     }
 
     SDL_AudioSpec spec, desired;
-
     memset(&spec, 0, sizeof(desired));
     desired.size = sizeof(desired);
     desired.channels = 2;
@@ -35,6 +43,19 @@ bool init() {
     return true;
 }
 
+bool play_sound(int num) {
+
+    audio_t::play_wave_t play;
+    play.looping_ = false;
+    play.rate_ = 1.f + s_rand.randfs() * .7f;
+    play.retrigger_ = true;
+    play.volume_ = s_rand.randfu();
+    play.wave_ = &s_wave[num];
+
+    s_audio.play(play);
+    return true;
+}
+
 } // namespace {}
 
 int main(const int argc, char *args[]) {
@@ -43,21 +64,17 @@ int main(const int argc, char *args[]) {
         return 1;
     }
 
-    wave_t wave;
     if (!wave_t::load_wav(
             "/home/flipper/repos/ldjam/tests/assets/sound1.wav",
-            wave)) {
+            s_wave[0])) {
         return 1;
     }
 
-    audio_t::play_wave_t play;
-    play.looping_ = false;
-    play.rate_ = 0.9f;
-    play.retrigger_ = true;
-    play.volume_ = 1.f;
-    play.wave_ = &wave;
-
-    s_audio.play(play);
+    if (!wave_t::load_wav(
+            "/home/flipper/repos/ldjam/tests/assets/sound_boss_spawn.wav",
+            s_wave[1])) {
+        return 1;
+    }
 
     bool active = true;
     while (active) {
@@ -67,7 +84,19 @@ int main(const int argc, char *args[]) {
             if (event.type == SDL_QUIT) {
                 active = false;
             }
+            if (event.type == SDL_KEYDOWN) {
+                switch (event.key.keysym.sym) {
+                case (SDLK_1):
+                    play_sound(0);
+                    break;
+                case (SDLK_2):
+                    play_sound(1);
+                    break;
+                }
+            }
         }
+
+        SDL_Delay(10);
     }
 
     return 0;

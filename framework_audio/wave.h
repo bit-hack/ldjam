@@ -8,8 +8,11 @@ struct wave_t {
 
     static bool load_wav(const char * path, wave_t & out);
 
-    uint32_t num_samples() const {
-        return length_ / ((bit_depth_ * channels_) / 8);
+    uint32_t num_frames() const {
+        const uint32_t sample_size = bit_depth_ / 8;
+        const uint32_t num_samples = length_ / sample_size;
+        const uint32_t num_frames = num_samples / channels_;
+        return num_frames;
     }
 
     uint32_t num_channels() const {
