@@ -1,6 +1,6 @@
 #include "../../framework_core/fsm.h"
 
-#define TEST_ASSERT(X) {if (X) { return false; }}
+#define TEST_ASSERT(X) {if (!(X)) { return false; }}
 
 extern
 bool test_fsm_1()

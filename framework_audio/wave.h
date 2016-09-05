@@ -4,9 +4,9 @@
 #include <memory>
 
 
-struct sound_t {
+struct wave_t {
 
-    static bool load_wav(const char * path, sound_t & out);
+    static bool load_wav(const char * path, wave_t & out);
 
     uint32_t num_samples() const {
         return length_ / ((bit_depth_ * channels_) / 8);
@@ -32,6 +32,10 @@ struct sound_t {
     template <typename type_t>
     const type_t * get() const {
         return reinterpret_cast<const type_t*>(samples_.get());
+    }
+
+    uint32_t length() const {
+        return length_;
     }
 
 protected:

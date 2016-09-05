@@ -4,6 +4,7 @@ extern bool test_anim_1();
 extern bool test_file_1();
 extern bool test_file_2();
 extern bool test_file_3();
+extern bool test_file_4();
 extern bool test_fsm_1();
 extern bool test_object_1();
 extern bool test_object_2();
@@ -21,11 +22,12 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 12> tests = {{
+std::array<test_t, 13> tests = {{
     TEST(test_anim_1),
     TEST(test_file_1),
     TEST(test_file_2),
     TEST(test_file_3),
+    TEST(test_file_4),
     TEST(test_fsm_1),
     TEST(test_object_1),
     TEST(test_object_2),
@@ -37,8 +39,11 @@ std::array<test_t, 12> tests = {{
 }};
 
 int main(const int argc, char *args[]) {
+    bool fails = 0;
     for (const auto test : tests) {
-        printf("%s %s\n", test.name_, test.test_() ? "pass" : "fail");
+        bool pass = test.test_();
+        fails += pass ? 0 : 1;
+        printf("%s %s\n", test.name_, pass ? "pass" : "fail");
     }
-    return 0;
+    return fails;
 }

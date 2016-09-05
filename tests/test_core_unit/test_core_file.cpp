@@ -1,6 +1,6 @@
 #include "../../framework_core/file.h"
 
-#define TEST_ASSERT(X) {if (X) { return false; }}
+#define TEST_ASSERT(X) {if (!(X)) { return false; }}
 
 bool test_file_1()
 {

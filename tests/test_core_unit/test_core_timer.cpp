@@ -1,6 +1,6 @@
 #include "../../framework_core/timer.h"
 
-#define TEST_ASSERT(X) {if (X) { return false; }}
+#define TEST_ASSERT(X) {if (!(X)) { return false; }}
 
 uint64_t thing_ = 0;
 

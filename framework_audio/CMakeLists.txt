@@ -5,6 +5,8 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
+    audio.cpp
+    audio.h
     stb_vorbis.c
     stb_vorbis.h
     wave.cpp

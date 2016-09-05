@@ -8,10 +8,10 @@ namespace {
     draw_t draw_;
     bitmap_t bitmap_;
     random_t random_(0x12345);
+    bitmap_t sprite_;
 }
 
 bool init() {
-
     if (SDL_Init(SDL_INIT_VIDEO)) {
         return false;
     }
@@ -87,6 +87,28 @@ void test_plot() {
     }
 }
 
+void test_blit() {
+    draw_.colour_ = 0x202020;
+    draw_.clear();
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    if (!sprite_.valid()) {
+        if (!bitmap_t::load("/home/flipper/repos/ldjam/tests/test_draw/sprite1.bmp", sprite_)) {
+            return;
+        }
+    }
+    for (int i=0; i<100; ++i) {
+        blit_info_t info;
+        info.bitmap_ = &sprite_;
+        info.dst_pos_ = vec2i_t {
+            int32_t(random_.randllu() % 200),
+            int32_t(random_.randllu() % 180)};
+        info.src_rect_ = recti_t {0, 0, 31, 31};
+        info.h_flip_ = false;
+        info.type_ = e_blit_opaque;
+        draw_.blit(info);
+    }
+}
+
 struct test_t {
     const char * name_;
     void (*func_)();
@@ -95,28 +117,24 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 4> tests = {{
-   TEST(test_circles),
-   TEST(test_lines),
-   TEST(test_plot),
-   TEST(test_rect)
+std::array<test_t, 5> tests = {{
+    TEST(test_blit),
+    TEST(test_circles),
+    TEST(test_lines),
+    TEST(test_plot),
+    TEST(test_rect)
 }};
 
 int main(const int argc, char *args[]) {
-
     if (!init()) {
         return 1;
     }
-
     uint32_t test_index = 0;
     bool pause = false;
-
     bool active = true;
     while (active) {
-
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
-
             if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_LEFT) {
                     --test_index;
@@ -128,22 +146,17 @@ int main(const int argc, char *args[]) {
                     pause ^= true;
                 }
             }
-
             if (event.type == SDL_QUIT) {
                 active = false;
             }
         }
-
         if (!pause) {
             const auto test = tests[test_index % tests.size()];
             test.func_();
-
             draw_.render_2x(screen_->pixels, screen_->pitch / 4);
             SDL_Flip(screen_);
         }
-
         SDL_Delay(1000/25);
     }
-
     return 0;
 }

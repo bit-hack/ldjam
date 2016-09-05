@@ -7,18 +7,17 @@
 
 
 enum blit_type_t {
-    e_opaque,
-    e_key,
-    e_and,
-    e_or,
-    e_gliss,
-    e_alpha,
-    e_add,
+    e_blit_opaque,
+    e_blit_key,
+    e_blit_and,
+    e_blit_or,
+    e_blit_gliss,
+    e_blit_alpha,
+    e_blit_add,
 };
 
 struct blit_info_t {
-    struct bitmap_t & bitmap_;
-    int32_t x_, y_;
+    struct bitmap_t * bitmap_;
     vec2i_t dst_pos_;
     recti_t src_rect_;
     blit_type_t type_;
@@ -81,6 +80,7 @@ protected:
 
     void _span(int32_t x0, int32_t x1, int32_t y);
     void _clip(vec2i_t & p0, vec2i_t & p1);
+    void _clip(recti_t & src, recti_t & dst);
 
     recti_t _target_size() const;
 

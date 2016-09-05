@@ -1,6 +1,6 @@
 #include "../../framework_core/objects.h"
 
-#define TEST_ASSERT(X) {if (X) { return false; }}
+#define TEST_ASSERT(X) {if (!(X)) { return false; }}
 
 enum {
     e_type_obj_1,

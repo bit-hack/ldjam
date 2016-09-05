@@ -104,6 +104,49 @@ void draw_t::plot(const vec2i_t & p) {
 }
 
 void draw_t::blit(const blit_info_t & info) {
+    assert(target_ && info.bitmap_->valid());
+    // calculate dest rect
+    recti_t dst_rect{
+        info.dst_pos_.x,
+        info.dst_pos_.y,
+        info.dst_pos_.x + info.src_rect_.dx(),
+        info.dst_pos_.y + info.src_rect_.dy()};
+    // quickly classify sprite on viewport
+    recti_t::classify_t c = viewport_.classify(dst_rect);
+    if (c == recti_t::e_rect_outside)
+        return;
+    // clip if we need to
+    recti_t src_rect = info.src_rect_;
+    if (c == recti_t::e_rect_overlap) {
+        _clip(src_rect, dst_rect);
+#if 0
+        return;
+#endif
+    }
+    // dest buffer setup
+    const uint32_t dst_pitch = target_->width();
+    uint32_t * dst =
+        target_->data() +
+        dst_rect.x0 +
+        dst_rect.y0 * dst_pitch;
+    // src buffer setup
+    const uint32_t src_pitch = info.bitmap_->width();
+    uint32_t * src =
+        info.bitmap_->data() +
+        src_rect.x0 +
+        src_rect.y0 * src_pitch;
+    //
+    for (int32_t y = 0; y <= dst_rect.dy(); y++) {
+        for (int32_t x = 0; x <= dst_rect.dx(); x++) {
+            dst[x] = src[x];
+        }
+        dst += dst_pitch;
+        src += src_pitch;
+    }
+}
+
+void draw_t::_clip(recti_t &src, recti_t &dst) {
+    // todo
 }
 
 void draw_t::set_target(struct bitmap_t & bmp) {
