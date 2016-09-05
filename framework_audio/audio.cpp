@@ -133,7 +133,34 @@ struct audio_t::detail_t {
     // 16 bit mono
     bool _render_16_1(info_wave_t & info, uint32_t count) {
         const wave_t & wave = *(info.wave_);
-        return false;
+        const uint64_t end = wave.num_samples() * 0x10000;
+        const int16_t * src = wave.get<int16_t>();
+        // get mix down buffer pointers
+        int32_t * ml = mix_l_.data();
+        int32_t * mr = mix_r_.data();
+        // repeat until all samples are done
+        for (;;) {
+            // render loop
+            for (;count && info.sample_ < end; --count) {
+                // buffer index point
+                const uint64_t index = info.sample_ / 0x10000;
+                // index wave file
+                assert(index < wave.length());
+                const int16_t sample = (src[index] * info.volume_) / 0x100;
+                // write to sample buffer
+                *(ml++) = sample;
+                *(mr++) = sample;
+                // advance sample pointer
+                info.sample_ += info.delta_;
+            }
+            // obey looping
+            if (count > 0 && info.looping_)
+                info.sample_ = 0;
+            else
+                break;
+        }
+        // success
+        return true;
     }
 
     // 16 bit stereo
@@ -216,4 +243,7 @@ bool audio_t::play(const play_vorbis_t & vorbis) {
 
 void audio_t::render(int16_t * out, uint32_t count) {
     detail_->render(out, count);
+}
+
+audio_t::~audio_t() {
 }

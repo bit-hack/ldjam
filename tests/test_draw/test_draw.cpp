@@ -92,7 +92,7 @@ void test_blit() {
     draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("/home/flipper/repos/ldjam/tests/test_draw/sprite1.bmp", sprite_)) {
+        if (!bitmap_t::load("/home/flipper/repos/ldjam/tests/assets/sprite1.bmp", sprite_)) {
             return;
         }
     }

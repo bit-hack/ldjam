@@ -19,6 +19,7 @@ struct audio_t {
     };
 
     audio_t();
+    ~audio_t();
 
     bool play(const play_wave_t &);
     bool play(const play_vorbis_t &);
