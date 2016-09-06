@@ -8,3 +8,5 @@ add_subdirectory(test_draw)
 add_subdirectory(test_draw_unit)
 
 add_subdirectory(test_spatial)
+
+add_subdirectory(test_stb_vorbis)

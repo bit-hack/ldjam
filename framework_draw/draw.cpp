@@ -1,5 +1,6 @@
 #include <cstdarg>
 #include <cstdio>
+#include <array>
 
 #include "draw.h"
 #include "../framework_core/common.h"
@@ -19,8 +20,7 @@ void draw_t::clear() {
 
 void draw_t::circle(
     const vec2i_t & center,
-    const int32_t radius)
-{
+    const int32_t radius) {
     assert(target_);
     int32_t xC = center.x, yC = center.y;
     int32_t p = 1 - radius, x = 0, y = radius;
@@ -68,15 +68,15 @@ void draw_t::triangle(
     const vec2f_t & v1,
     const vec2f_t & v2) {
     // triangle bounds
-    int32_t minx = min3(v0.x, v1.x, v2.x);
-    int32_t maxx = max3(v0.x, v1.x, v2.x);
-    int32_t miny = min3(v0.y, v1.y, v2.y);
-    int32_t maxy = max3(v0.y, v1.y, v2.y);
+    int32_t minx = int32_t(min3(v0.x, v1.x, v2.x));
+    int32_t maxx = int32_t(max3(v0.x, v1.x, v2.x));
+    int32_t miny = int32_t(min3(v0.y, v1.y, v2.y));
+    int32_t maxy = int32_t(max3(v0.y, v1.y, v2.y));
     // clip min point to screen
-    minx = max2<int32_t>(minx+0.f, viewport_.x0);
-    miny = max2<int32_t>(miny+0.f, viewport_.y0);
-    maxx = min2<int32_t>(maxx+1.f, viewport_.x1);
-    maxy = min2<int32_t>(maxy+1.f, viewport_.y1);
+    minx = max2<int32_t>(minx+0, viewport_.x0);
+    miny = max2<int32_t>(miny+0, viewport_.y0);
+    maxx = min2<int32_t>(maxx+1, viewport_.x1);
+    maxy = min2<int32_t>(maxy+1, viewport_.y1);
     // the signed triangle area
     const float area = 1.f / ((v1.x - v0.x)*(v2.y - v0.y)-
                               (v2.x - v0.x)*(v1.y - v0.y));
@@ -133,7 +133,7 @@ void draw_t::line(
 void draw_t::line(
     const vec2i_t & p0,
     const vec2i_t & p1) {
-
+    // <---- ---- ---- ---- ---- ---- ---- ---- todo: clip line to viewport
     bool yLonger = false;
     int32_t x=p0.x, y=p0.y;
     int32_t incrementVal, endVal;
@@ -150,7 +150,7 @@ void draw_t::line(
     else {
         incrementVal = 1;
     }
-    int32_t decInc = (longLen == 0) ? 0 : (shortLen << 16) / longLen;
+    const int32_t decInc = (longLen == 0) ? 0 : (shortLen << 16) / longLen;
     if (yLonger) {
         for (int32_t i = 0, j = 0; i != endVal; i += incrementVal, j += decInc) {
             plot(vec2i_t{x + (j >> 16), y + i});
@@ -200,10 +200,10 @@ void _draw_t_blit(bitmap_t & target,
                   const uint32_t key) {
     // calculate dest rect
     recti_t dst_rect{
-            info.dst_pos_.x,
-            info.dst_pos_.y,
-            info.dst_pos_.x + info.src_rect_.dx(),
-            info.dst_pos_.y + info.src_rect_.dy()};
+        info.dst_pos_.x,
+        info.dst_pos_.y,
+        info.dst_pos_.x + info.src_rect_.dx(),
+        info.dst_pos_.y + info.src_rect_.dy()};
     // quickly classify sprite on viewport
     recti_t::classify_t c = viewport.classify(dst_rect);
     if (c == recti_t::e_rect_outside) {
@@ -211,30 +211,22 @@ void _draw_t_blit(bitmap_t & target,
     }
     // clip to the viewport
     recti_t src_rect = info.src_rect_;
-
-    //todo: clip source to bitmap
-
+    // <---- ---- ---- ---- ---- ---- ---- ---- todo: clip source to bitmap
     if (c == recti_t::e_rect_overlap) {
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
     // destination buffer setup
     const uint32_t dst_pitch = target.width();
     uint32_t * dst =
-            target.data() +
-            dst_rect.x0 +
-            dst_rect.y0 * dst_pitch;
+        target.data() +
+        dst_rect.x0 +
+        dst_rect.y0 * dst_pitch;
     // src buffer setup
     const uint32_t src_pitch = info.bitmap_->width();
     uint32_t * src =
-            info.bitmap_->data() +
-            src_rect.x0 +
-            src_rect.y0 * src_pitch;
-#if 0
-    assert(dst_rect.x0 >= viewport.x0);
-    assert(dst_rect.y0 >= viewport.y0);
-    assert(dst_rect.x1 <= viewport.x1);
-    assert(dst_rect.y1 <= viewport.y1);
-#endif
+        info.bitmap_->data() +
+        src_rect.x0 +
+        src_rect.y0 * src_pitch;
     // main blitter loop
     for (int32_t y = 0; y <= dst_rect.dy(); y++) {
         for (int32_t x = 0; x <= dst_rect.dx(); x++) {
@@ -282,6 +274,7 @@ constexpr uint32_t mode_mask(const uint32_t src,
 
 void draw_t::blit(const blit_info_t & info) {
     assert(target_ && info.bitmap_->valid());
+    // dispatch based on blend type
     switch (info.type_) {
     case (e_blit_opaque):
         _draw_t_blit<mode_opaque>(*target_, viewport_, info, colour_, key_);
@@ -294,7 +287,7 @@ void draw_t::blit(const blit_info_t & info) {
         return;
     case (e_blit_mask):
         _draw_t_blit<mode_mask>(*target_, viewport_, info, colour_, key_);
-            return;
+        return;
     default:
         assert(!"unknown blend mode");
     }
@@ -388,7 +381,7 @@ void draw_t::printf(const font_t & font,
         if (j <= 0) {
             return;
         }
-        j = min2<int32_t>(temp.size(), j);
+        j = min2<int32_t>(int32_t(temp.size()), j);
         for (int i=0; i<j; i++) {
             const uint8_t ch = temp[i];
             info.src_rect_ = recti_t{
