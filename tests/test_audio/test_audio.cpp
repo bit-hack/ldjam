@@ -1,3 +1,4 @@
+#include <array>
 #include <SDL/SDL.h>
 #include "../../framework_core/random.h"
 #include "../../framework_audio/audio.h"

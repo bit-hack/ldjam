@@ -54,6 +54,9 @@ struct draw_t {
     void line(const vec2f_t & p0,
               const vec2f_t & p1);
 
+    void line(const vec2i_t & p0,
+              const vec2i_t & p1);
+
     void plot(const vec2i_t & p);
 
     void blit(const blit_info_t & info);

@@ -39,7 +39,7 @@ std::array<test_t, 13> tests = {{
 }};
 
 int main(const int argc, char *args[]) {
-    bool fails = 0;
+    int32_t fails = 0;
     for (const auto test : tests) {
         bool pass = test.test_();
         fails += pass ? 0 : 1;

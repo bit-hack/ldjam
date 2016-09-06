@@ -33,14 +33,16 @@ struct audio_t::detail_t {
     std::array<int32_t, C_BUFFER_SIZE> mix_l_;
     std::array<int32_t, C_BUFFER_SIZE> mix_r_;
 
-    void post(const play_wave_t & wave) {
+    bool post(const play_wave_t & wave) {
         std::lock_guard<std::mutex> guard(mutex_);
         msg_wave_.push_back(wave);
+        return true;
     }
 
-    void post(const play_vorbis_t & vorbis) {
+    bool post(const play_vorbis_t & vorbis) {
         std::lock_guard<std::mutex> guard(mutex_);
         msg_vorbis_.push_back(vorbis);
+        return true;
     }
 
     void handle(const play_wave_t & msg) {
@@ -228,7 +230,7 @@ struct audio_t::detail_t {
         }
     }
 
-    void render(int16_t * out, uint32_t count) {
+    bool render(int16_t * out, uint32_t count) {
         check_messages();
         while (count) {
             // figure our how many samples to render
@@ -250,6 +252,7 @@ struct audio_t::detail_t {
             _mixdown(out, samples);
             out += samples * 2;
         }
+        return true;
     }
 };
 
@@ -259,15 +262,15 @@ audio_t::audio_t()
 }
 
 bool audio_t::play(const play_wave_t & wave) {
-    detail_->post(wave);
+    return detail_->post(wave);
 }
 
 bool audio_t::play(const play_vorbis_t & vorbis) {
-    detail_->post(vorbis);
+    return detail_->post(vorbis);
 }
 
-void audio_t::render(int16_t * out, uint32_t count) {
-    detail_->render(out, count);
+bool audio_t::render(int16_t * out, uint32_t count) {
+    return detail_->render(out, count);
 }
 
 audio_t::~audio_t() {

@@ -22,19 +22,20 @@ struct random_t {
     }
 
     /* random unsigned 64bit value (xorshift*) */
-    uint64_t randllu()
+    template <typename type_t = uint64_t>
+    type_t rand()
     {
         x_ ^= x_ >> 12;
         x_ ^= x_ << 25;
         x_ ^= x_ >> 27;
-        return uint64_t(x_ * 2685821657736338717ull);
+        return type_t(x_ * 2685821657736338717ull);
     }
 
     /* random integer within a certain range */
     template <typename type_t>
     type_t rand_range(type_t min, type_t max)
     {
-        const uint64_t out = randllu();
+        const uint64_t out = rand();
         const type_t diff = max - min;
         return min + (diff != 0 ? out % diff : type_t(0));
     }
@@ -42,7 +43,7 @@ struct random_t {
     /* return true with a certain probability */
     bool rand_chance(uint64_t chance)
     {
-        return (randllu() % chance) == 0;
+        return (rand() % chance) == 0;
     }
 
     /* random value between 0.f and 1.f */
@@ -53,7 +54,7 @@ struct random_t {
             uint32_t i;
         } u;
         const uint32_t fmask = (1 << 23) - 1;
-        u.i = (randllu() & fmask) | 0x3f800000;
+        u.i = (rand<uint32_t>() & fmask) | 0x3f800000;
         return u.f - 1.f;
     }
 
@@ -65,7 +66,7 @@ struct random_t {
             uint32_t i;
         } u;
         const uint32_t fmask = (1 << 23) - 1;
-        u.i = (randllu() & fmask) | 0x40000000;
+        u.i = (rand<uint32_t>() & fmask) | 0x40000000;
         return u.f - 3.f;
     }
 
@@ -77,23 +78,29 @@ struct random_t {
             float f;
             uint32_t i;
         } u, v;
-        u.i = (uint32_t(randllu()) & fmask) | 0x3f800000;
-        v.i = (uint32_t(randllu()) & fmask) | 0x3f800000;
+        u.i = (rand<uint32_t>() & fmask) | 0x3f800000;
+        v.i = (rand<uint32_t>() & fmask) | 0x3f800000;
         float out = (u.f + v.f - 3.f);
         return out;
     }
 
     /* gaussian signed random ~[-1,+1] tending to 0 */
-    float grandfs()
+    float gaussian()
     {
         // 1 / half_width
-        static const float c_scale = 0.4246284f / 2.f;
+        static const float c_scale = 0.4246284f/1.5f;
         float sum = 0.f;
         sum += randfs();
         sum += randfs();
         sum += randfs();
         sum += randfs();
         return sum * c_scale;
+    }
+
+    /* pinch random ~[-1,+1] tending to 0 */
+    float pinch()
+    {
+        return randfs() * randfu();
     }
 
     template <typename type_t>

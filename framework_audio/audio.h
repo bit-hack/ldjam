@@ -24,7 +24,7 @@ struct audio_t {
     bool play(const play_wave_t &);
     bool play(const play_vorbis_t &);
 
-    void render(int16_t *, uint32_t count);
+    bool render(int16_t *, uint32_t count);
 
 protected:
 

@@ -65,6 +65,13 @@ void draw_t::triangle(const triangle_t &) {
 void draw_t::line(
     const vec2f_t & p0,
     const vec2f_t & p1) {
+    line(vec2i_t{int32_t(p0.x), int32_t(p0.y)},
+         vec2i_t{int32_t(p1.x), int32_t(p1.y)});
+}
+
+void draw_t::line(
+    const vec2i_t & p0,
+    const vec2i_t & p1) {
 
     bool yLonger = false;
     int32_t x=p0.x, y=p0.y;
@@ -199,7 +206,7 @@ void draw_t::render_2x(void * mem, const uint32_t pitch) {
     const uint32_t * src = target_->data();
     const uint32_t src_pitch = target_->width();
     // height iterator
-    for (uint32_t y=0; y<target_->height(); ++y) {
+    for (int32_t y=0; y<target_->height(); ++y) {
         // scan lines
         uint32_t * x0 = dst;
         uint32_t * x1 = dst + pitch;

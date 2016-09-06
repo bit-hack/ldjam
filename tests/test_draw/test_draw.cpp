@@ -1,3 +1,4 @@
+#include <array>
 #include <SDL/SDL.h>
 
 #include "../../framework_core/random.h"
@@ -35,10 +36,10 @@ void test_circles() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2i_t p = vec2i_t {
-            int32_t(random_.randllu() % 320),
-            int32_t(random_.randllu() % 240)};
-        draw_.colour_ = random_.randllu();
-        draw_.circle(p, random_.randllu() % 64);
+            random_.rand<int32_t>() % 320,
+            random_.rand<int32_t>() % 240};
+        draw_.colour_ = random_.rand<int32_t>();
+        draw_.circle(p, random_.rand<int32_t>() % 64);
     }
 }
 
@@ -48,12 +49,12 @@ void test_lines() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2f_t p0 = vec2f_t {
-                float(random_.randllu() % 320),
-                float(random_.randllu() % 240)};
+                float(random_.rand<int32_t>() % 320),
+                float(random_.rand<int32_t>() % 240)};
         const vec2f_t p1 = vec2f_t {
-                float(random_.randllu() % 320),
-                float(random_.randllu() % 240)};
-        draw_.colour_ = random_.randllu();
+                float(random_.rand<int32_t>() % 320),
+                float(random_.rand<int32_t>() % 240)};
+        draw_.colour_ = random_.rand<int32_t>();
         draw_.line(p0, p1);
     }
 }
@@ -64,12 +65,12 @@ void test_rect() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2i_t p0 = vec2i_t {
-            int32_t(random_.randllu() % 320),
-            int32_t(random_.randllu() % 240)};
+            random_.rand<int32_t>() % 320,
+            random_.rand<int32_t>() % 240};
         const vec2i_t p1 = vec2i_t {
-            int32_t(random_.randllu() % 320),
-            int32_t(random_.randllu() % 240)};
-        draw_.colour_ = random_.randllu();
+            random_.rand<int32_t>() % 320,
+            random_.rand<int32_t>() % 240};
+        draw_.colour_ = random_.rand<int32_t>();
         draw_.rect(recti_t{p0.x, p0.y, p1.x, p1.y});
     }
 }
@@ -80,9 +81,9 @@ void test_plot() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<1000; ++i) {
         const vec2i_t p0 = vec2i_t {
-                int32_t(random_.randllu() % 320),
-                int32_t(random_.randllu() % 240)};
-        draw_.colour_ = random_.randllu();
+                random_.rand<int32_t>() % 320,
+                random_.rand<int32_t>() % 240};
+        draw_.colour_ = random_.rand<int32_t>();
         draw_.plot(p0);
     }
 }
@@ -100,8 +101,8 @@ void test_blit() {
         blit_info_t info;
         info.bitmap_ = &sprite_;
         info.dst_pos_ = vec2i_t {
-            int32_t(random_.randllu() % 200),
-            int32_t(random_.randllu() % 180)};
+            random_.rand<int32_t>() % 200,
+            random_.rand<int32_t>() % 180};
         info.src_rect_ = recti_t {0, 0, 31, 31};
         info.h_flip_ = false;
         info.type_ = e_blit_opaque;
