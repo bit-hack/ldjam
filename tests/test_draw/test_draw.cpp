@@ -36,10 +36,10 @@ void test_circles() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2i_t p = vec2i_t {
-            random_.rand<int32_t>() % 320,
-            random_.rand<int32_t>() % 240};
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
         draw_.colour_ = random_.rand<int32_t>();
-        draw_.circle(p, random_.rand<int32_t>() % 64);
+        draw_.circle(p, random_.rand<uint32_t>() % 64);
     }
 }
 
@@ -49,11 +49,11 @@ void test_lines() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2f_t p0 = vec2f_t {
-                float(random_.rand<int32_t>() % 320),
-                float(random_.rand<int32_t>() % 240)};
+            float(random_.rand<uint32_t>() % 320u),
+            float(random_.rand<uint32_t>() % 240u)};
         const vec2f_t p1 = vec2f_t {
-                float(random_.rand<int32_t>() % 320),
-                float(random_.rand<int32_t>() % 240)};
+            float(random_.rand<uint32_t>() % 320u),
+            float(random_.rand<uint32_t>() % 240u)};
         draw_.colour_ = random_.rand<int32_t>();
         draw_.line(p0, p1);
     }
@@ -65,11 +65,11 @@ void test_rect() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2i_t p0 = vec2i_t {
-            random_.rand<int32_t>() % 320,
-            random_.rand<int32_t>() % 240};
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
         const vec2i_t p1 = vec2i_t {
-            random_.rand<int32_t>() % 320,
-            random_.rand<int32_t>() % 240};
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
         draw_.colour_ = random_.rand<int32_t>();
         draw_.rect(recti_t{p0.x, p0.y, p1.x, p1.y});
     }
@@ -81,8 +81,8 @@ void test_plot() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<1000; ++i) {
         const vec2i_t p0 = vec2i_t {
-                random_.rand<int32_t>() % 320,
-                random_.rand<int32_t>() % 240};
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
         draw_.colour_ = random_.rand<int32_t>();
         draw_.plot(p0);
     }
@@ -97,15 +97,16 @@ void test_blit() {
             return;
         }
     }
+    draw_.colour_ = 0x0;
     for (int i=0; i<100; ++i) {
         blit_info_t info;
         info.bitmap_ = &sprite_;
         info.dst_pos_ = vec2i_t {
-            random_.rand<int32_t>() % 200,
-            random_.rand<int32_t>() % 180};
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
         info.src_rect_ = recti_t {0, 0, 31, 31};
         info.h_flip_ = false;
-        info.type_ = e_blit_opaque;
+        info.type_ = e_blit_mask;
         draw_.blit(info);
     }
 }

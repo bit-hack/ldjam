@@ -173,50 +173,121 @@ void draw_t::plot(const vec2i_t & p) {
     }
 }
 
-void draw_t::blit(const blit_info_t & info) {
-    assert(target_ && info.bitmap_->valid());
+namespace {
+void _draw_t_clip(const recti_t & viewport,
+                  recti_t &src,
+                  recti_t &dst) {
+    const recti_t & vp = viewport;
+    // top left clip amount
+    const int32_t lx = max2(vp.x0-dst.x0, 0);
+    const int32_t ly = max2(vp.y0-dst.y0, 0);
+    // adjust source and destination
+    src.x0 += lx;
+    src.y0 += ly;
+    dst.x0 += lx;
+    dst.y0 += ly;
+    // clip lower right
+    dst.x1 = min2(vp.x1, dst.x1);
+    dst.y1 = min2(vp.y1, dst.y1);
+}
+
+template <uint32_t (*mode_t)(const uint32_t, const uint32_t, const uint32_t)>
+void _draw_t_blit(bitmap_t & target,
+                  const recti_t & viewport,
+                  const blit_info_t & info,
+                  const uint32_t colour) {
     // calculate dest rect
     recti_t dst_rect{
-        info.dst_pos_.x,
-        info.dst_pos_.y,
-        info.dst_pos_.x + info.src_rect_.dx(),
-        info.dst_pos_.y + info.src_rect_.dy()};
+            info.dst_pos_.x,
+            info.dst_pos_.y,
+            info.dst_pos_.x + info.src_rect_.dx(),
+            info.dst_pos_.y + info.src_rect_.dy()};
     // quickly classify sprite on viewport
-    recti_t::classify_t c = viewport_.classify(dst_rect);
-    if (c == recti_t::e_rect_outside)
+    recti_t::classify_t c = viewport.classify(dst_rect);
+    if (c == recti_t::e_rect_outside) {
         return;
-    // clip if we need to
+    }
+    // clip to the viewport
     recti_t src_rect = info.src_rect_;
     if (c == recti_t::e_rect_overlap) {
-        _clip(src_rect, dst_rect);
-#if 0
-        return;
-#endif
+        _draw_t_clip(viewport, src_rect, dst_rect);
     }
-    // dest buffer setup
-    const uint32_t dst_pitch = target_->width();
+    // destination buffer setup
+    const uint32_t dst_pitch = target.width();
     uint32_t * dst =
-        target_->data() +
-        dst_rect.x0 +
-        dst_rect.y0 * dst_pitch;
+            target.data() +
+            dst_rect.x0 +
+            dst_rect.y0 * dst_pitch;
     // src buffer setup
     const uint32_t src_pitch = info.bitmap_->width();
     uint32_t * src =
-        info.bitmap_->data() +
-        src_rect.x0 +
-        src_rect.y0 * src_pitch;
+            info.bitmap_->data() +
+            src_rect.x0 +
+            src_rect.y0 * src_pitch;
+    //
+    assert(dst_rect.x0 >= viewport.x0);
+    assert(dst_rect.y0 >= viewport.y0);
+    assert(dst_rect.x1 <= viewport.x1);
+    assert(dst_rect.y1 <= viewport.y1);
     //
     for (int32_t y = 0; y <= dst_rect.dy(); y++) {
         for (int32_t x = 0; x <= dst_rect.dx(); x++) {
-            dst[x] = src[x];
+            dst[x] = mode_t(src[x], dst[x], colour);
         }
         dst += dst_pitch;
         src += src_pitch;
     }
 }
 
-void draw_t::_clip(recti_t &src, recti_t &dst) {
-    // todo
+constexpr uint32_t mode_opaque(const uint32_t src,
+                               const uint32_t,
+                               const uint32_t) {
+    return src;
+}
+
+constexpr uint32_t mode_key(const uint32_t src,
+                            const uint32_t dst,
+                            const uint32_t colour) {
+    return (src == colour) ?
+           dst :
+           src;
+}
+
+constexpr uint32_t mode_gliss(const uint32_t src,
+                              const uint32_t dst,
+                              const uint32_t colour) {
+    return (src == colour) ?
+           (dst) :
+           ((src>>1)&0x7f7f7f) + ((dst>>1)&0x7f7f7f);
+}
+
+constexpr uint32_t mode_mask(const uint32_t src,
+                             const uint32_t dst,
+                             const uint32_t colour) {
+    return (src == colour) ?
+           (dst) :
+           (0xffffff);
+}
+} // namespace {}
+
+void draw_t::blit(const blit_info_t & info) {
+    assert(target_ && info.bitmap_->valid());
+    switch (info.type_) {
+    case (e_blit_opaque):
+        _draw_t_blit<mode_opaque>(*target_, viewport_, info, colour_);
+        return;
+    case (e_blit_key):
+        _draw_t_blit<mode_key>(*target_, viewport_, info, colour_);
+        return;
+    case (e_blit_gliss):
+        _draw_t_blit<mode_gliss>(*target_, viewport_, info, colour_);
+        return;
+    case (e_blit_mask):
+        _draw_t_blit<mode_mask>(*target_, viewport_, info, colour_);
+            return;
+    default:
+        assert(!"unknown blend mode");
+    }
 }
 
 void draw_t::set_target(struct bitmap_t & bmp) {

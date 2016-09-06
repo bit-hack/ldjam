@@ -37,9 +37,10 @@ struct rect_t {
     classify_t classify(const rect_t & a) const {
         if (a.x0 >= x0 && a.x1 <= x1 && a.y0 >= y0 && a.y1 <= y1)
             return e_rect_inside;
-        if (a.x0 > x1 || a.x1 < x0 || a.y0 > y1 || a.y1 < y0)
+        else if (a.x0 > x1 || a.x1 < x0 || a.y0 > y1 || a.y1 < y0)
             return e_rect_outside;
-        return e_rect_overlap;
+        else
+            return e_rect_overlap;
     }
 
     template <typename vec_t>
