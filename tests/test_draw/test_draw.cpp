@@ -110,6 +110,25 @@ void test_blit() {
     }
 }
 
+void test_triangle() {
+    draw_.colour_ = 0x202020;
+    draw_.clear();
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    for (int i=0; i<100; ++i) {
+        const vec2f_t p0 = vec2f_t {
+            random_.randfu() * 320.f,
+            random_.randfu() * 240.f};
+        const vec2f_t p1 = vec2f_t {
+            random_.randfu() * 320.f,
+            random_.randfu() * 240.f};
+        const vec2f_t p2 = vec2f_t {
+            random_.randfu() * 320.f,
+            random_.randfu() * 240.f};
+        draw_.colour_ = random_.rand<uint32_t>();
+        draw_.triangle(p0, p1, p2);
+    }
+}
+
 struct test_t {
     const char * name_;
     void (*func_)();
@@ -118,12 +137,13 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 5> tests = {{
+std::array<test_t, 6> tests = {{
     TEST(test_blit),
     TEST(test_circles),
     TEST(test_lines),
     TEST(test_plot),
-    TEST(test_rect)
+    TEST(test_rect),
+    TEST(test_triangle)
 }};
 
 int main(const int argc, char *args[]) {
@@ -145,6 +165,9 @@ int main(const int argc, char *args[]) {
                 }
                 if (event.key.keysym.sym == SDLK_SPACE) {
                     pause ^= true;
+                }
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    active = false;
                 }
             }
             if (event.type == SDL_QUIT) {

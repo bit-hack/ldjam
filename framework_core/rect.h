@@ -11,20 +11,20 @@ struct rect_t {
     static rect_t intersect(const rect_t & a,
                             const rect_t & b) {
         return rect_t{
-            maxv(a.x0, b.x0),
-            maxv(a.y0, b.y0),
-            minv(a.x1, b.x1),
-            minv(a.y1, b.y1)
+            max2(a.x0, b.x0),
+            max2(a.y0, b.y0),
+            min2(a.x1, b.x1),
+            min2(a.y1, b.y1)
         };
     }
 
     static rect_t combine(const rect_t & a,
                           const rect_t & b) {
         return rect_t{
-                minv(a.x0, b.x0),
-                minv(a.y0, b.y0),
-                maxv(a.x1, b.x1),
-                maxv(a.y1, b.y1)
+            min2(a.x0, b.x0),
+            min2(a.y0, b.y0),
+            max2(a.x1, b.x1),
+            max2(a.y1, b.y1)
         };
     }
 

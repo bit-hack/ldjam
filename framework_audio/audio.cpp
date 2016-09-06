@@ -234,7 +234,7 @@ struct audio_t::detail_t {
         check_messages();
         while (count) {
             // figure our how many samples to render
-            const uint32_t samples = minv(count, C_BUFFER_SIZE);
+            const uint32_t samples = min2(count, C_BUFFER_SIZE);
             count -= samples;
             // clear our mix buffers
             mix_l_.fill(0);

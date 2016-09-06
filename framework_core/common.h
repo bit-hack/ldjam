@@ -21,15 +21,29 @@ constexpr float fpart(const float& in)
 }
 
 template <typename type_t>
-constexpr type_t minv(const type_t a, const type_t b)
-{
-    return (a < b) ? a : b;
+constexpr type_t min2(const type_t a,
+            const type_t b) {
+    return (a<b) ? a : b;
 }
 
 template <typename type_t>
-constexpr type_t maxv(const type_t a, const type_t b)
-{
-    return (a > b) ? a : b;
+constexpr type_t min3(const type_t a,
+            const type_t b,
+            const type_t c) {
+    return min2(min2(a, b), c);
+}
+
+template <typename type_t>
+constexpr type_t max2(const type_t a,
+            const type_t b) {
+    return (a>b) ? a : b;
+}
+
+template <typename type_t>
+constexpr type_t max3(const type_t a,
+            const type_t b,
+            const type_t c) {
+    return max2(max2(a, b), c);
 }
 
 template <typename type_t>
