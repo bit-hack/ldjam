@@ -98,7 +98,7 @@ void test_blit() {
             return;
         }
     }
-    draw_.colour_ = 0x0;
+    draw_.key_ = 0x0;
     for (int i=0; i<100; ++i) {
         blit_info_t info;
         info.bitmap_ = &sprite_;
@@ -108,6 +108,7 @@ void test_blit() {
         info.src_rect_ = recti_t {0, 0, 31, 31};
         info.h_flip_ = false;
         info.type_ = e_blit_key;
+        draw_.colour_ = random_.rand<uint32_t>();
         draw_.blit(info);
     }
 }
@@ -126,8 +127,15 @@ void test_font() {
     font.cellw_ = 9;
     font.cellh_ = 14;
     font.spacing_ = 9;
-    vec2i_t pos {32, 32};
-    draw_.printf(font, pos, "Hello World");
+    draw_.key_ = 0xffffff;
+    for (int i=0; i<100; ++i) {
+        const vec2i_t p0 = vec2i_t {
+                int32_t(random_.rand<uint32_t>() % 320u),
+                int32_t(random_.rand<uint32_t>() % 240u)};
+        draw_.colour_ = random_.rand<int32_t>();
+        font.spacing_ = random_.rand_range(6, 32);
+        draw_.printf(font, p0, "Hello World");
+    }
 }
 
 void test_triangle() {

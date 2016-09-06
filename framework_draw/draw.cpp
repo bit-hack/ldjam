@@ -189,11 +189,15 @@ void _draw_t_clip(const recti_t & viewport,
     dst.y1 = min2(vp.y1, dst.y1);
 }
 
-template <uint32_t (*mode_t)(const uint32_t, const uint32_t, const uint32_t)>
+template <uint32_t (*mode_t)(const uint32_t,
+                             const uint32_t,
+                             const uint32_t,
+                             const uint32_t)>
 void _draw_t_blit(bitmap_t & target,
                   const recti_t & viewport,
                   const blit_info_t & info,
-                  const uint32_t colour) {
+                  const uint32_t colour,
+                  const uint32_t key) {
     // calculate dest rect
     recti_t dst_rect{
             info.dst_pos_.x,
@@ -234,7 +238,7 @@ void _draw_t_blit(bitmap_t & target,
     // main blitter loop
     for (int32_t y = 0; y <= dst_rect.dy(); y++) {
         for (int32_t x = 0; x <= dst_rect.dx(); x++) {
-            dst[x] = mode_t(src[x], dst[x], colour);
+            dst[x] = mode_t(src[x], dst[x], colour, key);
         }
         dst += dst_pitch;
         src += src_pitch;
@@ -243,32 +247,36 @@ void _draw_t_blit(bitmap_t & target,
 
 constexpr uint32_t mode_opaque(const uint32_t src,
                                const uint32_t,
+                               const uint32_t,
                                const uint32_t) {
     return src;
 }
 
 constexpr uint32_t mode_key(const uint32_t src,
                             const uint32_t dst,
-                            const uint32_t colour) {
-    return (src == colour) ?
+                            const uint32_t,
+                            const uint32_t key) {
+    return (src == key) ?
            dst :
            src;
 }
 
 constexpr uint32_t mode_gliss(const uint32_t src,
                               const uint32_t dst,
-                              const uint32_t colour) {
-    return (src == colour) ?
+                              const uint32_t,
+                              const uint32_t key) {
+    return (src == key) ?
            (dst) :
            ((src>>1)&0x7f7f7f) + ((dst>>1)&0x7f7f7f);
 }
 
 constexpr uint32_t mode_mask(const uint32_t src,
                              const uint32_t dst,
-                             const uint32_t colour) {
-    return (src == colour) ?
+                             const uint32_t colour,
+                             const uint32_t key) {
+    return (src == key) ?
            (dst) :
-           (0xffffff);
+           (colour);
 }
 } // namespace {}
 
@@ -276,16 +284,16 @@ void draw_t::blit(const blit_info_t & info) {
     assert(target_ && info.bitmap_->valid());
     switch (info.type_) {
     case (e_blit_opaque):
-        _draw_t_blit<mode_opaque>(*target_, viewport_, info, colour_);
+        _draw_t_blit<mode_opaque>(*target_, viewport_, info, colour_, key_);
         return;
     case (e_blit_key):
-        _draw_t_blit<mode_key>(*target_, viewport_, info, colour_);
+        _draw_t_blit<mode_key>(*target_, viewport_, info, colour_, key_);
         return;
     case (e_blit_gliss):
-        _draw_t_blit<mode_gliss>(*target_, viewport_, info, colour_);
+        _draw_t_blit<mode_gliss>(*target_, viewport_, info, colour_, key_);
         return;
     case (e_blit_mask):
-        _draw_t_blit<mode_mask>(*target_, viewport_, info, colour_);
+        _draw_t_blit<mode_mask>(*target_, viewport_, info, colour_, key_);
             return;
     default:
         assert(!"unknown blend mode");
@@ -370,7 +378,7 @@ void draw_t::printf(const font_t & font,
     const uint32_t xfit = font.bitmap_->width() / font.cellw_;
     std::array<char, 1024> temp;
     blit_info_t info;
-    info.type_ = e_blit_opaque;
+    info.type_ = e_blit_mask;
     info.bitmap_ = font.bitmap_;
     info.h_flip_ = false;
     info.dst_pos_ = vec2i_t{ pos.x, pos.y };
