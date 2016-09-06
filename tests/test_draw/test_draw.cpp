@@ -8,6 +8,7 @@ namespace {
     SDL_Surface * screen_;
     draw_t draw_;
     bitmap_t bitmap_;
+    bitmap_t font_;
     random_t random_(0x12345);
     bitmap_t sprite_;
 }
@@ -93,7 +94,7 @@ void test_blit() {
     draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("/home/flipper/repos/ldjam/tests/assets/sprite1.bmp", sprite_)) {
+        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
             return;
         }
     }
@@ -106,9 +107,27 @@ void test_blit() {
             int32_t(random_.rand<uint32_t>() % 240u)};
         info.src_rect_ = recti_t {0, 0, 31, 31};
         info.h_flip_ = false;
-        info.type_ = e_blit_mask;
+        info.type_ = e_blit_key;
         draw_.blit(info);
     }
+}
+
+void test_font() {
+    draw_.colour_ = 0x202020;
+    draw_.clear();
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    if (!font_.valid()) {
+        if (!bitmap_t::load("assets/font.bmp", font_)) {
+            return;
+        }
+    }
+    font_t font;
+    font.bitmap_ = &font_;
+    font.cellw_ = 9;
+    font.cellh_ = 14;
+    font.spacing_ = 9;
+    vec2i_t pos {32, 32};
+    draw_.printf(font, pos, "Hello World");
 }
 
 void test_triangle() {
@@ -138,7 +157,8 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 6> tests = {{
+std::array<test_t, 7> tests = {{
+    TEST(test_font),
     TEST(test_blit),
     TEST(test_circles),
     TEST(test_lines),

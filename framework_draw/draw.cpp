@@ -1,3 +1,6 @@
+#include <cstdarg>
+#include <cstdio>
+
 #include "draw.h"
 #include "../framework_core/common.h"
 
@@ -9,9 +12,7 @@ void draw_t::clear() {
     recti_t viewport = viewport_;
     uint32_t * pix = target_->data() + viewport.y0 * pitch;
     for (int y=viewport.y0; y<=viewport.y1; ++y) {
-        for (int x=viewport.x0; x<=viewport.x1; ++x) {
-            pix[x] = colour;
-        }
+        _span(viewport.x0, viewport.x1, y);
         pix += pitch;
     }
 }
@@ -122,9 +123,6 @@ void draw_t::triangle(
     }
 }
 
-void draw_t::triangle(const triangle_t &) {
-}
-
 void draw_t::line(
     const vec2f_t & p0,
     const vec2f_t & p1) {
@@ -209,6 +207,9 @@ void _draw_t_blit(bitmap_t & target,
     }
     // clip to the viewport
     recti_t src_rect = info.src_rect_;
+
+    //todo: clip source to bitmap
+
     if (c == recti_t::e_rect_overlap) {
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
@@ -224,12 +225,13 @@ void _draw_t_blit(bitmap_t & target,
             info.bitmap_->data() +
             src_rect.x0 +
             src_rect.y0 * src_pitch;
-    //
+#if 0
     assert(dst_rect.x0 >= viewport.x0);
     assert(dst_rect.y0 >= viewport.y0);
     assert(dst_rect.x1 <= viewport.x1);
     assert(dst_rect.y1 <= viewport.y1);
-    //
+#endif
+    // main blitter loop
     for (int32_t y = 0; y <= dst_rect.dy(); y++) {
         for (int32_t x = 0; x <= dst_rect.dx(); x++) {
             dst[x] = mode_t(src[x], dst[x], colour);
@@ -359,4 +361,37 @@ void draw_t::render_2x(void * mem, const uint32_t pitch) {
         dst += pitch * 2;
         src += target_->width();
     }
+}
+
+void draw_t::printf(const font_t & font,
+                    const vec2i_t & pos,
+                    const char * fmt,
+                    ...) {
+    const uint32_t xfit = font.bitmap_->width() / font.cellw_;
+    std::array<char, 1024> temp;
+    blit_info_t info;
+    info.type_ = e_blit_opaque;
+    info.bitmap_ = font.bitmap_;
+    info.h_flip_ = false;
+    info.dst_pos_ = vec2i_t{ pos.x, pos.y };
+    va_list vl;
+    va_start(vl, fmt);
+    if (int j=vsnprintf(temp.data(), temp.size(), fmt, vl)) {
+        if (j <= 0) {
+            return;
+        }
+        j = min2<int32_t>(temp.size(), j);
+        for (int i=0; i<j; i++) {
+            const uint8_t ch = temp[i];
+            info.src_rect_ = recti_t{
+                int32_t((ch % xfit) * font.cellw_),
+                int32_t((ch / xfit) * font.cellh_),
+            };
+            info.src_rect_.x1 = info.src_rect_.x0 + (font.cellw_ - 1);
+            info.src_rect_.y1 = info.src_rect_.y0 + (font.cellh_ - 1);
+            blit(info);
+            info.dst_pos_.x += font.spacing_;
+        }
+    }
+    va_end(vl);
 }

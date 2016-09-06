@@ -14,17 +14,17 @@ enum blit_type_t {
 };
 
 struct blit_info_t {
-    struct bitmap_t * bitmap_;
+    const struct bitmap_t * bitmap_;
     vec2i_t dst_pos_;
     recti_t src_rect_;
     blit_type_t type_;
     bool h_flip_;
 };
 
-struct triangle_t {
-    vec3f_t p0_, p1_, p2_;
-    vec2f_t t0_, t1_, t2_;
-    const bitmap_t & tex_;
+struct font_t {
+    const struct bitmap_t * bitmap_;
+    int32_t cellw_, cellh_;
+    int32_t spacing_;
 };
 
 struct draw_t {
@@ -46,8 +46,6 @@ struct draw_t {
                   const vec2f_t & b,
                   const vec2f_t & c);
 
-    void triangle(const triangle_t &);
-
     void line(const vec2f_t & p0,
               const vec2f_t & p1);
 
@@ -68,19 +66,24 @@ struct draw_t {
               const recti_t & src_rect,
               const vec2i_t & dst_pos);
 
+    void printf(const font_t &,
+                const vec2i_t & pos,
+                const char * fmt, ...);
+
     bitmap_t & get_target() {
         return * target_;
     }
 
-    void render_2x(void *, const uint32_t pitch);
+    void render_2x(void *,
+                   const uint32_t pitch);
 
     uint32_t colour_;
 
 protected:
 
-    void _span(int32_t x0, int32_t x1, int32_t y);
-    void _clip(vec2i_t & p0, vec2i_t & p1);
-//    void _clip(recti_t & src, recti_t & dst);
+    void _span(int32_t x0,
+               int32_t x1,
+               int32_t y);
 
     recti_t _target_size() const;
 
