@@ -6,6 +6,7 @@
 namespace {
 
 std::array<wave_t, 2> s_wave;
+std::array<vorbis_t, 2> s_vorbis;
 audio_t s_audio;
 SDL_Surface * s_screen;
 random_t s_rand(0x12345);
@@ -66,15 +67,35 @@ int main(const int argc, char *args[]) {
     }
 
     if (!wave_t::load_wav(
-            "/home/flipper/repos/ldjam/tests/assets/sound1.wav",
+            "assets/sound1.wav",
             s_wave[0])) {
         return 1;
     }
 
     if (!wave_t::load_wav(
-            "/home/flipper/repos/ldjam/tests/assets/sound_boss_spawn.wav",
+            "assets/sound_boss_spawn.wav",
             s_wave[1])) {
         return 1;
+    }
+
+    // test ogg vorbis playback
+    {
+        s_vorbis[0].open("assets/may.ogg");
+        if (s_vorbis[0].valid()) {
+            audio_t::play_vorbis_t play;
+            play.name_ = "may";
+            play.vorbis_ = &s_vorbis[0];
+            play.loop_ = false;
+            s_audio.play(play);
+        }
+        s_vorbis[1].open("assets/poly.ogg");
+        if (s_vorbis[1].valid()) {
+            audio_t::play_vorbis_t play;
+            play.name_ = "poly";
+            play.vorbis_ = &s_vorbis[1];
+            play.loop_ = true;
+            s_audio.play(play);
+        }
     }
 
     bool active = true;

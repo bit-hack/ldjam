@@ -1,13 +1,14 @@
 #pragma once
-
+#include <memory>
 #include <cstdint>
 
 #include "wave.h"
+#include "vorbis.h"
 
 struct audio_t {
 
     struct play_wave_t {
-        const wave_t *wave_;
+        const struct wave_t *wave_;
         float volume_;
         float rate_;
         bool looping_;
@@ -15,7 +16,9 @@ struct audio_t {
     };
 
     struct play_vorbis_t {
-        int dummy_;
+        const char * name_;
+        const struct vorbis_t * vorbis_;
+        bool loop_;
     };
 
     audio_t();

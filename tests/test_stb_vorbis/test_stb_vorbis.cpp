@@ -200,7 +200,7 @@ bool init() {
 
 int main(const int argc, char *args[]) {
 
-    if (!s_vorbis.open("assets/almosthuman.ogg")) {
+    if (!s_vorbis.open("assets/may.ogg")) {
         return 1;
     }
 
