@@ -86,6 +86,7 @@ int main(const int argc, char *args[]) {
             play.name_ = "may";
             play.vorbis_ = &s_vorbis[0];
             play.loop_ = false;
+            play.volume_ = 0x3f;
             s_audio.play(play);
         }
         s_vorbis[1].open("assets/poly.ogg");
@@ -94,6 +95,7 @@ int main(const int argc, char *args[]) {
             play.name_ = "poly";
             play.vorbis_ = &s_vorbis[1];
             play.loop_ = true;
+            play.volume_ = 0x7f;
             s_audio.play(play);
         }
     }

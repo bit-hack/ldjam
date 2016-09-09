@@ -17,6 +17,7 @@ set(SOURCE_FILES
     timer.h
     vec2.h
     vec3.h
-    rect.h)
+    rect.h
+    event.h)
 
 add_library(framework_core ${SOURCE_FILES})

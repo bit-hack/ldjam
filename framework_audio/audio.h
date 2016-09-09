@@ -19,6 +19,7 @@ struct audio_t {
         const char * name_;
         const struct vorbis_t * vorbis_;
         bool loop_;
+        int32_t volume_;
     };
 
     audio_t();

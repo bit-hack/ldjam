@@ -30,6 +30,7 @@ namespace {
             , loop_(false)
             , stb_(nullptr)
             , vorbis_()
+            , volume_(0xff)
         {
         }
 
@@ -60,6 +61,7 @@ namespace {
         bool loop_;
         stb_vorbis * stb_;
         std::deque<audio_t::play_vorbis_t> vorbis_;
+        int32_t volume_;
 
         void _render(int32_t * left, int32_t * right, int32_t count) {
             count *= 2;
@@ -93,8 +95,8 @@ namespace {
                 // render out these samples
                 assert((c_num&1)==0);
                 for (size_t i = tail_; i<notch; i+=2) {
-                    *(left++) = buffer_[i+0];
-                    *(right++) = buffer_[i+1];
+                    *(left++) = (int32_t(buffer_[i+0]) * volume_) >> 8;
+                    *(right++) = (int32_t(buffer_[i+1]) * volume_) >> 8;
                 }
                 tail_ = notch;
             }
@@ -128,6 +130,7 @@ namespace {
                 if (stb_) {
                     loop_ = v.loop_;
                     finished_ = false;
+                    volume_ = v.volume_;
                     _clear_buffer();
                 }
             }

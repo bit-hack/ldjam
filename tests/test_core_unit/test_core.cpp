@@ -13,6 +13,7 @@ extern bool test_object_4();
 extern bool test_object_5();
 extern bool test_timer_1();
 extern bool test_timer_2();
+extern bool test_event_1();
 
 struct test_t {
     const char * name_;
@@ -22,7 +23,7 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 13> tests = {{
+std::array<test_t, 14> tests = {{
     TEST(test_anim_1),
     TEST(test_file_1),
     TEST(test_file_2),
@@ -36,6 +37,7 @@ std::array<test_t, 13> tests = {{
     TEST(test_object_5),
     TEST(test_timer_1),
     TEST(test_timer_2),
+    TEST(test_event_1),
 }};
 
 int main(const int argc, char *args[]) {
