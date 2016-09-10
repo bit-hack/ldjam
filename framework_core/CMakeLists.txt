@@ -18,6 +18,7 @@ set(SOURCE_FILES
     vec2.h
     vec3.h
     rect.h
-    event.h)
+    event.h
+    buffer.h)
 
 add_library(framework_core ${SOURCE_FILES})

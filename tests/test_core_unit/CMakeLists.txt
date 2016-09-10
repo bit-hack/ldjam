@@ -11,7 +11,8 @@ set(SOURCE_FILES
     test_core_object.cpp
     test_core_timer.cpp
     test_core.cpp
-    test_core_event.cpp)
+    test_core_event.cpp
+    test_core_buffer.cpp)
 
 add_executable(test_core_unit ${SOURCE_FILES})
 target_link_libraries(test_core_unit PUBLIC framework_core SDL)

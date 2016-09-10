@@ -64,7 +64,7 @@ struct event_stream_t {
         }
     }
 
-    // send a message to all eligable listeners
+    // send a message to all eligible listeners
     void send(const event_t * event) {
         assert(event);
         // send to all global listeners first
