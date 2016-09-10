@@ -99,17 +99,14 @@ bool wave_t::load_wav(const char * path, wave_t & out) {
         return false;
     }
     // read sample data
-    std::unique_ptr<int8_t[]> buffer;
-    buffer.reset(new int8_t[data.chunk_size_]);
-    if (!file.read(buffer.get(), data.chunk_size_)) {
+    out.samples_.resize(data.chunk_size_);
+    if (!file.read(out.samples_.data(), data.chunk_size_)) {
         return false;
     }
     // copy into output structure
     out.bit_depth_ = fmt.bit_depth_;
     out.sample_rate_ = fmt.sample_rate_;
-    out.length_ = data.chunk_size_;
     out.channels_ = fmt.channels_;
-    out.samples_.reset(buffer.release());
     /* success */
     return true;
 }

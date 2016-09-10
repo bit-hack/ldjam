@@ -13,8 +13,9 @@ bool bitmap_t::create(const uint32_t width,
                       const uint32_t height,
                       bitmap_t & out) {
     // allocate space for all the pixels
-    std::unique_ptr<uint32_t> bmp(new uint32_t[width * height]);
-    out.pix_.reset(bmp.release());
+//    std::unique_ptr<uint32_t> bmp(new uint32_t[width * height]);
+    out.pix_.resize(width * height * sizeof(uint32_t));
+//    out.pix_.reset(bmp.release());
     out.width_ = width;
     out.height_ = height;
     return true;
@@ -64,7 +65,8 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
         return false;
     }
     // allocate space for all the pixels
-    std::unique_ptr<uint32_t> bmp(new uint32_t[dib_v1_.width_ * dib_v1_.height_]);
+//    std::unique_ptr<uint32_t> bmp(new uint32_t[dib_v1_.width_ * dib_v1_.height_]);
+    out.pix_.resize(dib_v1_.width_ * dib_v1_.height_ * sizeof(uint32_t));
     // seek to the start of pixel data
     if (!file.seek(header.pix_offset_)) {
         return false;
@@ -74,7 +76,7 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
     case (24):
         // traverse with vflip
         for (int32_t y = int32_t(dib_v1_.height_)-1; y>=0; --y) {
-            uint32_t * dst_pix = bmp.get()+(y * dib_v1_.width_);
+            uint32_t * dst_pix = out.pix_.get<uint32_t>()+(y * dib_v1_.width_);
             // read row
             for (uint32_t x = 0; x<dib_v1_.width_; ++x) {
                 // read row pixel
@@ -94,7 +96,7 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
     case (32):
         // traverse with vflip
         for (int32_t y = int32_t(dib_v1_.height_)-1; y>=0; ++y) {
-            uint32_t * dst_pix = bmp.get()+(y * dib_v1_.width_);
+            uint32_t * dst_pix = out.pix_.get<uint32_t>()+(y * dib_v1_.width_);
             if (!file.read(dst_pix, sizeof(uint32_t) * dib_v1_.width_)) {
                 return false;
             }
@@ -107,7 +109,7 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
     // write out to bitmap
     out.width_ = dib_v1_.width_;
     out.height_ = dib_v1_.height_;
-    out.pix_.reset(bmp.release());
+//    out.pix_.reset(bmp.release());
     // success
     return true;
 }

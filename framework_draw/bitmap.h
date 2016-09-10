@@ -3,6 +3,8 @@
 #include <cstdint>
 #include <memory>
 
+#include "../framework_core/buffer.h"
+
 struct bitmap_t {
 
     static bool create(const uint32_t width,
@@ -20,19 +22,22 @@ struct bitmap_t {
         return int32_t(height_);
     }
 
-    uint32_t * data() const {
-        return pix_.get();
+    uint32_t * data() {
+        return pix_.get<uint32_t>(0);
+    }
+
+    const uint32_t * data() const {
+        return pix_.get<const uint32_t>(0);
     }
 
     void colour_key(uint32_t key);
 
     bool valid() const {
-        return pix_.get() != nullptr;
+        return pix_.size() && pix_.get() != nullptr;
     }
 
 protected:
-
-    std::unique_ptr<uint32_t[]> pix_;
+    buffer_t pix_;
     uint32_t width_;
     uint32_t height_;
 };

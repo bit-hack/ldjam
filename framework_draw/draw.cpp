@@ -223,7 +223,7 @@ void _draw_t_blit(bitmap_t & target,
         dst_rect.y0 * dst_pitch;
     // src buffer setup
     const uint32_t src_pitch = info.bitmap_->width();
-    uint32_t * src =
+    const uint32_t * src =
         info.bitmap_->data() +
         src_rect.x0 +
         src_rect.y0 * src_pitch;

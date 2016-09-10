@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <memory>
 
+#include "../framework_core/buffer.h"
 
 struct wave_t {
 
@@ -10,7 +11,7 @@ struct wave_t {
 
     uint32_t num_frames() const {
         const uint32_t sample_size = bit_depth_ / 8;
-        const uint32_t num_samples = length_ / sample_size;
+        const uint32_t num_samples = samples_.size() / sample_size;
         const uint32_t num_frames = num_samples / channels_;
         return num_frames;
     }
@@ -38,12 +39,11 @@ struct wave_t {
     }
 
     uint32_t length() const {
-        return length_;
+        return samples_.size();
     }
 
 protected:
-    uint32_t length_; // in bytes
-    std::unique_ptr<int8_t[]> samples_;
+    buffer_t samples_;
     uint32_t sample_rate_;
     uint32_t bit_depth_;
     uint32_t channels_;

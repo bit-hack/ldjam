@@ -6,6 +6,7 @@
 #include <memory>
 
 #include "common.h"
+#include "file.h"
 
 struct buffer_t {
 
@@ -42,6 +43,30 @@ struct buffer_t {
     void clear() {
         data_.reset();
         size_ = 0;
+    }
+
+    bool load(const char * path) {
+        file_reader_t file;
+        if (!file.open(path)) {
+            return false;
+        }
+        size_t size = 0;
+        if (!file.size(size)) {
+            return false;
+        }
+        if (size != size_) {
+            resize(size);
+        }
+        assert(size == size_);
+        return file.read(data_.get(), size);
+    }
+
+    bool save(const char * path) const {
+        file_writer_t file;
+        if (!file.open(path)) {
+            return false;
+        }
+        return file.write(data_.get(), size_);
     }
 
     size_t size() const {
