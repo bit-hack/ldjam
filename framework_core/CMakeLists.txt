@@ -19,6 +19,9 @@ set(SOURCE_FILES
     vec3.h
     rect.h
     event.h
-    buffer.h)
+    buffer.h
+    geometric.h
+    bsp.h
+    bsp.cpp)
 
 add_library(framework_core ${SOURCE_FILES})

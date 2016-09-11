@@ -57,4 +57,9 @@ constexpr type_t clampv(const type_t lo, const type_t in, const type_t hi)
 {
     return (in < lo) ? lo : (in > hi) ? hi : in;
 }
+
+float epsilon(float a, float b) {
+    const float C_EPSILON = 0.00001f;
+    return (a > b - C_EPSILON && a < b + C_EPSILON);
+}
 } // namespace {}
