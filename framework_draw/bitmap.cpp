@@ -13,9 +13,7 @@ bool bitmap_t::create(const uint32_t width,
                       const uint32_t height,
                       bitmap_t & out) {
     // allocate space for all the pixels
-//    std::unique_ptr<uint32_t> bmp(new uint32_t[width * height]);
     out.pix_.resize(width * height * sizeof(uint32_t));
-//    out.pix_.reset(bmp.release());
     out.width_ = width;
     out.height_ = height;
     return true;
@@ -65,7 +63,6 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
         return false;
     }
     // allocate space for all the pixels
-//    std::unique_ptr<uint32_t> bmp(new uint32_t[dib_v1_.width_ * dib_v1_.height_]);
     out.pix_.resize(dib_v1_.width_ * dib_v1_.height_ * sizeof(uint32_t));
     // seek to the start of pixel data
     if (!file.seek(header.pix_offset_)) {
@@ -109,7 +106,6 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
     // write out to bitmap
     out.width_ = dib_v1_.width_;
     out.height_ = dib_v1_.height_;
-//    out.pix_.reset(bmp.release());
     // success
     return true;
 }
