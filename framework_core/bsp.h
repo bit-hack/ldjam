@@ -1,4 +1,5 @@
 #pragma once
+#include <array>
 #include <cstdint>
 #include <vector>
 #include <memory>
@@ -15,9 +16,12 @@ struct bsp_t {
 
             void set(const vec2f_t & a,
                      const vec2f_t & b) {
-
                 n_ = vec2f_t::normalize(vec2f_t::cross(b-a));
-                d_ = n_ * a;
+                d_ = -n_ * a;
+            }
+
+            float distance(const vec2f_t & p) const {
+                return p.x * n_.x + p.y * n_.y + d_;
             }
         } plane_;
 

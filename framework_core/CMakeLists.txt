@@ -20,7 +20,7 @@ set(SOURCE_FILES
     rect.h
     event.h
     buffer.h
-    geometric.h
+    geometry.h
     bsp.h
     bsp.cpp)
 
