@@ -4,27 +4,13 @@
 #include <vector>
 #include <memory>
 
+#include "geometry.h"
 #include "vec2.h"
 
 struct bsp_t {
 
     struct node_t {
-
-        struct {
-            vec2f_t n_;
-            float d_;
-
-            void set(const vec2f_t & a,
-                     const vec2f_t & b) {
-                n_ = vec2f_t::normalize(vec2f_t::cross(b-a));
-                d_ = -n_ * a;
-            }
-
-            float distance(const vec2f_t & p) const {
-                return p.x * n_.x + p.y * n_.y + d_;
-            }
-        } plane_;
-
+        geometry::line_t<vec2f_t> plane_;
         std::array<node_t*, 2> child_;
 
         bool is_leaf() const {

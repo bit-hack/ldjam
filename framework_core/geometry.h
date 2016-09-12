@@ -12,7 +12,23 @@ namespace geometry {
         const vec_t p0, p1;
 
         float distance(const vec_t & p) const {
-            return 0;
+            return vec_t::distance(p, project(p));
+        }
+
+        vec_t project(const vec_t & p) const {
+            // project onto edge plane
+            const vec_t delta = vec_t::normalize(p1 - p0);
+            const float p_delta = delta * p;
+            const float a_delta = delta * p0;
+            const vec2f_t i = p0 + delta * (p_delta - a_delta);
+            // find edge bounding box
+            const vec_t bb_min = vec_t { min2(p0.x, p1.x), min2(p0.y, p1.y) };
+            const vec_t bb_max = vec_t { max2(p0.x, p1.x), max2(p0.y, p1.y) };
+            // clip to edge bounds
+            return vec_t{
+                min2(max2(bb_min.x, i.x), bb_max.x),
+                min2(max2(bb_min.y, i.y), bb_max.y),
+            };
         }
     };
 
@@ -20,6 +36,13 @@ namespace geometry {
     template <typename vec_t>
     struct line_t {
         const vec_t p0, p1;
+
+        vec_t project(const vec_t & p) const {
+            const vec_t delta = vec_t::normalize(p1 - p0);
+            const float p_delta = delta * p;
+            const float a_delta = delta * p0;
+            return p0 + delta * (p_delta - a_delta);
+        }
     };
 
     // parametric line

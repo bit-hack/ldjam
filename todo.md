@@ -1,10 +1,8 @@
 ## Todo
 
 ##### framework
-. add gl_draw_t class
 . add tilemap support
 . add pathfinder to tilemap
-. agg geometry functions
 
 ##### spatial hash
 . add raycast
@@ -14,7 +12,6 @@
 
 ##### draw
 . add bitmap save
-. make bitmap use buffer
 
 ##### core
 . add perlin noise
@@ -33,10 +30,7 @@
 . add multiple events, listeners and streams
 
 ##### buffer_t
-. convert more of the core to use buffer_t
-. add load and save to buffer
 . checksum?
 
 ##### framework_audio
 . add interpolation to waveform data
-. make wave use buffer
