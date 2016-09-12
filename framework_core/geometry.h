@@ -3,6 +3,7 @@
 
 #include "common.h"
 #include "vec2.h"
+#include "rect.h"
 
 namespace geometry {
 
@@ -117,19 +118,10 @@ namespace geometry {
         // copy out intersection point
         out = vec_t {x, y};
 
-        if (x < min2(x1, x2) ||
-            x > max2(x1, x2) ||
-            y < min2(y1, y2) ||
-            y > max2(y1, y2)) {
-            return false;
-        }
-        if (x < min2(y3, y4) ||
-            x > max2(y3, y4) ||
-            y < min2(y3, y4) ||
-            y > max2(y3, y4)) {
-            return false;
-        }
-        return true;
+        rectf_t ba = rectf_t::bound(a.p0, a.p1);
+        rectf_t bb = rectf_t::bound(b.p0, b.p1);
+
+        return ba.contains(out) && bb.contains(out);
     }
 
     // line -> edge intersection

@@ -90,6 +90,40 @@ void test_intersect_edge_edge() {
             edge_t<vec2f_t>{point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
+        draw_.circle(vec2i_t{int32_t(i.x), int32_t(i.y)}, 3);
+    }
+}
+
+void test_intersect_line_edge() {
+    using namespace geometry;
+
+    draw_.colour_ = 0x406080;
+    draw_.line(point_[0], point_[1]);
+    draw_.line(point_[2], point_[3]);
+
+    vec2f_t i;
+    if (intersect(
+            line_t<vec2f_t>{point_[0], point_[1]},
+            edge_t<vec2f_t>{point_[2], point_[3]},
+            i)) {
+        draw_.colour_ = 0x806040;
+        draw_.circle(vec2i_t{i.x, i.y}, 3);
+    }
+}
+
+void test_intersect_line_line() {
+    using namespace geometry;
+
+    draw_.colour_ = 0x406080;
+    draw_.line(point_[0], point_[1]);
+    draw_.line(point_[2], point_[3]);
+
+    vec2f_t i;
+    if (intersect(
+            line_t<vec2f_t>{point_[0], point_[1]},
+            line_t<vec2f_t>{point_[2], point_[3]},
+            i)) {
+        draw_.colour_ = 0x806040;
         draw_.circle(vec2i_t{i.x, i.y}, 3);
     }
 }
@@ -102,11 +136,13 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 4> tests = {{
+std::array<test_t, 6> tests = {{
     TEST(test_line_project),
     TEST(test_edge_project),
+    TEST(test_pline_project),
     TEST(test_intersect_edge_edge),
-    TEST(test_pline_project)
+    TEST(test_intersect_line_edge),
+    TEST(test_intersect_line_line),
 }};
 
 int main(const int argc, char *args[]) {

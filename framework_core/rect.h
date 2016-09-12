@@ -8,6 +8,16 @@ struct rect_t {
     type_t x0, y0;
     type_t x1, y1;
 
+    template <typename vec_t>
+    static rect_t bound(const vec_t & a, const vec_t & b) {
+        return rect_t{
+            min2(a.x, b.x),
+            min2(a.y, b.y),
+            max2(a.x, b.x),
+            max2(a.y, b.y)
+        };
+    }
+
     static rect_t intersect(const rect_t & a,
                             const rect_t & b) {
         return rect_t{
@@ -63,3 +73,4 @@ struct rect_t {
 };
 
 typedef rect_t<int32_t> recti_t;
+typedef rect_t<float> rectf_t;
