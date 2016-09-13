@@ -1,12 +1,52 @@
 #pragma once
 
+#include <cassert>
+#include <initializer_list>
 #include <cstdint>
+
 #include "../framework_core/common.h"
 
 template <typename type_t>
 struct rect_t {
     type_t x0, y0;
     type_t x1, y1;
+
+    enum mode_t {
+        e_relative, // x1 relative to x0, etc
+        e_absolute  // x1 not relative to x0, etc
+    };
+
+    rect_t() = default;
+
+    rect_t(const std::initializer_list<type_t> & l)
+    {
+        assert(l.size()==4);
+        const type_t * a = l.begin();
+        x0 = a[0];
+        y0 = a[1];
+        x1 = a[2];
+        y1 = a[3];
+    }
+
+    rect_t(type_t a,
+           type_t b,
+           type_t c,
+           type_t d,
+           mode_t mode=e_absolute)
+        : x0(a), y0(b)
+        , x1(mode==e_relative ? a+c : c)
+        , y1(mode==e_relative ? b+d : d)
+    {
+    }
+
+    template <typename other_t>
+    rect_t(const rect_t<other_t> & other)
+        : x0(type_t(other.x0))
+        , y0(type_t(other.y0))
+        , x1(type_t(other.x1))
+        , y1(type_t(other.y1))
+    {
+    }
 
     template <typename vec_t>
     static rect_t bound(const vec_t & a, const vec_t & b) {

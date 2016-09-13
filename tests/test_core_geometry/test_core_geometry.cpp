@@ -149,17 +149,21 @@ int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    uint32_t test_index = 0;
+    int32_t test_index = 0;
     bool active = true;
     while (active) {
         SDL_Event event;
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_LEFT) {
-                    --test_index;
+                    if (--test_index<0) {
+                        test_index += tests.size();
+                    }
                 }
                 if (event.key.keysym.sym == SDLK_RIGHT) {
-                    ++test_index;
+                    if (++test_index >= tests.size()) {
+                        test_index -= tests.size();
+                    }
                 }
                 if (event.key.keysym.sym == SDLK_ESCAPE) {
                     active = false;
@@ -175,8 +179,14 @@ int main(const int argc, char *args[]) {
         draw_.clear();
 
         // run this specific test
-        const auto test = tests[test_index % tests.size()];
+        test_index %= tests.size();
+        const auto test = tests[test_index];
         test.func_();
+
+        for (int i = 0; i<tests.size(); ++i) {
+            draw_.colour_ = i==test_index ? 0xffffff : 0x909090;
+            draw_.rect(recti_t(1 + 4 * i, 1, 3, 4, recti_t::e_relative));
+        }
 
         // update points
         int32_t mx, my;
