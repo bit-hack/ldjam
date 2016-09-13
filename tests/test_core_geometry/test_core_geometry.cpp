@@ -90,7 +90,7 @@ void test_intersect_edge_edge() {
             edge_t<vec2f_t>{point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
-        draw_.circle(vec2i_t{int32_t(i.x), int32_t(i.y)}, 3);
+        draw_.circle(vec2i_t::cast(i), 3);
     }
 }
 
@@ -107,7 +107,7 @@ void test_intersect_line_edge() {
             edge_t<vec2f_t>{point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
-        draw_.circle(vec2i_t{i.x, i.y}, 3);
+        draw_.circle(vec2i_t::cast(i), 3);
     }
 }
 
@@ -124,7 +124,7 @@ void test_intersect_line_line() {
             line_t<vec2f_t>{point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
-        draw_.circle(vec2i_t{i.x, i.y}, 3);
+        draw_.circle(vec2i_t::cast(i), 3);
     }
 }
 

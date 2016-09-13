@@ -62,4 +62,16 @@ float epsilon(float a, float b) {
     const float C_EPSILON = 0.00001f;
     return (a > b - C_EPSILON && a < b + C_EPSILON);
 }
+
+//
+// cubic interpolation
+// 0     1 --> 2     3
+//
+float cubic(const float * v, float x )
+{
+    const float &a=v[0], &b=v[1], &c=v[2], &d=v[3];
+    const float p = (d-c) - (a-b);
+    return p*x*x*x + ((a-b)-p)*x*x + (c-a)*x + b;
+}
+
 } // namespace {}

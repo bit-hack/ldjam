@@ -3,6 +3,7 @@
 ##### framework
 . add tilemap support
 . add pathfinder to tilemap
+. add animation test
 
 ##### spatial hash
 . add raycast
@@ -12,6 +13,7 @@
 
 ##### draw
 . add bitmap save
+. add sprite bounds checking
 
 ##### core
 . add perlin noise
@@ -23,6 +25,7 @@
 . add navmesh generator
 . add edge list generator
 . variable number of planes
+. add raycasting to tilemap
 
 ##### events
 . add event downcasting

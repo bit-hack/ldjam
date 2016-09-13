@@ -113,6 +113,15 @@ struct vec3_t {
         };
     }
 
+    template <typename other_t>
+    static vec3_t cast( const vec3_t<other_t> & a ) {
+        return vec3_t {
+            type_t(a.x),
+            type_t(a.y),
+            type_t(a.z)
+        };
+    }
+
     static vec3_t lerp(
         const vec3_t& a,
         const vec3_t& b,

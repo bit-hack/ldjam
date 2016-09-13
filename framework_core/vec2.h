@@ -58,6 +58,14 @@ struct vec2_t {
         y /= v;
     }
 
+    template <typename other_t>
+    static vec2_t cast( const vec2_t<other_t> & a ) {
+        return vec2_t {
+            type_t(a.x),
+            type_t(a.y)
+        };
+    }
+
     static type_t length(const vec2_t& v)
     {
         return ::sqrt(v.x * v.x + v.y * v.y);

@@ -10,14 +10,14 @@ namespace geometry {
     // circle encapsulation
     template <typename vec_t>
     struct circle_t {
-        const vec_t p_;
-        const float r_;
+        vec_t p_;
+        float r_;
     };
 
     // edge
     template <typename vec_t>
     struct edge_t {
-        const vec_t p0, p1;
+        vec_t p0, p1;
 
         float distance(const vec_t & p) const {
             return vec_t::distance(p, project(p));
@@ -43,7 +43,7 @@ namespace geometry {
     // inferred line
     template <typename vec_t>
     struct line_t {
-        const vec_t p0, p1;
+        vec_t p0, p1;
 
         vec_t project(const vec_t & p) const {
             const vec_t delta = vec_t::normalize(p1 - p0);
@@ -56,8 +56,8 @@ namespace geometry {
     // parametric line
     template <typename vec_t>
     struct pline_t {
-        const vec_t n_;
-        const float d_;
+        vec_t n_;
+        float d_;
 
         pline_t(const vec_t & a,
                 const vec_t & b)
