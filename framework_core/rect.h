@@ -40,7 +40,7 @@ struct rect_t {
     }
 
     template <typename other_t>
-    rect_t(const rect_t<other_t> & other)
+    explicit rect_t(const rect_t<other_t> & other)
         : x0(type_t(other.x0))
         , y0(type_t(other.y0))
         , x1(type_t(other.x1))

@@ -29,6 +29,21 @@ template <typename type_t>
 struct vec2_t {
     type_t x, y;
 
+    vec2_t() = default;
+
+    template <typename other_t>
+    explicit vec2_t(const vec2_t<other_t> & other)
+        : x(type_t(other.x))
+        , y(type_t(other.y))
+    {
+    }
+
+    vec2_t(type_t a_x, type_t a_y)
+        : x(a_x)
+        , y(a_y)
+    {
+    }
+
     static float sqrt(const float& x)
     {
         return sqrtf(x);

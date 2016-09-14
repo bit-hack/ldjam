@@ -27,6 +27,13 @@ struct font_t {
     int32_t spacing_;
 };
 
+struct tilemap_t {
+    vec2i_t map_size_;
+    vec2i_t cell_size_;
+    uint8_t * cells_;
+    blit_type_t type_;
+};
+
 struct draw_t {
 
     draw_t()

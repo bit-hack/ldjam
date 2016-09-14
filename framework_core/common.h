@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cassert>
+
 namespace {
 const float C_PI = 3.14159265359f;
 const float C_2PI = 6.28318530718f;
@@ -58,8 +60,8 @@ constexpr type_t clampv(const type_t lo, const type_t in, const type_t hi)
     return (in < lo) ? lo : (in > hi) ? hi : in;
 }
 
-float epsilon(float a, float b) {
-    const float C_EPSILON = 0.00001f;
+float fp_cmp(float a, float b) {
+    const float C_EPSILON = 0.0001f;
     return (a > b - C_EPSILON && a < b + C_EPSILON);
 }
 
@@ -73,5 +75,49 @@ float cubic(const float * v, float x )
     const float p = (d-c) - (a-b);
     return p*x*x*x + ((a-b)-p)*x*x + (c-a)*x + b;
 }
+
+template <typename type_t>
+struct valid_t {
+
+    valid_t()
+        : valid_(false)
+    {}
+
+    valid_t(type_t & data)
+        : valid_(true)
+        , data_(data)
+    {}
+
+    type_t * operator -> () {
+        assert(valid_);
+        return &data_;
+    }
+
+    const type_t * operator -> () const {
+        assert(valid_);
+        return &data_;
+    }
+
+    bool valid() const {
+        return valid_;
+    }
+
+    type_t get() {
+        return data_;
+    }
+
+    const type_t get() const {
+        return data_;
+    }
+
+    void operator = (const type_t & rhs) {
+        data_ = rhs;
+        valid_ = true;
+    }
+
+protected:
+    bool valid_;
+    type_t data_;
+};
 
 } // namespace {}

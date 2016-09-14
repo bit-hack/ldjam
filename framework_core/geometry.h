@@ -51,6 +51,15 @@ namespace geometry {
             const float a_delta = delta * p0;
             return p0 + delta * (p_delta - a_delta);
         }
+
+        float sideval(const vec_t & p) const {
+            const vec_t norm = vec_t::cross(p1-p0);
+            return norm * (p - p0);
+        }
+
+        float distance(const vec_t & p) const {
+            return vec_t::distance(p, project(p));
+        }
     };
 
     // parametric line
@@ -181,4 +190,66 @@ namespace geometry {
         out = vec_t {x, y};
         return true;
     }
+
+    template <typename vec_t>
+    void split(
+            const line_t<vec_t> & line,
+            const edge_t<vec_t> & edge,
+            valid_t<edge_t<vec_t>> & pos,
+            valid_t<edge_t<vec_t>> & neg) {
+
+        const float dist_p0 = line.sideval(edge.p0);
+        const float dist_p1 = line.sideval(edge.p1);
+
+        // classify p0
+        int32_t class_p0 = 0;
+        if (!fp_cmp(dist_p0, 0.f)) {
+             class_p0 = (dist_p0 > 0.f) ? 1 : -1;
+        }
+
+        // classify p1
+        int32_t class_p1 = 0;
+        if (!fp_cmp(dist_p1, 0.f)) {
+            class_p1 = (dist_p1 > 0.f) ? 1 : -1;
+        }
+
+        // polarise coincident points
+        if (class_p0 == 0) class_p0 = class_p1;
+        if (class_p1 == 0) class_p1 = class_p0;
+
+        // if edge is fully polarised
+        if (class_p0 == class_p1) {
+            switch (class_p0) {
+                case (0):
+                    // both coincident
+                case (1):
+                    // both positive
+                    pos = edge;
+                    return;
+                case (-1):
+                    // both negative
+                    neg = edge;
+                    return;
+            }
+        }
+        else {
+            // edge is split
+            vec_t mid;
+            intersect(line, edge, mid);
+
+            if (dist_p0 > 0.f) {
+                pos = edge_t<vec_t> { mid, edge.p0 };
+                neg = edge_t<vec_t> { edge.p1, mid };
+            }
+            else {
+                pos = edge_t<vec_t> { mid, edge.p1 };
+                neg = edge_t<vec_t> { edge.p0, mid };
+            }
+        }
+    }
+
+    typedef edge_t<vec2f_t> edgef_t;
+    typedef line_t<vec2f_t> linef_t;
+    typedef pline_t<vec2f_t> plinef_t;
+
 } // geometry

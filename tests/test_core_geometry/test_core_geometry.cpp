@@ -4,6 +4,8 @@
 
 #include "../../framework_core/geometry.h"
 #include "../../framework_core/random.h"
+#include "../../framework_core/bsp.h"
+
 #include "../../framework_draw/draw.h"
 
 namespace {
@@ -46,7 +48,7 @@ void test_line_project() {
     draw_.colour_ = 0x406080;
     draw_.line(point_[0], point_[1]);
 
-    geometry::line_t<vec2f_t> line {point_[0], point_[1]};
+    geometry::linef_t line {point_[0], point_[1]};
     vec2f_t proj = line.project(point_[2]);
 
     draw_.colour_ = 0x806040;
@@ -59,7 +61,7 @@ void test_pline_project() {
     draw_.colour_ = 0x406080;
     draw_.line(point_[0], point_[1]);
 
-    pline_t<vec2f_t> pline {point_[0], point_[1]};
+    plinef_t pline {point_[0], point_[1]};
     vec2f_t proj = pline.project(point_[2]);
 
     draw_.colour_ = 0x806040;
@@ -70,7 +72,7 @@ void test_edge_project() {
     draw_.colour_ = 0x406080;
     draw_.line(point_[0], point_[1]);
 
-    geometry::edge_t<vec2f_t> edge {point_[0], point_[1]};
+    geometry::edgef_t edge {point_[0], point_[1]};
     vec2f_t proj = edge.project(point_[2]);
 
     draw_.colour_ = 0x806040;
@@ -86,8 +88,8 @@ void test_intersect_edge_edge() {
 
     vec2f_t i;
     if (intersect(
-            edge_t<vec2f_t>{point_[0], point_[1]},
-            edge_t<vec2f_t>{point_[2], point_[3]},
+            edgef_t {point_[0], point_[1]},
+            edgef_t {point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
         draw_.circle(vec2i_t::cast(i), 3);
@@ -103,8 +105,8 @@ void test_intersect_line_edge() {
 
     vec2f_t i;
     if (intersect(
-            line_t<vec2f_t>{point_[0], point_[1]},
-            edge_t<vec2f_t>{point_[2], point_[3]},
+            linef_t {point_[0], point_[1]},
+            edgef_t {point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
         draw_.circle(vec2i_t::cast(i), 3);
@@ -120,11 +122,36 @@ void test_intersect_line_line() {
 
     vec2f_t i;
     if (intersect(
-            line_t<vec2f_t>{point_[0], point_[1]},
-            line_t<vec2f_t>{point_[2], point_[3]},
+            linef_t {point_[0], point_[1]},
+            linef_t {point_[2], point_[3]},
             i)) {
         draw_.colour_ = 0x806040;
         draw_.circle(vec2i_t::cast(i), 3);
+    }
+}
+
+void test_bsp_split() {
+    using namespace geometry;
+
+    draw_.colour_ = 0x406080;
+    draw_.line(point_[0], point_[1]);
+    draw_.line(point_[2], point_[3]);
+
+    linef_t line{point_[0], point_[1]};
+    edgef_t edge{point_[2], point_[3]};
+
+    valid_t<edgef_t> pos, neg;
+
+    geometry::split<vec2f_t>(line, edge, pos, neg);
+
+    if (pos.valid()) {
+        draw_.colour_ = 0x33CC44;
+        draw_.line(pos->p0, pos->p1);
+    }
+
+    if (neg.valid()) {
+        draw_.colour_ = 0xFF3344;
+        draw_.line(neg->p0, neg->p1);
     }
 }
 
@@ -136,13 +163,14 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 6> tests = {{
+std::array<test_t, 7> tests = {{
     TEST(test_line_project),
     TEST(test_edge_project),
     TEST(test_pline_project),
     TEST(test_intersect_edge_edge),
     TEST(test_intersect_line_edge),
     TEST(test_intersect_line_line),
+    TEST(test_bsp_split)
 }};
 
 int main(const int argc, char *args[]) {
