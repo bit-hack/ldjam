@@ -244,7 +244,7 @@ int main(const int argc, char *args[]) {
         // draw the points
         for (const auto & p : point_) {
             draw_.colour_ = 0x204060;
-            draw_.circle(vec2i_t{int32_t(p.x), int32_t(p.y)}, 4);
+            draw_.circle(vec2i_t(p), 4);
         }
 
         // upscale and flip target to screen

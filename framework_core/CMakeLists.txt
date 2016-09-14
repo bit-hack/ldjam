@@ -24,6 +24,7 @@ set(SOURCE_FILES
     bsp.h
     bsp.cpp
     particle.h
-    tiles.h)
+    tiles.h
+    tiles.cpp)
 
 add_library(framework_core ${SOURCE_FILES})

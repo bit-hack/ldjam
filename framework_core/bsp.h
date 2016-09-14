@@ -8,10 +8,10 @@
 #include "geometry.h"
 #include "vec2.h"
 
-struct bsp_t {
+/* do we even need to split?
+ */
 
-//    typedef geometry::edgef_t edgef_t;
-//    typedef geometry::linef_t linef_t;
+struct bsp_t {
 
     typedef std::vector<geometry::edgef_t> edge_list_t;
 
