@@ -2,36 +2,46 @@
 #include <memory>
 #include <cstdint>
 
+#include "queue.h"
 #include "wave.h"
 #include "vorbis.h"
 
+struct mix_out_t {
+    int32_t * left_;
+    int32_t * right_;
+    const size_t count_;
+};
+
+struct audio_source_t {
+
+    virtual void render(const mix_out_t &) = 0;
+};
+
 struct audio_t {
 
-    struct play_wave_t {
-        const struct wave_t *wave_;
-        float volume_;
-        float rate_;
-        bool looping_;
-        bool retrigger_;
-    };
-
-    struct play_vorbis_t {
-        const char * name_;
-        const struct vorbis_t * vorbis_;
-        bool loop_;
-        int32_t volume_;
-    };
-
-    audio_t();
-    ~audio_t();
-
-    bool play(const play_wave_t &);
-    bool play(const play_vorbis_t &);
+    // must be done before we start rendering
+    void add(audio_source_t * src) {
+        source_.push_back(src);
+    }
 
     bool render(int16_t *, uint32_t count);
 
 protected:
 
-    struct detail_t;
-    std::unique_ptr<detail_t> detail_;
+    // clip sample to signed 16bit integer range
+    static constexpr int16_t clip(int32_t x) {
+        return int16_t(x >  0x7fff ?  0x7fff :
+                       (x < -0x7fff ? -0x7fff : x));
+    }
+
+    void _mixdown(int16_t * out, const uint32_t count);
+
+    static const uint32_t C_BUFFER_SIZE = 1024;
+
+    struct {
+        std::array<int32_t, C_BUFFER_SIZE> left_;
+        std::array<int32_t, C_BUFFER_SIZE> right_;
+    } mix_;
+
+    std::vector<audio_source_t*> source_;
 };

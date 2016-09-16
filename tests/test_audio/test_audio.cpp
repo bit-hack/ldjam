@@ -2,12 +2,18 @@
 #include <SDL/SDL.h>
 #include "../../framework_core/random.h"
 #include "../../framework_audio/audio.h"
+#include "../../framework_audio/source_wave.h"
+#include "../../framework_audio/source_vorbis.h"
 
 namespace {
 
 std::array<wave_t, 2> s_wave;
 std::array<vorbis_t, 2> s_vorbis;
+
+audio_source_vorbis_t s_source_vorbis;
+audio_source_wave_t s_source_wave;
 audio_t s_audio;
+
 SDL_Surface * s_screen;
 random_t s_rand(0x12345);
 
@@ -47,20 +53,22 @@ bool init() {
 
 bool play_sound(int num) {
 
-    audio_t::play_wave_t play;
+    audio_source_wave_t::play_wave_t play;
     play.looping_ = false;
     play.rate_ = 1.f + s_rand.randfs() * .7f;
     play.retrigger_ = true;
     play.volume_ = s_rand.randfu();
     play.wave_ = &s_wave[num];
-
-    s_audio.play(play);
+    s_source_wave.play(play);
     return true;
 }
 
 } // namespace {}
 
 int main(const int argc, char *args[]) {
+
+    s_audio.add(&s_source_wave);
+    s_audio.add(&s_source_vorbis);
 
     if (!init()) {
         return 1;
@@ -82,21 +90,21 @@ int main(const int argc, char *args[]) {
     {
         s_vorbis[0].open("assets/may.ogg");
         if (s_vorbis[0].valid()) {
-            audio_t::play_vorbis_t play;
+            audio_source_vorbis_t::play_vorbis_t play;
             play.name_ = "may";
             play.vorbis_ = &s_vorbis[0];
             play.loop_ = false;
             play.volume_ = 0x3f;
-            s_audio.play(play);
+            s_source_vorbis.play(play);
         }
         s_vorbis[1].open("assets/poly.ogg");
         if (s_vorbis[1].valid()) {
-            audio_t::play_vorbis_t play;
+            audio_source_vorbis_t::play_vorbis_t play;
             play.name_ = "poly";
             play.vorbis_ = &s_vorbis[1];
             play.loop_ = true;
             play.volume_ = 0x7f;
-            s_audio.play(play);
+            s_source_vorbis.play(play);
         }
     }
 

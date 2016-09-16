@@ -11,6 +11,7 @@ set(SOURCE_FILES
     stb_vorbis.h
     wave.cpp
     wave.h
-    vorbis.h)
+    vorbis.h
+    queue.h source_wave.h source_vorbis.h source_wave.cpp source_vorbis.cpp)
 
 add_library(framework_audio ${SOURCE_FILES})

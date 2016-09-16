@@ -5,6 +5,9 @@
 
 #include "../framework_core/buffer.h"
 
+// todo:
+// - add buffer space for interpolation
+
 struct wave_t {
 
     static bool load_wav(const char * path, wave_t & out);
@@ -30,12 +33,14 @@ struct wave_t {
 
     template <typename type_t>
     type_t * get() {
-        return reinterpret_cast<type_t*>(samples_.get());
+        return reinterpret_cast<type_t*>(
+                samples_.get());
     }
 
     template <typename type_t>
     const type_t * get() const {
-        return reinterpret_cast<const type_t*>(samples_.get());
+        return reinterpret_cast<const type_t*>(
+                samples_.get());
     }
 
     uint32_t length() const {
