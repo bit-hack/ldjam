@@ -1,8 +1,6 @@
 #pragma once
-
 #include <memory>
-
-#include "../framework_core/file.h"
+#include "../../framework_core/file.h"
 
 struct vorbis_t {
 
@@ -21,10 +19,7 @@ struct vorbis_t {
             return false;
         }
         data_.reset(new uint8_t[size_]);
-        if (!file.read(data_.get(), size_)) {
-            return false;
-        }
-        return true;
+        return file.read(data_.get(), size_);
     }
 
     void close() {
