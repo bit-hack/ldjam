@@ -3,8 +3,8 @@
 #include <cstdint>
 
 #include "queue.h"
-#include "wave.h"
-#include "vorbis.h"
+#include "format/wave.h"
+#include "format/vorbis.h"
 
 struct mix_out_t {
     int32_t * left_;

@@ -7,7 +7,7 @@
 
 #include "../../framework_core/file.h"
 #include "../../framework_core/common.h"
-#include "../../framework_audio/stb_vorbis.h"
+#include "../../framework_audio/source/vorbis/stb_vorbis.h"
 
 namespace {
 SDL_Surface * s_screen = nullptr;

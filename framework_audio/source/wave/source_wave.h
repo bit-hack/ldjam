@@ -1,7 +1,7 @@
 #pragma once
 #include <map>
 
-#include "audio.h"
+#include "../../audio.h"
 
 struct audio_source_wave_t :
         public audio_source_t {

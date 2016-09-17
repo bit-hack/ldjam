@@ -1,6 +1,7 @@
 #pragma once
+#include <array>
 
-#include "audio.h"
+#include "../../audio.h"
 
 struct audio_source_vorbis_t :
         public audio_source_t {

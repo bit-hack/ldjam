@@ -2,8 +2,8 @@
 #include <SDL/SDL.h>
 #include "../../framework_core/random.h"
 #include "../../framework_audio/audio.h"
-#include "../../framework_audio/source_wave.h"
-#include "../../framework_audio/source_vorbis.h"
+#include "../../framework_audio/source/wave/source_wave.h"
+#include "../../framework_audio/source/vorbis/source_vorbis.h"
 
 namespace {
 

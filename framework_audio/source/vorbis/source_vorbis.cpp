@@ -1,6 +1,8 @@
+#include <cassert>
+
 #include "stb_vorbis.h"
-#include "vorbis.h"
 #include "source_vorbis.h"
+#include "../../format/vorbis.h"
 
 audio_source_vorbis_t::audio_source_vorbis_t()
     : buffer_()
