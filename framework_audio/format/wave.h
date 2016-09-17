@@ -14,7 +14,7 @@ struct wave_t {
 
     uint32_t num_frames() const {
         const uint32_t sample_size = bit_depth_ / 8;
-        const uint32_t num_samples = samples_.size() / sample_size;
+        const uint32_t num_samples = uint32_t(samples_.size()) / sample_size;
         const uint32_t num_frames = num_samples / channels_;
         return num_frames;
     }
@@ -44,7 +44,7 @@ struct wave_t {
     }
 
     uint32_t length() const {
-        return samples_.size();
+        return uint32_t(samples_.size());
     }
 
 protected:

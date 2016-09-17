@@ -185,12 +185,12 @@ int main(const int argc, char *args[]) {
             if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_LEFT) {
                     if (--test_index<0) {
-                        test_index += tests.size();
+                        test_index += int32_t(tests.size());
                     }
                 }
                 if (event.key.keysym.sym == SDLK_RIGHT) {
-                    if (++test_index >= tests.size()) {
-                        test_index -= tests.size();
+                    if (++test_index >= int32_t(tests.size())) {
+                        test_index -= int32_t(tests.size());
                     }
                 }
                 if (event.key.keysym.sym == SDLK_ESCAPE) {

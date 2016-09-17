@@ -1,15 +1,5 @@
-#include <set>
-#include <map>
-#include <mutex>
-#include <cassert>
-#include <vector>
-#include <array>
-#include <deque>
-
 #include "../framework_core/common.h"
-
 #include "audio.h"
-#include "stb_vorbis.h"
 
 bool audio_t::render(int16_t * out, uint32_t count) {
     while (count) {

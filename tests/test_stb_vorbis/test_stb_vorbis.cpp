@@ -82,7 +82,7 @@ struct vorbis_2_t {
         int error = 0;
         stb_ = stb_vorbis_open_memory(
             raw_.get(), 
-            raw_size_, 
+            int(raw_size_),
             &error, 
             nullptr);
         if (!stb_) {
@@ -108,6 +108,9 @@ struct vorbis_2_t {
     }
 
     void render(int16_t * stream, int32_t count) {
+
+        const int _CHANNELS = 2;
+
         while (!finished_ && count) {
             // if the buffer is empty
             if (head_ == tail_) {
@@ -115,9 +118,9 @@ struct vorbis_2_t {
                 head_ = tail_ = 0;
                 head_ = stb_vorbis_get_frame_short_interleaved(
                     stb_, 
-                    2,
+                    _CHANNELS,
                     buffer_.data(),
-                    buffer_.size())*2;
+                    int(buffer_.size()))*_CHANNELS;
             }
             // no more data in the stream
             if (head_<=0) {
