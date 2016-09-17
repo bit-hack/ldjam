@@ -4,6 +4,7 @@
 . add tilemap support
 . add pathfinder to tilemap
 . add animation test
+. add input/controller support
 
 ##### spatial hash
 . add raycast

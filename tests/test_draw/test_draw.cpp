@@ -2,16 +2,25 @@
 #define _SDL_main_h
 #include <SDL/SDL.h>
 
+#include "../../framework_core/timer.h"
 #include "../../framework_core/random.h"
 #include "../../framework_draw/draw.h"
 
 namespace {
-    SDL_Surface * screen_;
-    draw_t draw_;
-    bitmap_t bitmap_;
-    bitmap_t font_;
-    random_t random_(0x12345);
-    bitmap_t sprite_;
+
+uint64_t get_time() {
+    return SDL_GetTicks();
+}
+
+float scroll_ = 0.f;
+
+timer_t timer_ = timer_t(get_time, 1000 / 30);
+SDL_Surface * screen_;
+draw_t draw_;
+bitmap_t bitmap_;
+bitmap_t font_;
+random_t random_(0x12345);
+bitmap_t sprite_;
 }
 
 bool init() {
@@ -29,12 +38,11 @@ bool init() {
         return false;
     }
     draw_.set_target(bitmap_);
+    timer_.reset();
     return true;
 }
 
 void test_circles() {
-    draw_.colour_ = 0x202020;
-    draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2i_t p = vec2i_t {
@@ -62,8 +70,6 @@ void test_lines() {
 }
 
 void test_rect() {
-    draw_.colour_ = 0x202020;
-    draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2i_t p0 = vec2i_t {
@@ -78,8 +84,6 @@ void test_rect() {
 }
 
 void test_plot() {
-    draw_.colour_ = 0x202020;
-    draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<1000; ++i) {
         const vec2i_t p0 = vec2i_t {
@@ -91,8 +95,6 @@ void test_plot() {
 }
 
 void test_blit() {
-    draw_.colour_ = 0x202020;
-    draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!sprite_.valid()) {
         if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
@@ -115,8 +117,6 @@ void test_blit() {
 }
 
 void test_font() {
-    draw_.colour_ = 0x202020;
-    draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!font_.valid()) {
         if (!bitmap_t::load("assets/font.bmp", font_)) {
@@ -140,8 +140,6 @@ void test_font() {
 }
 
 void test_triangle() {
-    draw_.colour_ = 0x202020;
-    draw_.clear();
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     for (int i=0; i<100; ++i) {
         const vec2f_t p0 = vec2f_t {
@@ -158,6 +156,45 @@ void test_triangle() {
     }
 }
 
+void test_tilemap() {
+    if (!font_.valid()) {
+        if (!bitmap_t::load("assets/font.bmp", font_)) {
+            return;
+        }
+    }
+
+    const float SPEED = 0.033f;
+    scroll_ += scroll_ > C_2PI ? SPEED-C_2PI : SPEED;
+
+    static const int _WIDTH = 48;
+    static const int _HEIGHT = 24;
+
+    int32_t ox = 16+cosf(scroll_)*16;
+    int32_t oy = 16-sinf(scroll_)*16;
+
+    draw_.viewport(recti_t {ox, oy, ox+320-32, oy+240-32});
+    draw_.colour_ = 0x224477;
+    draw_.rect(recti_t{0, 0, 320, 240});
+
+    std::array<uint8_t, _WIDTH*_HEIGHT> tdata;
+    for (int i = 0; i<tdata.size(); ++i) {
+        auto & cell = tdata[i];
+        cell = i % _WIDTH + (i / _WIDTH);
+    }
+
+    tilemap_t tiles = {
+        vec2i_t { _WIDTH, _HEIGHT },
+        vec2i_t { 9, 14 },
+        tdata.data(),
+        &font_,
+        e_blit_opaque
+    };
+    draw_.blit(tiles, vec2i_t{
+        int32_t(sinf(scroll_) * 32.f),
+        int32_t(cosf(scroll_) * 32.f)}
+    );
+}
+
 struct test_t {
     const char * name_;
     void (*func_)();
@@ -166,21 +203,22 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 7> tests = {{
+std::array<test_t, 8> tests = {{
     TEST(test_font),
     TEST(test_blit),
     TEST(test_circles),
     TEST(test_lines),
     TEST(test_plot),
     TEST(test_rect),
-    TEST(test_triangle)
+    TEST(test_triangle),
+    TEST(test_tilemap)
 }};
 
 int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    uint32_t test_index = 0;
+    int32_t test_index = 7;
     bool pause = false;
     bool active = true;
     while (active) {
@@ -188,10 +226,14 @@ int main(const int argc, char *args[]) {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_LEFT) {
-                    --test_index;
+                    if (--test_index<0) {
+                        test_index += tests.size();
+                    }
                 }
                 if (event.key.keysym.sym == SDLK_RIGHT) {
-                    ++test_index;
+                    if (++test_index<int32_t(tests.size())) {
+                        test_index -= tests.size();
+                    }
                 }
                 if (event.key.keysym.sym == SDLK_SPACE) {
                     pause ^= true;
@@ -205,12 +247,19 @@ int main(const int argc, char *args[]) {
             }
         }
         if (!pause) {
-            const auto test = tests[test_index % tests.size()];
-            test.func_();
-            draw_.render_2x(screen_->pixels, screen_->pitch / 4);
-            SDL_Flip(screen_);
+            if (timer_.frame()) {
+                // clear the screen
+                draw_.colour_ = 0x202020;
+                draw_.clear();
+                // execute the test case
+                const auto test = tests[test_index % tests.size()];
+                test.func_();
+                // render to the screen
+                draw_.render_2x(screen_->pixels, screen_->pitch/4);
+                SDL_Flip(screen_);
+            }
         }
-        SDL_Delay(1000/25);
+        SDL_Delay(1);
     }
     return 0;
 }

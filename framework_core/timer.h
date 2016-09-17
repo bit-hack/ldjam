@@ -2,12 +2,12 @@
 #include <cassert>
 #include <cstdint>
 
-struct delta_time_t {
-    typedef uint64_t (*millisec_t)();
+struct timer_t {
+    typedef uint64_t (*tick_func_t)();
 
-    delta_time_t(millisec_t mills, uint64_t interval)
-        : get_time_(mills)
-        , interval_(interval)
+    timer_t(tick_func_t func, uint64_t period = 0)
+        : get_time_(func)
+        , period_(period)
     {
         reset();
     }
@@ -19,7 +19,7 @@ struct delta_time_t {
         if (old_ > nval)
             return 0.f;
         const uint64_t diff = nval - old_;
-        return float(diff) / float(interval_ ? interval_ : 1);
+        return float(diff) / float(period_ ? period_ : 1);
     }
 
     void reset()
@@ -30,22 +30,45 @@ struct delta_time_t {
 
     void step()
     {
-        old_ += interval_;
+        old_ += period_;
+    }
+
+    bool done() const {
+        assert(get_time_);
+        const uint64_t nval = get_time_();
+        return (nval-old_) > period_;
     }
 
     uint64_t deltai() const
     {
         assert(get_time_);
-        uint64_t nval = get_time_();
+        const uint64_t nval = get_time_();
         if (old_ > nval)
             return 0ull;
         const uint64_t diff = nval - old_;
-        return interval_ ? (diff / interval_) : 0ull;
+        return period_ ? (diff / period_) : 0ull;
     }
 
-    uint64_t interval_;
+    bool frame() {
+        float delta = deltaf();
+        if (delta < 1.f) {
+            return false;
+        }
+        else {
+            // watch out for explosions
+            if (delta>20.f) {
+                reset();
+            }
+            else {
+                step();
+            }
+            return true;
+        }
+    }
+
+    uint64_t period_;
 
 protected:
     uint64_t old_;
-    uint64_t (*get_time_)();
+    tick_func_t get_time_;
 };

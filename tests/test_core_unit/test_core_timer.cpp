@@ -11,7 +11,7 @@ uint64_t get_time()
 
 bool test_timer_1()
 {
-    delta_time_t timer = delta_time_t(get_time, 4);
+    timer_t timer = timer_t(get_time, 4);
     thing_ = 0;
     TEST_ASSERT(timer.deltaf() == 0.00f);
     thing_ = 1;
@@ -41,8 +41,8 @@ bool test_timer_2()
 {
     {
         thing_ = 1ull;
-        delta_time_t timer = delta_time_t(get_time, 0);
-        timer.interval_ = 0;
+        timer_t timer = timer_t(get_time, 0);
+        timer.period_ = 0;
         uint64_t di = timer.deltai();
         TEST_ASSERT(di == 0ull);
         float df = timer.deltaf();
@@ -50,8 +50,8 @@ bool test_timer_2()
     }
     {
         thing_ = 0ull;
-        delta_time_t timer = delta_time_t(get_time, 0);
-        timer.interval_ = 1;
+        timer_t timer = timer_t(get_time, 0);
+        timer.period_ = 1;
         uint64_t di = timer.deltai();
         TEST_ASSERT(di == 0ull);
         float df = timer.deltaf();
@@ -59,8 +59,8 @@ bool test_timer_2()
     }
     {
         thing_ = 0ull;
-        delta_time_t timer = delta_time_t(get_time, 0);
-        timer.interval_ = 0ull;
+        timer_t timer = timer_t(get_time, 0);
+        timer.period_ = 0ull;
         uint64_t di = timer.deltai();
         TEST_ASSERT(di == 0ull);
         float df = timer.deltaf();
