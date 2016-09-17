@@ -31,6 +31,7 @@ struct tilemap_t {
     vec2i_t map_size_;
     vec2i_t cell_size_;
     uint8_t * cells_;
+    bitmap_t * bitmap_;
     blit_type_t type_;
 };
 
@@ -62,6 +63,8 @@ struct draw_t {
     void plot(const vec2i_t & p);
 
     void blit(const blit_info_t & info);
+
+    void blit(const tilemap_t & tiles, vec2i_t & p);
 
     void set_target(struct bitmap_t &);
 

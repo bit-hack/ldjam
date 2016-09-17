@@ -396,3 +396,55 @@ void draw_t::printf(const font_t & font,
     }
     va_end(vl);
 }
+
+void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
+
+    const int32_t cell_w = tiles.cell_size_.x;
+    const int32_t cell_h = tiles.cell_size_.y;
+
+    // cell space
+    int32_t x0 = (p.x+viewport_.x0) / cell_w;
+    int32_t y0 = (p.y+viewport_.y0) / cell_h;
+    int32_t x1 = (p.x+viewport_.x1) / cell_w;
+    int32_t y1 = (p.y+viewport_.y1) / cell_h;
+
+    // clip upper left
+    if (x0 < 0) p.x -= x0 * cell_w;
+    x0 = max2(x0, 0);
+    if (y0 < 0) p.y -= y0 * cell_h;
+    y0 = max2(y0, 0);
+
+    // clip lower right
+    x1 = min2(x1, tiles.map_size_.x-1);
+    y1 = min2(y1, tiles.map_size_.y-1);
+
+    blit_info_t info = {
+        tiles.bitmap_,
+        p,
+        recti_t(),
+        tiles.type_,
+        false
+    };
+
+    // cells fitting into sprite sheet x axis
+    const int32_t cells_w =
+            tiles.bitmap_->width() / tiles.cell_size_.x;
+
+    // main blit loop
+    for (int32_t y=y0; y<y1; ++y) {
+        info.dst_pos_ = p;
+        for (int32_t x=x0; x<x1; ++x) {
+            const uint8_t cell =
+                    tiles.cells_[x + y * tiles.map_size_.x];
+            info.src_rect_ = {
+                (cell % cells_w) * tiles.cell_size_.y,
+                (cell / cells_w) * tiles.cell_size_.y,
+                cell_w,
+                cell_h
+            };
+            blit(info);
+            info.dst_pos_.x += cell_w;
+        }
+        p.y += cell_h;
+    }
+}
