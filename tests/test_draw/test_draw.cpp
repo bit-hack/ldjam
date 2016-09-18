@@ -166,8 +166,8 @@ void test_tilemap() {
     const float SPEED = 0.033f;
     scroll_ += scroll_ > C_2PI ? SPEED-C_2PI : SPEED;
 
-    static const int _WIDTH = 48;
-    static const int _HEIGHT = 24;
+    static const int _WIDTH = 34;
+    static const int _HEIGHT = 16;
 
     int32_t ox = 16+cosf(scroll_)*16;
     int32_t oy = 16-sinf(scroll_)*16;
@@ -179,7 +179,7 @@ void test_tilemap() {
     std::array<uint8_t, _WIDTH*_HEIGHT> tdata;
     for (int i = 0; i<tdata.size(); ++i) {
         auto & cell = tdata[i];
-        cell = i % _WIDTH + (i / _WIDTH);
+        cell = i % _WIDTH + (i / _WIDTH) + scroll_ * 10;
     }
 
     tilemap_t tiles = {
@@ -231,7 +231,7 @@ int main(const int argc, char *args[]) {
                     }
                 }
                 if (event.key.keysym.sym == SDLK_RIGHT) {
-                    if (++test_index<int32_t(tests.size())) {
+                    if ((++test_index) >= int32_t(tests.size())) {
                         test_index -= tests.size();
                     }
                 }
@@ -254,6 +254,12 @@ int main(const int argc, char *args[]) {
                 // execute the test case
                 const auto test = tests[test_index % tests.size()];
                 test.func_();
+                //
+                draw_.viewport(recti_t {0, 0, 320, 240});
+                for (int i = 0; i<tests.size(); ++i) {
+                    draw_.colour_ = i==test_index ? 0xffffff : 0x909090;
+                    draw_.rect(recti_t(1 + 4 * i, 1, 3, 4, recti_t::e_relative));
+                }
                 // render to the screen
                 draw_.render_2x(screen_->pixels, screen_->pitch/4);
                 SDL_Flip(screen_);

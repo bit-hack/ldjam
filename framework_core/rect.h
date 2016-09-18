@@ -110,6 +110,14 @@ struct rect_t {
     vec_t size() const {
         return vec_t{dx(), dy()};
     }
+
+    rect_t operator + (const rect_t & rhs) {
+        return rect_t{
+            x0+rhs.x0,
+            y0+rhs.y0,
+            x1+rhs.x1,
+            y1+rhs.y1};
+    }
 };
 
 typedef rect_t<int32_t> recti_t;

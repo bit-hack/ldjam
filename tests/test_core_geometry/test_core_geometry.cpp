@@ -211,7 +211,7 @@ int main(const int argc, char *args[]) {
         const auto test = tests[test_index];
         test.func_();
 
-        for (int i = 0; i<tests.size(); ++i) {
+        for (int32_t i = 0; i<int32_t(tests.size()); ++i) {
             draw_.colour_ = i==test_index ? 0xffffff : 0x909090;
             draw_.rect(recti_t(1 + 4 * i, 1, 3, 4, recti_t::e_relative));
         }

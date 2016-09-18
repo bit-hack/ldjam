@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "../framework_core/buffer.h"
+#include "../framework_core/rect.h"
 
 struct bitmap_t {
 
@@ -34,6 +35,10 @@ struct bitmap_t {
 
     bool valid() const {
         return pix_.size() && pix_.get() != nullptr;
+    }
+
+    recti_t rect() const {
+        return recti_t{0, 0, int32_t(width_)-1, int32_t(height_)-1};
     }
 
 protected:

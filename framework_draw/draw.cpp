@@ -42,12 +42,12 @@ void draw_t::circle(
 
 void draw_t::rect(const recti_t p) {
     assert(target_);
-    const recti_t rect = recti_t::intersect(viewport_, p);
+    const recti_t rect = recti_t::intersect(viewport_+recti_t{0, 0, 1, 1}, p);
     const uint32_t pitch = target_->width();
     const uint32_t colour = colour_;
     uint32_t * pix = target_->data() + rect.y0 * pitch;
-    for (int y=rect.y0; y<=rect.y1; ++y) {
-        for (int x=rect.x0; x<=rect.x1; ++x) {
+    for (int y=rect.y0; y<rect.y1; ++y) {
+        for (int x=rect.x0; x<rect.x1; ++x) {
             pix[x] = colour;
         }
         pix += pitch;
@@ -209,9 +209,9 @@ void _draw_t_blit(bitmap_t & target,
     if (c == recti_t::e_rect_outside) {
         return;
     }
+    // clip src rect to the source bitmap
+    recti_t src_rect = recti_t::intersect(info.src_rect_, info.bitmap_->rect());
     // clip to the viewport
-    recti_t src_rect = info.src_rect_;
-    // <---- ---- ---- ---- ---- ---- ---- ---- todo: clip source to bitmap
     if (c == recti_t::e_rect_overlap) {
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
@@ -398,28 +398,30 @@ void draw_t::printf(const font_t & font,
     va_end(vl);
 }
 
+namespace {
+    template <typename type_t>
+    type_t quantize(const type_t in, const type_t divisor) {
+        return ((in<0) ? (in-divisor) : in)/divisor;
+    }
+} // namespace {}
+
 void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
 
+    // cell size
     const int32_t cell_w = tiles.cell_size_.x;
     const int32_t cell_h = tiles.cell_size_.y;
 
-    // cell space
-    int32_t x0 = 0; // (p.x)/cell_w;
-    int32_t y0 = 0; // (p.y)/cell_h;
-    int32_t x1 = 48; // (p.x+viewport_.x1)/cell_w;
-    int32_t y1 = 24; // (p.y+viewport_.y1)/cell_h;
+    // cells fitting into sprite sheet x axis
+    const int32_t cells_w =
+            tiles.bitmap_->width() / tiles.cell_size_.x;
 
-    // clip upper left
-//    if (x0 < 0) p.x += x0 * cell_w;
-//    x0 = max2(x0, 0);
+    // viewport to map space
+    int32_t x0 = clampv(0, quantize(viewport_.x0-p.x, cell_w), tiles.map_size_.x-1);
+    int32_t y0 = clampv(0, quantize(viewport_.y0-p.y, cell_h), tiles.map_size_.y-1);
+    int32_t x1 = clampv(0, quantize(viewport_.x1-p.x, cell_w), tiles.map_size_.x-1);
+    int32_t y1 = clampv(0, quantize(viewport_.y1-p.y, cell_h), tiles.map_size_.y-1);
 
-//    if (y0 < 0) p.y += y0 * cell_h;
-//    y0 = max2(y0, 0);
-
-    // clip lower right
-    x1 = min2(x1, tiles.map_size_.x-1);
-    y1 = min2(y1, tiles.map_size_.y-1);
-
+    // blank blit into
     blit_info_t info = {
         tiles.bitmap_,
         p,
@@ -428,18 +430,19 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
         false
     };
 
-    // cells fitting into sprite sheet x axis
-    const int32_t cells_w =
-            tiles.bitmap_->width() / tiles.cell_size_.x;
+    // find first blit point
+    vec2i_t pos{p.x + x0 * cell_w, p.y + y0 * cell_h};
 
     // main blit loop
     for (int32_t y=y0; y<=y1; ++y) {
-        info.dst_pos_ = p;
-        for (int32_t x=x0; x<=x1; ++x) {
 
+        info.dst_pos_ = pos;
+
+        for (int32_t x=x0; x<=x1; ++x) {
+            // 
             const uint8_t cell =
                     tiles.cells_[x + y * tiles.map_size_.x];
-
+            // calculate source rectangle
             info.src_rect_ = recti_t(
                 (cell % cells_w) * tiles.cell_size_.x,
                 (cell / cells_w) * tiles.cell_size_.y,
@@ -447,10 +450,12 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
                 cell_h - 1,
                 recti_t::e_relative
             );
-
+            // blit this tile
             blit(info);
+            // advance along this row
             info.dst_pos_.x += cell_w;
         }
-        p.y += cell_h;
+        // wrap and step one columb
+        pos.y += cell_h;
     }
 }
