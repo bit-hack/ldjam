@@ -111,6 +111,34 @@ void test_collision() {
     draw_.rect(recti_t(rect));
 }
 
+void test_collision_alt() {
+
+    int32_t mx, my;
+    SDL_GetMouseState(&mx, &my);
+
+    rectf_t rect {
+        mx - 24.f, my - 24.f,
+        mx + 24.f, my + 24.f
+    };
+
+    draw_.colour_ = 0xD08040;
+    draw_.rect(recti_t(rect));
+
+    vec2f_t res{0.f, 0.f};
+    if (map_.collide_alt(rect, res)) {
+        rect.x0 += res.x;
+        rect.y0 += res.y;
+        rect.x1 += res.x;
+        rect.y1 += res.y;
+
+        draw_.colour_ = 0x004488;
+        draw_.rect(recti_t{16, 16, 32, 32});
+    }
+
+    draw_.colour_ = 0x40A070;
+    draw_.rect(recti_t(rect));
+}
+
 struct test_t {
     const char * name_;
     void (*func_)();
@@ -119,8 +147,9 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 1> tests = {{
+std::array<test_t, 2> tests = {{
     TEST(test_collision),
+    TEST(test_collision_alt)
 }};
 
 int main(const int argc, char *args[]) {

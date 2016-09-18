@@ -26,8 +26,19 @@ struct collision_map_t {
     {
     }
 
+    // collide a bounding rect with solid tiles in the collision map.
+    // this is the most robust solver of the two.  the need for solid
+    // tiles however may be a limitation in some situations.
     bool collide(const rectf_t & r, vec2f_t & out);
 
+    // collide a bounding rect with the collision map via tile flags.
+    // In this case we do not require solid tiles, only edge flags in
+    // all the tiles.  this enables us to have zero tile thick walls.
+    // this solver is less robust then the former however, and doesnt
+    // handle multiple tile collisions as well.
+    bool collide_alt(const rectf_t & r, vec2f_t & out);
+
+    // collide a point with the map tiles.
     bool collide(const vec2f_t & p, vec2f_t & out);
 
     bool raycast(
