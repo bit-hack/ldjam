@@ -10,35 +10,37 @@ namespace {
 
 bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
 
+    // find the tile space extent of the bounding rectangle
     int32_t minx = clampv(0, quantize<int32_t>(r.x0, cell_size_.x), size_.x-1);
     int32_t miny = clampv(0, quantize<int32_t>(r.y0, cell_size_.y), size_.y-1);
     int32_t maxx = clampv(0, quantize<int32_t>(r.x1, cell_size_.x), size_.x-1);
     int32_t maxy = clampv(0, quantize<int32_t>(r.y1, cell_size_.y), size_.y-1);
 
-    bool collide = false;
-
+    // set the worst case resolution to improve upon
     const float ival = max2(r.x1-r.x0, r.y1-r.y0);
     out.x = ival;
     out.y = ival;
 
+    // flags for valid resolutions
     bool setx = false, sety = false;
 
+    // iterate over all touched tiles
     for (int32_t y=miny; y<=maxy; ++y) {
         for (int32_t x=minx; x<=maxx; ++x) {
 
+            // get the flags for this tile we are on
             const uint8_t t = get(vec2i_t{x, y});
 
+            // non solid tiles do not affect the resolver
             if ((t & e_tile_solid) == 0)
                 continue;
 
-            // we have now collided for sure
-            collide = true;
-
-            const rectf_t
-                    b { float(x+0) * cell_size_.x,
-                        float(y+0) * cell_size_.y,
-                        float(x+1) * cell_size_.x,
-                        float(y+1) * cell_size_.y };
+            // find the full size tile
+            const rectf_t b {
+                float(x+0) * cell_size_.x,
+                float(y+0) * cell_size_.y,
+                float(x+1) * cell_size_.x,
+                float(y+1) * cell_size_.y };
 
             // find all possible resolution vectors (r = collider, b = blocker)
             std::array<float, 4> res = {
@@ -48,9 +50,11 @@ bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
                 (t & e_tile_push_right) ? b.x1 - r.x0 :  ival,
             };
 
+            // take the minimum resolution in each axis
             res[0] = select_abs_min(res[0], res[1]);
             res[2] = select_abs_min(res[2], res[3]);
 
+            // per-tile we only take one resolution vector
             if (absv(res[0]) < absv(res[2])) {
                 out.y = (absv(res[0]) < absv(out.y)) ? res[0] : out.y;
                 sety = true;
@@ -62,10 +66,12 @@ bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
         }
     }
 
+    // take any resolutions that were chosen
     out.x = setx ? out.x : 0.f;
     out.y = sety ? out.y : 0.f;
 
-    return collide;
+    // any resolution indicates we have collided
+    return setx | sety;
 }
 
 bool collision_map_t::collide(const vec2f_t &p, vec2f_t &out) {
