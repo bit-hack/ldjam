@@ -14,7 +14,7 @@ uint64_t get_time() {
 
 float scroll_ = 0.f;
 
-timer_t timer_ = timer_t(get_time, 1000 / 30);
+timing_t timer_ = timing_t(get_time, 1000 / 30);
 SDL_Surface * screen_;
 draw_t draw_;
 bitmap_t bitmap_;
@@ -189,10 +189,10 @@ void test_tilemap() {
         &font_,
         e_blit_opaque
     };
-    draw_.blit(tiles, vec2i_t{
-        int32_t(sinf(scroll_) * 32.f),
-        int32_t(cosf(scroll_) * 32.f)}
-    );
+
+    vec2i_t pos{int32_t(sinf(scroll_) * 32.f),
+                int32_t(cosf(scroll_) * 32.f)};
+    draw_.blit(tiles, pos);
 }
 
 struct test_t {

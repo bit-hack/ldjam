@@ -2,10 +2,10 @@
 #include <cassert>
 #include <cstdint>
 
-struct timer_t {
+struct timing_t {
     typedef uint64_t (*tick_func_t)();
 
-    timer_t(tick_func_t func, uint64_t period = 0)
+    timing_t(tick_func_t func, uint64_t period = 0)
         : get_time_(func)
         , period_(period)
     {
