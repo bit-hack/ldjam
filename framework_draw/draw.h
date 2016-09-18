@@ -84,7 +84,10 @@ struct draw_t {
         return * target_;
     }
 
-    void render_2x(void *,
+    void render_2x(void *dst,
+                   const uint32_t pitch);
+
+    void render_1x(void *dst,
                    const uint32_t pitch);
 
     uint32_t colour_, key_;

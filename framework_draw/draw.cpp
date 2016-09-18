@@ -364,6 +364,26 @@ void draw_t::render_2x(void * mem, const uint32_t pitch) {
     }
 }
 
+void draw_t::render_1x(void * mem, const uint32_t pitch) {
+    assert(mem);
+    // data access
+    uint32_t * dst = reinterpret_cast<uint32_t*>(mem);
+    const uint32_t * src = target_->data();
+    const uint32_t src_pitch = target_->width();
+    // height iterator
+    for (int32_t y=0; y<target_->height(); ++y) {
+        // scan lines
+        uint32_t * x0 = dst;
+        // draw spans
+        for (uint32_t i = 0; i < src_pitch; ++i) {
+            x0[i] = src[i];
+        }
+        // advance scan lines
+        dst += pitch;
+        src += target_->width();
+    }
+}
+
 void draw_t::printf(const font_t & font,
                     const vec2i_t & pos,
                     const char * fmt,
@@ -397,13 +417,6 @@ void draw_t::printf(const font_t & font,
     }
     va_end(vl);
 }
-
-namespace {
-    template <typename type_t>
-    type_t quantize(const type_t in, const type_t divisor) {
-        return ((in<0) ? (in-divisor) : in)/divisor;
-    }
-} // namespace {}
 
 void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
 

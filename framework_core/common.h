@@ -23,6 +23,11 @@ constexpr float fpart(const float& in)
 }
 
 template <typename type_t>
+constexpr type_t absv(const type_t v) {
+    return (v < 0) ? -v : v;
+}
+
+template <typename type_t>
 constexpr type_t min2(const type_t a,
             const type_t b) {
     return (a<b) ? a : b;
@@ -74,6 +79,11 @@ float cubic(const float * v, float x )
     const float &a=v[0], &b=v[1], &c=v[2], &d=v[3];
     const float p = (d-c) - (a-b);
     return p*x*x*x + ((a-b)-p)*x*x + (c-a)*x + b;
+}
+
+template <typename type_t>
+type_t quantize(const type_t in, const type_t divisor) {
+    return ((in<0) ? (in-divisor) : in)/divisor;
 }
 
 template <typename type_t>

@@ -111,12 +111,30 @@ struct rect_t {
         return vec_t{dx(), dy()};
     }
 
-    rect_t operator + (const rect_t & rhs) {
+    rect_t operator * (const int32_t scale) const {
         return rect_t{
-            x0+rhs.x0,
-            y0+rhs.y0,
-            x1+rhs.x1,
-            y1+rhs.y1};
+            x0 * scale,
+            y0 * scale,
+            x1 * scale,
+            y1 * scale
+        };
+    }
+
+    rect_t operator / (const int32_t scale) const {
+        return rect_t{
+            x0 / scale,
+            y0 / scale,
+            x1 / scale,
+            y1 / scale
+        };
+    }
+
+    rect_t operator + (const rect_t & rhs) const {
+        return rect_t{
+            x0 + rhs.x0,
+            y0 + rhs.y0,
+            x1 + rhs.x1,
+            y1 + rhs.y1};
     }
 };
 

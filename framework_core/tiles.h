@@ -9,10 +9,19 @@
  * non solid tiles denote which movement vectors are valid
  */
 
+enum {
+    e_tile_solid         = 1,
+    e_tile_push_up       = 2,
+    e_tile_push_down     = 4,
+    e_tile_push_left     = 8,
+    e_tile_push_right    = 16
+};
+
 struct collision_map_t {
 
-    collision_map_t(const vec2i_t & size)
+    collision_map_t(const vec2i_t & size, const vec2i_t & cell_size)
         : size_(size)
+        , cell_size_(cell_size)
         , map_(new uint8_t[ size.x * size.y ])
     {
     }
@@ -28,8 +37,15 @@ struct collision_map_t {
 
     bool preprocess();
 
-    bool is_solid(vec2i_t & i) const {
-        return index(i) & e_solid;
+    bool is_solid(const vec2i_t & p) const {
+        assert(map_.get());
+        if (p.x >= 0 && p.x < size_.x && p.y >= 0 && p.y < size_.y) {
+            return (get(p) & e_tile_solid) != 0;
+        }
+        else {
+            // off the map is unconditional solid
+            return true;
+        }
     }
 
     uint8_t * get() const {
@@ -41,29 +57,32 @@ struct collision_map_t {
         return size_;
     }
 
+    uint8_t & get(const vec2i_t & p) {
+        assert(p.x >= 0 && p.x < size_.x);
+        assert(p.y >= 0 && p.y < size_.y);
+        assert(map_.get());
+        return map_.get()[p.x + p.y * size_.x];
+    }
+
+    const uint8_t & get(const vec2i_t & p) const {
+        assert(p.x >= 0 && p.x < size_.x);
+        assert(p.y >= 0 && p.y < size_.y);
+        assert(map_.get());
+        return map_.get()[p.x + p.y * size_.x];
+    }
+
+    void clear(const uint8_t value) {
+        assert(map_.get());
+        const uint32_t count = size_.x * size_.y;
+        uint8_t * tile = map_.get();
+        for (int32_t i=0; i<count; ++i) {
+            *(tile++) = value;
+        }
+    }
+
 protected:
-    enum {
-        e_solid         = 1,
-        e_push_up       = 2,
-        e_push_down     = 4,
-        e_push_left     = 8,
-        e_push_right    = 16
-    };
 
     const vec2i_t size_;
+    const vec2i_t cell_size_;
     std::unique_ptr<uint8_t[]> map_;
-
-    const uint8_t & index(const vec2i_t & i) const {
-        assert(i.x >= 0 && i.x < size_.x);
-        assert(i.y >= 0 && i.y < size_.y);
-        assert(map_.get());
-        return map_.get()[ i.x + i.y * size_.x ];
-    }
-
-    uint8_t & index(const vec2i_t & i) {
-        assert(i.x >= 0 && i.x < size_.x);
-        assert(i.y >= 0 && i.y < size_.y);
-        assert(map_.get());
-        return map_.get()[ i.x + i.y * size_.x ];
-    }
 };
