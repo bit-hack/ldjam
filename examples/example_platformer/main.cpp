@@ -18,16 +18,72 @@ struct service_t {
 struct player_t : public object_ex_t<e_object_player, player_t> {
 
     service_t * service_;
+    vec2f_t pos_[2];
 
     player_t(object_service_t s)
         : object_ex_t()
         , service_(static_cast<service_t*>(s))
     {
+        pos_[0] = pos_[1] = vec2f_t{64, 64};
+    }
+
+    void move(const vec2f_t & dir, bool jump) {
+
+        const float _DAMPING = .93f;
+        const float _FRICTION = 0.2f;
+        const float _GRAVITY = 0.4f;
+        const float _JUMP = 9.f;
+        const float _XSPEED = 1.f;
+        const float _XLIMIT = 3.f;
+
+        vec2f_t vel = pos_[1] - pos_[0];
+        pos_[0] = pos_[1];
+
+        vel += vec2f_t{ 0.f, _GRAVITY };
+        vel += dir * _XSPEED;
+        vel.x = clampv(-_XLIMIT, vel.x, _XLIMIT);
+
+        // integrate
+        pos_[1] = pos_[0] + vel * _DAMPING;
+
+        bool jmp = false;
+        vec2f_t res;
+        if (service_->map_->collide(bound(), res)) {
+            pos_[1] += res;
+            if (res.y < 0.f) {
+
+                pos_[0].x = lerp(pos_[0].x, pos_[1].x, _FRICTION);
+
+                jmp = jump;
+            }
+        }
+
+        if (jmp) {
+            pos_[0] += vec2f_t{ 0.f, _JUMP };
+        }
+    }
+
+    rectf_t bound() const {
+        return rectf_t{
+            pos_[1].x-4,
+            pos_[1].y-10,
+            pos_[1].x+4,
+            pos_[1].y };
     }
 
     virtual void tick() override {
+
+        const uint8_t * keys = SDL_GetKeyState(nullptr);
+        float dx = 0.f;
+
+        if (keys[SDLK_LEFT]) dx -= 1.f;
+        if (keys[SDLK_RIGHT]) dx += 1.f;
+
+        bool jump = keys[SDLK_UP] != 0;
+        move(vec2f_t{dx, 0.f}, jump);
+
         service_->draw_->colour_ = 0x406080;
-        service_->draw_->rect(recti_t{ 32, 32, 64, 64 });
+        service_->draw_->rect(recti_t(bound()));
     }
 };
 
@@ -84,11 +140,14 @@ struct app_t {
     }
 
     bool map_init() {
+
+        const int32_t _CHANCE = 10;
+
         map_.clear(0);
         uint8_t * tile = map_.get();
         for (int32_t y=0; y<map_.size().y; ++y) {
             for (int32_t x=0; x<map_.size().x; ++x) {
-                bool set = rand_.rand_chance(20) || y==(map_.size().y-1);
+                bool set = rand_.rand_chance(_CHANCE) || y==(map_.size().y-1);
                 tile[x + y * map_.size().x] = set ? e_tile_solid : 0;
             }
         }
@@ -116,6 +175,11 @@ struct app_t {
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_QUIT) {
                 return false;
+            }
+            if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_ESCAPE) {
+                    return false;
+                }
             }
         }
         return true;
