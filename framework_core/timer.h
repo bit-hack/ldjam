@@ -2,11 +2,12 @@
 #include <cassert>
 #include <cstdint>
 
+template <typename type_t = uint64_t>
 struct timing_t {
-    typedef uint64_t (*tick_func_t)();
+    typedef type_t (*tick_func_t)();
 
-    timing_t(tick_func_t func, uint64_t period = 0)
-        : get_time_(func)
+    timing_t(tick_func_t func = nullptr, type_t period = 0)
+        : func_(func)
         , period_(period)
     {
         reset();
@@ -14,18 +15,16 @@ struct timing_t {
 
     float deltaf() const
     {
-        assert(get_time_);
-        uint64_t nval = get_time_();
+        type_t nval = get_time();
         if (old_ > nval)
             return 0.f;
-        const uint64_t diff = nval - old_;
+        const type_t diff = nval - old_;
         return float(diff) / float(period_ ? period_ : 1);
     }
 
     void reset()
     {
-        assert(get_time_);
-        old_ = get_time_();
+        old_ = get_time();
     }
 
     void step()
@@ -34,18 +33,16 @@ struct timing_t {
     }
 
     bool done() const {
-        assert(get_time_);
-        const uint64_t nval = get_time_();
+        const type_t nval = get_time();
         return (nval-old_) > period_;
     }
 
     uint64_t deltai() const
     {
-        assert(get_time_);
-        const uint64_t nval = get_time_();
+        const type_t nval = get_time();
         if (old_ > nval)
             return 0ull;
-        const uint64_t diff = nval - old_;
+        const type_t diff = nval - old_;
         return period_ ? (diff / period_) : 0ull;
     }
 
@@ -66,9 +63,14 @@ struct timing_t {
         }
     }
 
-    uint64_t period_;
+    type_t period_;
+    tick_func_t func_;
 
 protected:
-    uint64_t old_;
-    tick_func_t get_time_;
+
+    type_t get_time() const {
+        return func_ ? func_() : 0;
+    }
+
+    type_t old_;
 };

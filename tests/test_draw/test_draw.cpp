@@ -14,7 +14,7 @@ uint64_t get_time() {
 
 float scroll_ = 0.f;
 
-timing_t timer_ = timing_t(get_time, 1000 / 30);
+timing_t<uint64_t> timer_ = timing_t<uint64_t>(get_time, 1000 / 30);
 SDL_Surface * screen_;
 draw_t draw_;
 bitmap_t bitmap_;

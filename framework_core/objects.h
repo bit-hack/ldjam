@@ -130,6 +130,7 @@ protected:
 };
 
 struct object_t {
+
     object_t(object_type_t type)
         : type_(type)
         , alive_(true)
@@ -198,7 +199,7 @@ struct object_t {
         return ref_.disposed();
     }
 
-    virtual void tick(){};
+    virtual void tick() {};
 
     void destroy()
     {
