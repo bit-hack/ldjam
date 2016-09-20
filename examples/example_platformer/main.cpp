@@ -1,5 +1,6 @@
 #include <SDL/SDL.h>
 
+#include "../../framework_core/fsm.h"
 #include "../../framework_core/random.h"
 #include "../../framework_core/objects.h"
 #include "../../framework_core/tiles.h"
@@ -19,48 +20,26 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
 
     service_t * service_;
     vec2f_t pos_[2];
+    float dx_;
+
+    typedef fsm_t<player_t> player_fsm_t;
+    typedef player_fsm_t::fsm_state_t player_state_t;
+
+    player_fsm_t fsm_;
+    player_state_t fsm_state_air_; // falling jumping
+    player_state_t fsm_state_run_; // running on ground
+    player_state_t fsm_state_slide_; // wall slide
 
     player_t(object_service_t s)
         : object_ex_t()
         , service_(static_cast<service_t*>(s))
+        , fsm_(this)
+        , fsm_state_air_(&player_t::tick_air)
+        , fsm_state_run_(&player_t::tick_run)
+        , fsm_state_slide_(&player_t::tick_slide)
+        , dx_(0.f)
     {
         pos_[0] = pos_[1] = vec2f_t{64, 64};
-    }
-
-    void move(const vec2f_t & dir, bool jump) {
-
-        const float _DAMPING = .93f;
-        const float _FRICTION = 0.2f;
-        const float _GRAVITY = 0.4f;
-        const float _JUMP = 9.f;
-        const float _XSPEED = 1.f;
-        const float _XLIMIT = 3.f;
-
-        vec2f_t vel = pos_[1] - pos_[0];
-        pos_[0] = pos_[1];
-
-        vel += vec2f_t{ 0.f, _GRAVITY };
-        vel += dir * _XSPEED;
-        vel.x = clampv(-_XLIMIT, vel.x, _XLIMIT);
-
-        // integrate
-        pos_[1] = pos_[0] + vel * _DAMPING;
-
-        bool jmp = false;
-        vec2f_t res;
-        if (service_->map_->collide(bound(), res)) {
-            pos_[1] += res;
-            if (res.y < 0.f) {
-
-                pos_[0].x = lerp(pos_[0].x, pos_[1].x, _FRICTION);
-
-                jmp = jump;
-            }
-        }
-
-        if (jmp) {
-            pos_[0] += vec2f_t{ 0.f, _JUMP };
-        }
     }
 
     rectf_t bound() const {
@@ -71,17 +50,146 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             pos_[1].y };
     }
 
+    void tick_run() {
+        vec2f_t res;
+        if (!service_->map_->collide(bound(), res)) {
+            fsm_.state_change(fsm_state_air_);
+            return;
+        }
+        else {
+            // reduce size slightly to ensure continuous collision
+//            res.y -= signv(res.y);
+            // apply collision response as impulse
+            pos_[1] += res;
+            // find velocity (verlet)
+            const vec2f_t vel = pos_[1] - pos_[0];
+            // integrate
+            pos_[0] = pos_[1];
+            pos_[1] += vel + vec2f_t {dx_, 0.f};
+            // ground friction
+            pos_[0].x = lerp(pos_[0].x, pos_[1].x, 0.4f);
+        }
+    }
+
+    void tick_air() {
+        const float _GRAVITY = 0.4f;
+
+        vec2f_t res;
+        if (service_->map_->collide(bound(), res)) {
+            const vec2f_t vel = pos_[1] - pos_[0];
+            const bool falling = vel.y > 0.f;
+            // feet landed on something
+            if (res.y < 0.f && falling) {
+                fsm_.state_change(fsm_state_run_);
+                return;
+            }
+            // being pushed in the x axis
+            if (absv(res.x) >= 0.f && (res.y == 0.f)) {
+                if (signv(res.x) != signv(vel.x)) {
+                    fsm_.state_change(fsm_state_slide_);
+                    return;
+                }
+            }
+            // apply collision as impulse
+            pos_[1] += res;
+            //
+            if (res.y > 0.f) {
+                pos_[0].y = pos_[1].y;
+            }
+        }
+        // glide threw the air
+        {
+            // find velocity (verlet)
+            const vec2f_t vel = pos_[1] - pos_[0];
+            // integrate
+            pos_[0] = pos_[1];
+            pos_[1] += vel + vec2f_t{dx_, _GRAVITY};
+        }
+        // air resistance
+        {
+            pos_[0].x = lerp(pos_[0].x, pos_[1].x, 0.2f);
+        }
+    }
+
+    void tick_slide() {
+        const float _GRAVITY = 0.4f;
+
+        const vec2f_t vel = pos_[1] - pos_[0];
+        const bool falling = vel.y > 0.f;
+        vec2f_t res;
+        if (service_->map_->collide(bound(), res)) {
+            // feet landed on something
+            if (res.y < 0.f && falling) {
+                fsm_.state_change(fsm_state_run_);
+                return;
+            }
+            // reduce size slightly to ensure continuous collision
+            res.x -= signv(res.x);
+            // apply resolution as simple translate
+            pos_[1].x += res.x;
+            pos_[0].x = pos_[1].x;
+            // find velocity (verlet)
+            const vec2f_t vel = pos_[1] - pos_[0];
+            // integrate
+            pos_[0] = pos_[1];
+            pos_[1] += vel + vec2f_t{0.f, _GRAVITY};
+            //
+            pos_[0].y = lerp(pos_[0].y, pos_[1].y, 0.4f);
+        }
+        else {
+            // no collision so falling
+            fsm_.state_change(fsm_state_air_);
+            return;
+        }
+    }
+
+    void jump() {
+        if (fsm_.state() == fsm_state_run_) {
+            pos_[0].y += 6.f;
+        }
+        if (fsm_.state() == fsm_state_slide_) {
+
+            rectf_t b = bound();
+            b.x0 -= 2;
+            b.x1 += 2;
+
+            vec2f_t res;
+            if (service_->map_->collide(b, res)) {
+                if (res.x > 0.f) {
+                    pos_[1] += vec2f_t {3,-3};
+                }
+                if (res.x < 0.f) {
+                    pos_[1] += vec2f_t {-3,-3};
+                }
+            }
+        }
+    }
+
+    void move(float dx) {
+        dx_ = dx;
+    }
+
     virtual void tick() override {
+        // tick the fsm
+        if (fsm_.empty()) {
+            fsm_.state_push(fsm_state_air_);
+        }
+        fsm_.tick();
 
-        const uint8_t * keys = SDL_GetKeyState(nullptr);
-        float dx = 0.f;
+        if (fsm_.state() == fsm_state_run_) {
+            service_->draw_->colour_ = 0xff0000;
+            service_->draw_->rect(recti_t{8, 8, 16, 16});
+        }
+        if (fsm_.state() == fsm_state_air_) {
+            service_->draw_->colour_ = 0x00ff00;
+            service_->draw_->rect(recti_t{8, 8, 16, 16});
+        }
+        if (fsm_.state() == fsm_state_slide_) {
+            service_->draw_->colour_ = 0x0000ff;
+            service_->draw_->rect(recti_t{8, 8, 16, 16});
+        }
 
-        if (keys[SDLK_LEFT]) dx -= 1.f;
-        if (keys[SDLK_RIGHT]) dx += 1.f;
-
-        bool jump = keys[SDLK_UP] != 0;
-        move(vec2f_t{dx, 0.f}, jump);
-
+        // draw the player
         service_->draw_->colour_ = 0x406080;
         service_->draw_->rect(recti_t(bound()));
     }
@@ -177,8 +285,14 @@ struct app_t {
                 return false;
             }
             if (event.type == SDL_KEYDOWN) {
-                if (event.key.keysym.sym == SDLK_ESCAPE) {
+
+                switch (event.key.keysym.sym) {
+                case (SDLK_ESCAPE):
                     return false;
+
+                case (SDLK_UP):
+                    player_->cast<player_t>().jump();
+                    break;
                 }
             }
         }
@@ -189,6 +303,17 @@ struct app_t {
         draw_.colour_ = 0x202020;
         draw_.clear();
         map_draw();
+
+        float dx = 0.f;
+        {
+            const uint8_t *key = SDL_GetKeyState(nullptr);
+            dx += key[SDLK_LEFT] ? -1.f : 0.f;
+            dx += key[SDLK_RIGHT] ? 1.f : 0.f;
+        }
+
+        player_t & player = player_->cast<player_t>();
+        player.move(dx);
+
         factory_.tick();
         return true;
     }

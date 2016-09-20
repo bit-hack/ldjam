@@ -6,11 +6,6 @@ namespace {
     constexpr type_t select_abs_min(const type_t & a, const type_t & b) {
         return (absv(a) < absv(b)) ? a : b;
     }
-
-    template <typename type_t>
-    constexpr type_t select_abs_max(const type_t & a, const type_t & b) {
-        return (absv(a) > absv(b)) ? a : b;
-    }
 }
 
 bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
@@ -160,7 +155,40 @@ bool collision_map_t::collide_alt(const rectf_t &r, vec2f_t &out) {
 }
 
 bool collision_map_t::collide(const vec2f_t &p, vec2f_t &out) {
-    return false;
+    // find point to map coordinates
+    int32_t tx = clampv(0, quantize<int32_t>(p.x, cell_size_.x), size_.x-1);
+    int32_t ty = clampv(0, quantize<int32_t>(p.y, cell_size_.y), size_.y-1);
+    // get the flags for this tile we are on
+    const uint8_t t = get(vec2i_t{tx, ty});
+    // non solid tiles do not affect the resolver
+    if ((t & e_tile_solid) == 0) {
+        return false;
+    }
+    // find the full size tile
+    const rectf_t b {
+        float(tx+0) * cell_size_.x,
+        float(ty+0) * cell_size_.y,
+        float(tx+1) * cell_size_.x,
+        float(ty+1) * cell_size_.y };
+    // x axis resolution
+    float dx = select_abs_min(
+            (t&e_tile_push_right) ? b.x1 - p.x : cell_size_.x,
+            (t&e_tile_push_left) ? b.x0 - p.x :-cell_size_.x);
+    // y axis resolution
+    float dy = select_abs_min(
+            (t&e_tile_push_down) ? b.y1 - p.y : cell_size_.y,
+            (t&e_tile_push_up) ? b.y0 - p.y :-cell_size_.y);
+    // select min split
+    if (absv(dx) < absv(dy)) {
+        out.x = dx;
+        out.y = 0.f;
+    }
+    else {
+        out.x = 0.f;
+        out.y = dy;
+    }
+    // collision took place
+    return true;
 }
 
 bool collision_map_t::raycast(const vec2f_t &p0, const vec2f_t &p1, vec2f_t &hit) {

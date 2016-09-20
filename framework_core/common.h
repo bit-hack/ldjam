@@ -7,6 +7,11 @@ const float C_PI = 3.14159265359f;
 const float C_2PI = 6.28318530718f;
 
 template <typename type_t>
+constexpr type_t signv(const type_t v) {
+    return (v==0) ? 0 : ((v>0) ? 1 : -1);
+}
+
+template <typename type_t>
 void swapv(type_t & a, type_t & b) {
     type_t c = a; a = b; b = c;
 }

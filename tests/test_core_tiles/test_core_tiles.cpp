@@ -139,6 +139,20 @@ void test_collision_alt() {
     draw_.rect(recti_t(rect));
 }
 
+void test_collision_point() {
+    int32_t mx, my;
+    SDL_GetMouseState(&mx, &my);
+
+    draw_.colour_ = 0x00ff00;
+
+    vec2f_t res;
+    if (map_.collide(vec2f_t{float(mx), float(my)}, res)) {
+        mx += res.x;
+        my += res.y;
+        draw_.rect(recti_t{mx-1, my-1, mx+1, my+1});
+    }
+}
+
 struct test_t {
     const char * name_;
     void (*func_)();
@@ -147,9 +161,10 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 2> tests = {{
+std::array<test_t, 3> tests = {{
     TEST(test_collision),
-    TEST(test_collision_alt)
+    TEST(test_collision_alt),
+    TEST(test_collision_point)
 }};
 
 int main(const int argc, char *args[]) {
