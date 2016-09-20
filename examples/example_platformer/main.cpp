@@ -8,22 +8,29 @@
 #include "../../framework_draw/draw.h"
 
 enum {
-    e_object_player
+    e_object_player,
+    e_object_camera
 };
 
 struct service_t {
+
+    object_factory_t * factory_;
     draw_t * draw_;
     collision_map_t * map_;
+
+    object_ref_t player_;
 };
 
 struct player_t : public object_ex_t<e_object_player, player_t> {
+    const int32_t _WIDTH = 4;
+    const int32_t _HEIGHT = 10;
+
+    typedef fsm_t<player_t> player_fsm_t;
+    typedef player_fsm_t::fsm_state_t player_state_t;
 
     service_t * service_;
     vec2f_t pos_[2];
     float dx_;
-
-    typedef fsm_t<player_t> player_fsm_t;
-    typedef player_fsm_t::fsm_state_t player_state_t;
 
     player_fsm_t fsm_;
     player_state_t fsm_state_air_; // falling jumping
@@ -44,38 +51,58 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
 
     rectf_t bound() const {
         return rectf_t{
-            pos_[1].x-4,
-            pos_[1].y-10,
-            pos_[1].x+4,
+            pos_[1].x-_WIDTH,
+            pos_[1].y-_HEIGHT,
+            pos_[1].x+_WIDTH,
             pos_[1].y };
     }
 
+    // bound swept in size by velocity
+    rectf_t swept_bound() const {
+        rectf_t fat_bound = bound();
+        const vec2f_t vel = pos_[1] - pos_[0];
+        fat_bound.x0 -= max2(vel.x, 0.f);
+        fat_bound.y0 -= max2(vel.y, 0.f);
+        fat_bound.x1 -= min2(vel.x, 0.f);
+        fat_bound.y1 -= min2(vel.y, 0.f);
+        return fat_bound;
+    }
+
     void tick_run() {
+        const float _GRAVITY  = .4f;
+        const float _FRICTION = 0.3f;
+        const float _Y_FRINGE = 1.f;
+
+        rectf_t bound = swept_bound();
+        bound.y1 += _Y_FRINGE;
+
         vec2f_t res;
-        if (!service_->map_->collide(bound(), res)) {
+        if (!service_->map_->collide(bound, res)) {
             fsm_.state_change(fsm_state_air_);
             return;
         }
         else {
             // reduce size slightly to ensure continuous collision
-//            res.y -= signv(res.y);
+            res.y -= signv<float>(res.y) * _Y_FRINGE;
             // apply collision response as impulse
             pos_[1] += res;
             // find velocity (verlet)
             const vec2f_t vel = pos_[1] - pos_[0];
             // integrate
             pos_[0] = pos_[1];
-            pos_[1] += vel + vec2f_t {dx_, 0.f};
+            pos_[1] += vel + vec2f_t {dx_, _GRAVITY};
             // ground friction
-            pos_[0].x = lerp(pos_[0].x, pos_[1].x, 0.4f);
+            pos_[0].x = lerp(pos_[0].x, pos_[1].x, _FRICTION);
         }
     }
 
     void tick_air() {
-        const float _GRAVITY = 0.4f;
+        const float _GRAVITY  = .4f;
+        const float _X_RESIST = .2f;
+        const float _Y_RESIST = .04f;
 
         vec2f_t res;
-        if (service_->map_->collide(bound(), res)) {
+        if (service_->map_->collide(swept_bound(), res)) {
             const vec2f_t vel = pos_[1] - pos_[0];
             const bool falling = vel.y > 0.f;
             // feet landed on something
@@ -107,62 +134,77 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
         }
         // air resistance
         {
-            pos_[0].x = lerp(pos_[0].x, pos_[1].x, 0.2f);
+            pos_[0].x = lerp(pos_[0].x, pos_[1].x, _X_RESIST);
+            pos_[0].y = lerp(pos_[0].y, pos_[1].y, _Y_RESIST);
         }
     }
 
     void tick_slide() {
         const float _GRAVITY = 0.4f;
+        const float _FRICTION = 0.4f;
 
-        const vec2f_t vel = pos_[1] - pos_[0];
-        const bool falling = vel.y > 0.f;
+        const bool falling = (pos_[1] - pos_[0]).y > 0.f;
         vec2f_t res;
-        if (service_->map_->collide(bound(), res)) {
-            // feet landed on something
-            if (res.y < 0.f && falling) {
-                fsm_.state_change(fsm_state_run_);
-                return;
-            }
-            // reduce size slightly to ensure continuous collision
-            res.x -= signv(res.x);
-            // apply resolution as simple translate
-            pos_[1].x += res.x;
-            pos_[0].x = pos_[1].x;
-            // find velocity (verlet)
-            const vec2f_t vel = pos_[1] - pos_[0];
-            // integrate
-            pos_[0] = pos_[1];
-            pos_[1] += vel + vec2f_t{0.f, _GRAVITY};
-            //
-            pos_[0].y = lerp(pos_[0].y, pos_[1].y, 0.4f);
-        }
-        else {
+        if (!service_->map_->collide(swept_bound(), res)) {
             // no collision so falling
             fsm_.state_change(fsm_state_air_);
             return;
         }
+        // feet landed on something
+        if (res.y < 0.f && falling) {
+            fsm_.state_change(fsm_state_run_);
+            return;
+        }
+        // reduce size slightly to ensure continuous collision
+        res.x -= signv(res.x);
+        // apply resolution as simple translate
+        pos_[1].x += res.x;
+        pos_[0].x = pos_[1].x;
+        // find velocity (verlet)
+        const vec2f_t vel = pos_[1] - pos_[0];
+        // integrate
+        pos_[0] = pos_[1];
+        pos_[1] += vel + vec2f_t{0.f, _GRAVITY};
+        // wall friction
+        pos_[0].y = lerp(pos_[0].y, pos_[1].y, _FRICTION);
     }
 
     void jump() {
+        const float _WJMP_Y = 4.f;
+        const float _WJMP_X = 3.f;
+        const float _JMP_SIZE = 4.f;
+        const int32_t _X_SENSE = 2;
+        // if we are on the ground
         if (fsm_.state() == fsm_state_run_) {
-            pos_[0].y += 6.f;
+            pos_[0].y += _JMP_SIZE;
+            fsm_.state_change(fsm_state_air_);
+            return;
         }
+        // if we are sliding
         if (fsm_.state() == fsm_state_slide_) {
-
             rectf_t b = bound();
-            b.x0 -= 2;
-            b.x1 += 2;
-
+            b.x0 -= _X_SENSE;
+            b.x1 += _X_SENSE;
             vec2f_t res;
             if (service_->map_->collide(b, res)) {
                 if (res.x > 0.f) {
-                    pos_[1] += vec2f_t {3,-3};
+                    pos_[1] += vec2f_t {_WJMP_X,-_WJMP_Y};
                 }
                 if (res.x < 0.f) {
-                    pos_[1] += vec2f_t {-3,-3};
+                    pos_[1] += vec2f_t {-_WJMP_X,-_WJMP_Y};
                 }
+                fsm_.state_change(fsm_state_air_);
+                return;
             }
         }
+    }
+
+    vec2f_t get_pos() const {
+        return pos_[1];
+    }
+
+    vec2f_t get_velocity() const {
+        return pos_[1] - pos_[0];
     }
 
     void move(float dx) {
@@ -189,9 +231,44 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             service_->draw_->rect(recti_t{8, 8, 16, 16});
         }
 
-        // draw the player
+        service_->draw_->colour_ = 0x408060;
+        service_->draw_->rect(recti_t(swept_bound()));
         service_->draw_->colour_ = 0x406080;
         service_->draw_->rect(recti_t(bound()));
+    }
+};
+
+struct camera_t : public object_ex_t<e_object_camera, camera_t> {
+
+    service_t & service_;
+
+    vec2f_t target_;
+    vec2f_t pos_;
+
+    camera_t(object_service_t s)
+        : service_(*reinterpret_cast<service_t*>(s))
+        , pos_{32, 32}
+    {
+    }
+
+    virtual void tick() override {
+        auto & p = service_.player_;
+        if (p.valid()) {
+            player_t & player = p->cast<player_t>();
+            vec2f_t pos = player.get_pos();
+            vec2f_t vel = player.get_velocity();
+
+            target_ = vec2f_t::lerp(target_, pos + vel * 12.f, .5f);
+        }
+
+        // <---- raycast(player, target) and limit to intersection point
+
+        service_.draw_->colour_ = 0x509030;
+        service_.draw_->plot(vec2i_t(pos_));
+        service_.draw_->colour_ = 0x304050;
+        service_.draw_->plot(vec2i_t(target_));
+
+        pos_ = vec2f_t::lerp(pos_, target_, 0.2f);
     }
 };
 
@@ -201,15 +278,18 @@ struct app_t {
     static const int32_t _MAP_HEIGHT = 240 / 16;
 
     SDL_Surface * screen_;
-    draw_t draw_;
-    timing_t<uint32_t> timer_;
     bitmap_t target_;
+
     bool active_;
-    collision_map_t map_;
+
+    timing_t<uint32_t> timer_;
     random_t rand_;
-    service_t service_;
+
+    draw_t draw_;
+    collision_map_t map_;
     object_factory_t factory_;
-    object_ref_t player_;
+
+    service_t service_;
 
     app_t()
         : screen_(nullptr)
@@ -291,7 +371,7 @@ struct app_t {
                     return false;
 
                 case (SDLK_UP):
-                    player_->cast<player_t>().jump();
+                    service_.player_->cast<player_t>().jump();
                     break;
                 }
             }
@@ -311,7 +391,7 @@ struct app_t {
             dx += key[SDLK_RIGHT] ? 1.f : 0.f;
         }
 
-        player_t & player = player_->cast<player_t>();
+        player_t & player = service_.player_->cast<player_t>();
         player.move(dx);
 
         factory_.tick();
@@ -325,8 +405,13 @@ struct app_t {
         if (!map_init()) {
             return false;
         }
+
         factory_.add_creator<player_t>();
-        player_ = factory_.create(e_object_player);
+        service_.player_ = factory_.create(e_object_player);
+
+        factory_.add_creator<camera_t>();
+        object_ref_t camera = factory_.create(e_object_camera);
+
         while (active_) {
             if (!poll_events()) {
                 return false;
