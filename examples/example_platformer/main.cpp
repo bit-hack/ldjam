@@ -183,8 +183,10 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
         // if we are sliding
         if (fsm_.state() == fsm_state_slide_) {
             rectf_t b = bound();
+            // fatten bound in x axis
             b.x0 -= _X_SENSE;
             b.x1 += _X_SENSE;
+            // test for collision to deduce slide side
             vec2f_t res;
             if (service_->map_->collide(b, res)) {
                 if (res.x > 0.f) {
@@ -217,7 +219,7 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             fsm_.state_push(fsm_state_air_);
         }
         fsm_.tick();
-
+        // fsm state indicator
         if (fsm_.state() == fsm_state_run_) {
             service_->draw_->colour_ = 0xff0000;
             service_->draw_->rect(recti_t{8, 8, 16, 16});
@@ -230,7 +232,7 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             service_->draw_->colour_ = 0x0000ff;
             service_->draw_->rect(recti_t{8, 8, 16, 16});
         }
-
+        // draw player body
         service_->draw_->colour_ = 0x408060;
         service_->draw_->rect(recti_t(swept_bound()));
         service_->draw_->colour_ = 0x406080;
@@ -254,18 +256,20 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
     virtual void tick() override {
         // if we have a valid player
         if (service_.player_.valid()) {
-            // get player stats
+            // get player state
             player_t & player = service_.player_->cast<player_t>();
             const vec2f_t pos = player.get_pos();
             const vec2f_t vel = player.get_velocity();
             // project where the player is going
             const vec2f_t proj = pos + vel * 12.f;
-            // try to raycast player to point
+            // raycast from player to future point
             vec2f_t hit;
             if (service_.map_->raycast(pos, proj, hit)) {
+                // ease towards map intersection
                 target_ = vec2f_t::lerp(target_, hit, .5f);
             }
             else {
+                // ease towards future projection
                 target_ = vec2f_t::lerp(target_, proj, .5f);
             }
         }
@@ -382,9 +386,10 @@ struct app_t {
                 switch (event.key.keysym.sym) {
                 case (SDLK_ESCAPE):
                     return false;
-
                 case (SDLK_UP):
                     service_.player_->cast<player_t>().jump();
+                    break;
+                default:
                     break;
                 }
             }

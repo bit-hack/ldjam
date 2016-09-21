@@ -192,9 +192,7 @@ bool collision_map_t::collide(const vec2f_t &p, vec2f_t &out) {
 }
 
 bool collision_map_t::raycast(const vec2f_t &p0, const vec2f_t &p1, vec2f_t &hit) {
-
     // todo!!!
-
     return false;
 }
 

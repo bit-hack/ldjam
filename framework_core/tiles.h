@@ -91,6 +91,10 @@ struct collision_map_t {
         }
     }
 
+    vec2i_t cell_size() const {
+        return cell_size_;
+    }
+
 protected:
 
     const vec2i_t size_;
