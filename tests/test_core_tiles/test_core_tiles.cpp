@@ -155,81 +155,6 @@ void test_collision_point() {
     }
 }
 
-namespace {
-    template <typename type_t, typename out_t>
-    constexpr out_t downsample(const type_t value, const type_t grid) {
-        return out_t((value<0?value-grid:value) / grid);
-    }
-
-    template <typename type_t>
-    constexpr type_t grid_align(const type_t value, const type_t grid) {
-        return downsample<type_t, int32_t>(value, grid) * grid;
-    }
-
-    template <typename type_t>
-    type_t grid_fpart(const type_t a, const int32_t b, const int32_t nudge) {
-        const float ia = (a / float(b));
-        return int32_t(ia + nudge) - ia;
-    }
-
-    bool raycast(const vec2f_t & from, const vec2f_t & to, vec2f_t & hit) {
-        // cell size
-        const float csx = map_.cell_size().x;
-        const float csy = map_.cell_size().y;
-        // vector delta
-        const float dx = to.x - from.x;
-        const float dy = to.y - from.y;
-        // gradients
-        const float step_x = absv(dy) / dx;
-        const float step_y = absv(dx) / dy;
-        // direction sign vectors
-        const int32_t sign_x = step_x > 0 ? 1 : -1;
-        const int32_t sign_y = step_y > 0 ? 1 : -1;
-        // squared length for both axes
-        const float pay_x = sqrtf((step_x * step_x) + (1 * 1));  // squared length traveled stepping the x axis
-        const float pay_y = sqrtf((step_y * step_y) + (1 * 1));  // squared length traveled stepping the y axis
-        // starting accumulations
-        float acc_x = (dx < 0) ?
-                      ((from.x/csx - int32_t(from.x/csx)) * pay_x) :
-                      ((int32_t(from.x/csx + 1) - from.x/csx) * pay_x);
-        float acc_y = (dy < 0) ?
-                      ((from.y/csy - int32_t(from.y/csy)) * pay_y) :
-                      ((int32_t(from.y/csy + 1) - from.y/csy) * pay_y);
-        // starting integer coordinate
-        vec2i_t int_pos = {
-            downsample<float, int32_t>(from.x, csx),
-            downsample<float, int32_t>(from.y, csy)
-        };
-        // while we have not hit anything
-        while (!map_.is_solid(int_pos)) {
-
-            draw_.colour_ = 0x334455;
-            draw_.rect(recti_t(int_pos.x * csx,
-                               int_pos.y * csy,
-                               csx,
-                               csy,
-                               recti_t::e_relative));
-
-            if (acc_x < acc_y) {
-                // step x
-                int_pos.x += sign_x;
-                acc_x += pay_x;
-            }
-            else {
-                // step y
-                int_pos.y += sign_y;
-                acc_y += pay_y;
-            }
-        }
-
-        // todo <--- at this stage we know the tile we hit so do an intersection
-        //           test to find the exact location.
-        //           or
-        //           use the length in out accumulator to work out the exact hit point
-        return true;
-    }
-}
-
 void test_raycast_1() {
 
     vec2i_t mouse;
@@ -240,11 +165,14 @@ void test_raycast_1() {
     }
 
     vec2f_t hit;
-    raycast(vec2f_t(point_), vec2f_t(mouse), hit);
+    map_.raycast(vec2f_t(point_), vec2f_t(mouse), hit);
 
     draw_.colour_ = 0x667788;
     draw_.circle(point_, 3);
     draw_.line(mouse, point_);
+
+    draw_.colour_ = 0x00ff00;
+    draw_.circle(vec2i_t(hit), 3);
 }
 
 void test_raycast_2() {
@@ -262,9 +190,9 @@ void test_raycast_2() {
         draw_.plot(vec2i_t(targ));
 
         vec2f_t hit;
-        if (!map_.raycast(vec2f_t(mouse), targ, hit)) {
-            draw_.colour_ = 0xff00;
-            draw_.plot(vec2i_t(hit));
+        if (map_.raycast(vec2f_t(mouse), targ, hit)) {
+            draw_.colour_ = 0x0;
+            draw_.line(hit, targ);
         }
     }
 }

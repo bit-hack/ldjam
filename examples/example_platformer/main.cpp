@@ -264,7 +264,8 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
             const vec2f_t proj = pos + vel * 12.f;
             // raycast from player to future point
             vec2f_t hit;
-            if (service_.map_->raycast(pos, proj, hit)) {
+            if (service_.map_->raycast(pos + vec2f_t{0, -8}, proj, hit)) {
+                hit = vec2f_t::nearest(pos, hit, proj);
                 // ease towards map intersection
                 target_ = vec2f_t::lerp(target_, hit, .5f);
             }
@@ -279,7 +280,7 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
         service_.draw_->colour_ = 0x509030;
         service_.draw_->plot(vec2i_t(pos_));
         service_.draw_->colour_ = 0x304050;
-        service_.draw_->plot(vec2i_t(target_));
+        service_.draw_->circle(vec2i_t(target_), 3);
         // draw screen frame
         service_.draw_->colour_ = 0xa0a0a0;
         service_.draw_->line(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});

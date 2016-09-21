@@ -44,6 +44,17 @@ struct vec2_t {
     {
     }
 
+    static vec2_t nearest(const vec2_t & origin,
+                          const vec2_t & a,
+                          const vec2_t & b) {
+        if (distance_sqr(origin, a) < distance_sqr(origin, b)) {
+            return a;
+        }
+        else {
+            return b;
+        }
+    }
+
     static float sqrt(const float& x)
     {
         return sqrtf(x);

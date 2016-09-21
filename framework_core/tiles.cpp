@@ -191,9 +191,154 @@ bool collision_map_t::collide(const vec2f_t &p, vec2f_t &out) {
     return true;
 }
 
-bool collision_map_t::raycast(const vec2f_t &p0, const vec2f_t &p1, vec2f_t &hit) {
-    // todo!!!
-    return false;
+bool collision_map_t::raycast(const vec2f_t &a, const vec2f_t &b, vec2f_t &hit )
+{
+    float csx = cell_size_.x;
+    float csy = cell_size_.y;
+
+    float x1 = a.x/csx; float y1 = a.y/csy;
+    float x2 = b.x/csx; float y2 = b.y/csy;
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- SETUP
+    // starting positions
+    float x_px = x1, x_py = y1;
+    float y_px = x1, y_py = y1;
+    // direction vector
+    float dx = x2-x1, dy = y2-y1;
+
+    float hx1 = 0, hy1 = 0;
+    float hx2 = 0, hy2 = 0;
+
+    int ix = 0, iy  = 0;
+
+    int _1x, _1y;
+    int _2x, _2y;
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- Y AXIS INTERSECTIONS
+    if ( dy > 0.0f )
+    {
+        //
+        float yp = 0;
+        if ( dy > 0.f ) yp = dx / dy;
+        // grid align
+        y_px += (ipartv( y_py + 1 ) - y_py ) * yp;
+        iy    = (int)(y1 + 1);
+
+        for ( ;; )
+        {
+            // check for hit
+            if (is_solid(vec2i_t(y_px, iy)))
+            {
+                _1x = (int)y_px;
+                _1y = iy;
+                // save the hit point
+                hx1  = y_px;
+                hy1  = (float)iy;
+                y_py = (float)iy;
+                break;
+            }
+            // step
+            y_px += yp;
+            iy   += 1;
+        }
+    }
+    else // if ( dy < 0.0f )
+    {
+        // check this when dx < 0.0f also
+
+        float yp = dx / dy;
+        // grid align
+        y_px -= (y_py - ipartv( y_py ) ) * yp;
+        iy    = (int)(y_py);
+        for ( ;; )
+        {
+            // check for hit
+            if (is_solid(vec2i_t(y_px, iy-1)))
+            {
+                _1x = (int)y_px;
+                _1y = iy-1;
+                // save the hit point
+                y_py = (float)iy;
+                hx1  = y_px;
+                hy1  = (float)iy;
+                break;
+            }
+            // step
+            y_px -= yp;
+            iy   -= 1;
+        }
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- X AXIS INTERSECTIONS
+    if ( dx > 0.0f )
+    {
+        float xp = 0;
+        if ( dx > 0 ) xp = dy / dx;
+        // grid align
+        x_py += (ipartv( x_px + 1 ) - x_px ) * xp;
+        ix    = int32_t(x_px+1);
+        for ( ;; )
+        {
+            // check for hit
+            if (is_solid(vec2i_t(ix, x_py)))
+            {
+                _2x = ix;
+                _2y = (int)x_py;
+                // save the hit point
+                x_px = (float)ix;
+                hx2  = (float)ix;
+                hy2  = x_py;
+                break;
+            }
+            // step
+            ix   += 1;
+            x_py += xp;
+        }
+    }
+    else // if ( dx < 0.0f )
+    {
+        // check this when dy < 0.0f also
+
+        float xp = dy / dx; // two negs can make a positive here
+        // grid align
+        x_py -= (x_px - ipartv( x_px )) * xp;
+        ix    = int32_t(x_px);
+        for ( ;; )
+        {
+            // check for hit
+            if (is_solid(vec2i_t(ix-1, x_py)))
+            {
+                _2x = ix-1;
+                _2y = (int)x_py;
+                // save the hit point
+                x_px = (float)ix;
+                hx2  = x_px;
+                hy2  = x_py;
+                break;
+            }
+            // step
+            ix   -= 1;
+            x_py -= xp;
+        }
+    }
+
+    // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- INTERSECTION SELECTION
+    float dx1 = (x_px-x1) * (x_px-x1);
+    float dy1 = (x_py-y1) * (x_py-y1);
+    float dx2 = (y_px-x1) * (y_px-x1);
+    float dy2 = (y_py-y1) * (y_py-y1);
+
+    // pick closest hit point
+    if ((dx1+dy1) < (dx2+dy2))
+    {
+        hit = vec2f_t{hx2*csx, hy2*csy};
+    }
+    else
+    {
+        hit = vec2f_t{hx1*csx, hy1*csy};
+    }
+
+    return true;
 }
 
 bool collision_map_t::preprocess() {

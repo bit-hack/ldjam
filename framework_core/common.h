@@ -1,10 +1,15 @@
 #pragma once
 
 #include <cassert>
+#include <cstdint>
 
 namespace {
 const float C_PI = 3.14159265359f;
 const float C_2PI = 6.28318530718f;
+
+constexpr int32_t ipartv(float v) {
+    return int32_t(v);
+}
 
 template <typename type_t>
 constexpr type_t signv(const type_t v) {
