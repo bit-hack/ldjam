@@ -252,23 +252,36 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
     }
 
     virtual void tick() override {
-        auto & p = service_.player_;
-        if (p.valid()) {
-            player_t & player = p->cast<player_t>();
-            vec2f_t pos = player.get_pos();
-            vec2f_t vel = player.get_velocity();
-
-            target_ = vec2f_t::lerp(target_, pos + vel * 12.f, .5f);
+        // if we have a valid player
+        if (service_.player_.valid()) {
+            // get player stats
+            player_t & player = service_.player_->cast<player_t>();
+            const vec2f_t pos = player.get_pos();
+            const vec2f_t vel = player.get_velocity();
+            // project where the player is going
+            const vec2f_t proj = pos + vel * 12.f;
+            // try to raycast player to point
+            vec2f_t hit;
+            if (service_.map_->raycast(pos, proj, hit)) {
+                target_ = vec2f_t::lerp(target_, hit, .5f);
+            }
+            else {
+                target_ = vec2f_t::lerp(target_, proj, .5f);
+            }
         }
-
-        // <---- raycast(player, target) and limit to intersection point
-
+        // smooth out camera position
+        pos_ = vec2f_t::lerp(pos_, target_, 0.2f);
+        // draw position and target
         service_.draw_->colour_ = 0x509030;
         service_.draw_->plot(vec2i_t(pos_));
         service_.draw_->colour_ = 0x304050;
         service_.draw_->plot(vec2i_t(target_));
-
-        pos_ = vec2f_t::lerp(pos_, target_, 0.2f);
+        // draw screen frame
+        service_.draw_->colour_ = 0xa0a0a0;
+        service_.draw_->line(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});
+        service_.draw_->line(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{ 64,  48});
+        service_.draw_->line(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{-64, -48});
+        service_.draw_->line(pos_+vec2f_t{ 64,  48}, pos_+vec2f_t{ 64, -48});
     }
 };
 
