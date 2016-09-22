@@ -170,7 +170,7 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
     }
 
     void jump() {
-        const float _WJMP_Y = 4.f;
+        const float _WJMP_Y = 6.f;
         const float _WJMP_X = 3.f;
         const float _JMP_SIZE = 4.f;
         const int32_t _X_SENSE = 2;
