@@ -1,7 +1,7 @@
 ## Todo
 
 ##### framework
-. add tilemap support
+. add tilemap support (partial done)
 . add pathfinder to tilemap
 . add animation test
 . add input/controller support +1
@@ -21,12 +21,15 @@
 . add vector noise
 
 ##### tilemap
+. move out into stand alone library
 . add A# pathfinder
 . add string pulling path finder
 . add navmesh generator
 . add edge list generator
 . variable number of planes
-. add raycasting to tilemap
+. add raycasting to tilemap (done)
+. add line of sight check
+. add potential fields
 
 ##### events
 . add event downcasting
