@@ -218,6 +218,11 @@ void _draw_t_blit(bitmap_t & target,
     if (c == recti_t::e_rect_overlap) {
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
+    //
+    if (hflip) {
+        const int32_t xshift = src_rect.x0 - info.src_rect_.x0;
+        src_rect.x1 -= xshift;
+    }
     // destination buffer setup
     const int32_t dst_pitch = target.width();
     uint32_t * dst =

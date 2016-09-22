@@ -124,17 +124,19 @@ void test_blit_clip() {
             return;
         }
     }
+
     draw_.key_ = 0x0;
     blit_info_t info;
     info.bitmap_ = &sprite_;
-    info.dst_pos_ = vec2i_t {int32_t(160 - 16 + sinf(time_) * 140), int32_t(64)};
-    info.src_rect_ = recti_t {0, 0, 31, 31};
+    info.dst_pos_ = vec2i_t {int32_t(160 - 12 + cosf(time_) * 138),
+                             int32_t(32+12) + sinf(time_ * 2.f) * 32};
+    info.src_rect_ = recti_t {2, 2, 29, 29};
     info.h_flip_ = false;
     info.type_ = e_blit_key;
     draw_.colour_ = random_.rand<uint32_t>();
     draw_.blit(info);
 
-    info.dst_pos_.y = 128;
+    info.dst_pos_.y += 128;
     info.h_flip_ = true;
     draw_.blit(info);
 }
@@ -273,7 +275,7 @@ int main(const int argc, char *args[]) {
         if (!pause) {
             if (timer_.frame()) {
                 //
-                time_ += 0.03f;
+                time_ += 0.04f;
                 if (time_ > C_2PI) time_ -= C_2PI;
                 // clear the screen
                 draw_.colour_ = 0x202020;
