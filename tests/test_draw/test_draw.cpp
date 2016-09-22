@@ -218,7 +218,7 @@ int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    int32_t test_index = 7;
+    int32_t test_index = 1;
     bool pause = false;
     bool active = true;
     while (active) {

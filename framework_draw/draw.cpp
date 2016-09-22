@@ -219,13 +219,13 @@ void _draw_t_blit(bitmap_t & target,
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
     // destination buffer setup
-    const uint32_t dst_pitch = target.width();
+    const int32_t dst_pitch = target.width();
     uint32_t * dst =
         target.data() +
         dst_rect.x0 +
         dst_rect.y0 * dst_pitch;
     // src buffer setup
-    const uint32_t src_pitch = info.bitmap_->width();
+    const int32_t src_pitch = info.bitmap_->width();
     const uint32_t * src =
         info.bitmap_->data() +
         src_rect.x0 +
