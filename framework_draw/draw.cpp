@@ -189,10 +189,13 @@ void _draw_t_clip(const recti_t & viewport,
     dst.y1 = min2(vp.y1, dst.y1);
 }
 
-template <uint32_t (*mode_t)(const uint32_t,
-                             const uint32_t,
-                             const uint32_t,
-                             const uint32_t)>
+// pixel blending function type
+typedef uint32_t pixel_func_t(const uint32_t,
+                              const uint32_t,
+                              const uint32_t,
+                              const uint32_t);
+
+template <pixel_func_t mode_t, bool hflip = false>
 void _draw_t_blit(bitmap_t & target,
                   const recti_t & viewport,
                   const blit_info_t & info,
@@ -230,7 +233,10 @@ void _draw_t_blit(bitmap_t & target,
     // main blitter loop
     for (int32_t y = 0; y <= dst_rect.dy(); y++) {
         for (int32_t x = 0; x <= dst_rect.dx(); x++) {
-            dst[x] = mode_t(src[x], dst[x], colour, key);
+            dst[x] = mode_t(src[hflip ? src_rect.dx() - x : x],
+                            dst[x],
+                            colour,
+                            key);
         }
         dst += dst_pitch;
         src += src_pitch;
@@ -277,16 +283,28 @@ void draw_t::blit(const blit_info_t & info) {
     // dispatch based on blend type
     switch (info.type_) {
     case (e_blit_opaque):
-        _draw_t_blit<mode_opaque>(*target_, viewport_, info, colour_, key_);
+        if (info.h_flip_)
+            _draw_t_blit<mode_opaque, true>(*target_, viewport_, info, colour_, key_);
+        else
+            _draw_t_blit<mode_opaque, false>(*target_, viewport_, info, colour_, key_);
         return;
     case (e_blit_key):
-        _draw_t_blit<mode_key>(*target_, viewport_, info, colour_, key_);
+        if (info.h_flip_)
+            _draw_t_blit<mode_key, true>(*target_, viewport_, info, colour_, key_);
+        else
+            _draw_t_blit<mode_key, false>(*target_, viewport_, info, colour_, key_);
         return;
     case (e_blit_gliss):
-        _draw_t_blit<mode_gliss>(*target_, viewport_, info, colour_, key_);
+        if (info.h_flip_)
+            _draw_t_blit<mode_gliss, true>(*target_, viewport_, info, colour_, key_);
+        else
+            _draw_t_blit<mode_gliss, false>(*target_, viewport_, info, colour_, key_);
         return;
     case (e_blit_mask):
-        _draw_t_blit<mode_mask>(*target_, viewport_, info, colour_, key_);
+        if (info.h_flip_)
+            _draw_t_blit<mode_mask, true>(*target_, viewport_, info, colour_, key_);
+        else
+            _draw_t_blit<mode_mask, false>(*target_, viewport_, info, colour_, key_);
         return;
     default:
         assert(!"unknown blend mode");

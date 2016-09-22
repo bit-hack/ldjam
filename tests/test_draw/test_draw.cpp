@@ -109,7 +109,7 @@ void test_blit() {
             int32_t(random_.rand<uint32_t>() % 320u),
             int32_t(random_.rand<uint32_t>() % 240u)};
         info.src_rect_ = recti_t {0, 0, 31, 31};
-        info.h_flip_ = false;
+        info.h_flip_ = (random_.rand() & 1) == 0;
         info.type_ = e_blit_key;
         draw_.colour_ = random_.rand<uint32_t>();
         draw_.blit(info);
