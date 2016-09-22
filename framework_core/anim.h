@@ -5,14 +5,11 @@
 #include <string>
 #include <vector>
 #include <queue>
+
 #include "random.h"
+#include "rect.h"
 
 namespace anim {
-struct rect_t {
-
-    int32_t x0, y0, x1, y1;
-};
-
 struct sequence_t {
 
     enum end_type_t {
@@ -123,29 +120,27 @@ struct sheet_t {
     {
     }
 
-    void add_frame(const rect_t& frame)
+    void add_frame(const recti_t& frame)
     {
         frame_.push_back(frame);
     }
 
     void add_grid(const int32_t cell_width,
-        const int32_t cell_height)
-    {
+                  const int32_t cell_height) {
+
         for (int32_t y = 0; y < height_; y += cell_height) {
             for (int32_t x = 0; x < width_; x += cell_width) {
                 frame_.push_back(
-                    rect_t{ x, y, cell_width, cell_height });
+                    recti_t( x, y, cell_width, cell_height, recti_t::e_relative));
             }
         }
     }
 
-    void clear()
-    {
+    void clear() {
         frame_.clear();
     }
 
-    const rect_t& get_frame(size_t index) const
-    {
+    const recti_t& get_frame(size_t index) const {
         assert((index < frame_.size()) && "no frame at this index");
         return frame_.at(index);
     }
@@ -153,7 +148,7 @@ struct sheet_t {
 protected:
     const int32_t width_;
     const int32_t height_;
-    std::vector<rect_t> frame_;
+    std::vector<recti_t> frame_;
 };
 
 struct anim_controller_t {
@@ -164,27 +159,23 @@ struct anim_controller_t {
     {
     }
 
-    void push_sequence(const sequence_t* sequence)
-    {
+    void push_sequence(const sequence_t* sequence) {
         state_.push_back(state_t(sequence));
     }
 
-    void set_sequence(const sequence_t* sequence)
-    {
+    void set_sequence(const sequence_t* sequence) {
         pop_sequence();
         push_sequence(sequence);
     }
 
-    void pop_sequence()
-    {
+    void pop_sequence() {
         if (state_.size()) {
             state_.pop_back();
         }
     }
 
-    bool tick(int32_t delta)
-    {
-
+    bool tick(int32_t delta) {
+        assert(sheet_);
         while (state_.size()) {
 
             state_t& state = state_.back();
@@ -243,12 +234,12 @@ struct anim_controller_t {
             }
                 break;
             case (sequence_t::e_op_hotspot):
-                state.offset_x_ = op.x_;
-                state.offset_y_ = op.y_;
-                break;
-            case (sequence_t::e_op_offset):
                 state.hotspot_x_ = op.x_;
                 state.hotspot_y_ = op.y_;
+                break;
+            case (sequence_t::e_op_offset):
+                state.offset_x_ = op.x_;
+                state.offset_y_ = op.y_;
                 break;
             default:
                 assert(!"unknown opcode");
@@ -263,8 +254,7 @@ struct anim_controller_t {
         return true;
     }
 
-    bool retrigger()
-    {
+    bool retrigger() {
         if (state_.size() == 0) {
             return false;
         }
@@ -273,8 +263,7 @@ struct anim_controller_t {
         return true;
     }
 
-    bool get_sequence(const sequence_t*& out) const
-    {
+    bool get_sequence(const sequence_t*& out) const {
         if (state_.size()) {
             out = state_.back().sequence_;
             return true;
@@ -282,8 +271,7 @@ struct anim_controller_t {
         return false;
     }
 
-    bool get_frame(rect_t& out) const
-    {
+    bool get_frame(recti_t& out) const {
         if (state_.size() == 0) {
             return false;
         }
@@ -292,8 +280,7 @@ struct anim_controller_t {
         return true;
     }
 
-    bool get_event(uint32_t& out)
-    {
+    bool get_event(uint32_t& out) {
         if (event_.size()) {
             out = event_.front();
             event_.pop();
@@ -302,33 +289,29 @@ struct anim_controller_t {
         return false;
     }
 
-    bool get_hotspot(int32_t& x_out, int32_t& y_out)
-    {
+    bool get_hotspot(int32_t& x_out, int32_t& y_out) {
         if (state_.size()) {
-            state_.back().hotspot_x_;
-            state_.back().hotspot_y_;
+            x_out = state_.back().hotspot_x_;
+            y_out = state_.back().hotspot_y_;
             return true;
         }
         return false;
     }
 
-    bool get_offset(int32_t& x_out, int32_t& y_out)
-    {
+    bool get_offset(int32_t& x_out, int32_t& y_out) {
         if (state_.size()) {
-            state_.back().offset_x_;
-            state_.back().offset_y_;
+            x_out = state_.back().offset_x_;
+            y_out = state_.back().offset_y_;
             return true;
         }
         return false;
     }
 
-    void set_sheet(const sheet_t* sheet)
-    {
+    void set_sheet(const sheet_t* sheet) {
         sheet_ = sheet;
     }
 
-    bool is_playing(const sequence_t* seq) const
-    {
+    bool is_playing(const sequence_t* seq) const {
         if (state_.size())
             return (state_.back().sequence_ == seq);
         else
@@ -352,7 +335,7 @@ protected:
         }
 
         const sequence_t* sequence_;
-        rect_t rect_;
+        recti_t rect_;
         int32_t interval_;
         int32_t pc_;
         int32_t delay_;

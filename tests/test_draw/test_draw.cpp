@@ -129,7 +129,7 @@ void test_blit_clip() {
     blit_info_t info;
     info.bitmap_ = &sprite_;
     info.dst_pos_ = vec2i_t {int32_t(160 - 12 + cosf(time_) * 138),
-                             int32_t(32+12) + sinf(time_ * 2.f) * 32};
+                             int32_t(32 + 12 + sinf(time_ * 2.f) * 32)};
     info.src_rect_ = recti_t {2, 2, 29, 29};
     info.h_flip_ = false;
     info.type_ = e_blit_key;

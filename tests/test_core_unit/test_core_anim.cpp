@@ -39,7 +39,7 @@ bool test_anim_1()
 
     for (int i = 0; i<10; ++i) {
         control.tick(1);
-        anim::rect_t frame;
+        recti_t frame;
         control.get_frame(frame);
     }
 

@@ -5,6 +5,7 @@
 #include "../../framework_core/objects.h"
 #include "../../framework_core/tiles.h"
 #include "../../framework_core/timer.h"
+#include "../../framework_core/anim.h"
 #include "../../framework_draw/draw.h"
 
 enum {
@@ -19,6 +20,79 @@ struct service_t {
     collision_map_t * map_;
 
     object_ref_t player_;
+};
+
+struct player_anim_t {
+
+    anim::sheet_t sheet_;
+
+    anim::sequence_t run_;
+    anim::sequence_t stand_;
+    anim::sequence_t jump_;
+    anim::sequence_t fall_;
+    anim::sequence_t slide_;
+    anim::sequence_t skid_;
+
+    anim::anim_controller_t controller_;
+
+    bitmap_t bitmap_;
+
+    enum {
+        e_foot_fall
+    };
+
+    player_anim_t()
+        : sheet_(108, 24)
+        , run_("run", anim::sequence_t::e_end_loop)
+        , stand_("stand", anim::sequence_t::e_end_hold)
+        , jump_("jump", anim::sequence_t::e_end_hold)
+        , fall_("fall", anim::sequence_t::e_end_hold)
+        , slide_("slide", anim::sequence_t::e_end_hold)
+        , skid_("skid", anim::sequence_t::e_end_hold)
+    {
+        sheet_.add_grid(12, 13);
+        controller_.set_sheet(&sheet_);
+        // construct animation sequences
+        run_.op_interval(3).op_offset(-6, -13)
+            .op_event(e_foot_fall).op_frame(1).op_frame(2)
+            .op_event(e_foot_fall).op_frame(3).op_frame(4);
+        stand_.op_offset(-6, -13).op_frame(0);
+        jump_ .op_offset(-6, -13).op_frame(5);
+        fall_ .op_offset(-6, -13).op_frame(6);
+        skid_ .op_offset(-6, -13).op_frame(7);
+        slide_.op_offset(-2, -13).op_frame(8);
+        // set to stand by default
+        controller_.push_sequence(&run_);
+        // load the sprite sheet
+        bitmap_t::load("assets/ninja.bmp", bitmap_);
+    }
+
+    void render(const vec2i_t & pos, draw_t & draw_) {
+        if (!bitmap_.valid()) {
+            return;
+        }
+        vec2i_t offset;
+        if (!controller_.get_offset(offset.x, offset.y)) {
+            return;
+        }
+        recti_t src;
+        if (!controller_.get_frame(src)) {
+            return;
+        }
+        blit_info_t info = {
+            &bitmap_,
+            pos + offset,
+            src,
+            e_blit_key,
+            false
+        };
+        draw_.key_ = 0xff00ff;
+        draw_.blit(info);
+    }
+
+    void tick(int32_t delta) {
+        controller_.tick(delta);
+    }
 };
 
 struct player_t : public object_ex_t<e_object_player, player_t> {
@@ -36,6 +110,8 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
     player_state_t fsm_state_air_; // falling jumping
     player_state_t fsm_state_run_; // running on ground
     player_state_t fsm_state_slide_; // wall slide
+
+    player_anim_t anim_;
 
     player_t(object_service_t s)
         : object_ex_t()
@@ -237,6 +313,9 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
         service_->draw_->rect(recti_t(swept_bound()));
         service_->draw_->colour_ = 0x406080;
         service_->draw_->rect(recti_t(bound()));
+        // draw using animation controller
+        anim_.tick(1);
+        anim_.render(vec2i_t(pos_[1]), *service_->draw_);
     }
 };
 
@@ -279,8 +358,7 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
         // draw position and target
         service_.draw_->colour_ = 0x509030;
         service_.draw_->plot(vec2i_t(pos_));
-        service_.draw_->colour_ = 0x304050;
-        service_.draw_->circle(vec2i_t(target_), 3);
+        service_.draw_->plot(vec2i_t(target_));
         // draw screen frame
         service_.draw_->colour_ = 0xa0a0a0;
         service_.draw_->line(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});

@@ -19,6 +19,7 @@
 ##### core
 . add perlin noise
 . add vector noise
+. make anim use vec2
 
 ##### tilemap
 . move out into stand alone library
