@@ -86,7 +86,7 @@ struct collision_map_t {
         assert(map_.get());
         const uint32_t count = size_.x * size_.y;
         uint8_t * tile = map_.get();
-        for (int32_t i=0; i<count; ++i) {
+        for (uint32_t i=0; i<count; ++i) {
             *(tile++) = value;
         }
     }

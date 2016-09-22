@@ -297,6 +297,7 @@ struct app_t {
 
     SDL_Surface * screen_;
     bitmap_t target_;
+    SDL_Joystick * joystick_;
 
     bool active_;
 
@@ -318,13 +319,14 @@ struct app_t {
         , map_(vec2i_t{_MAP_WIDTH, _MAP_HEIGHT}, vec2i_t{16, 16})
         , rand_(0x12345)
         , factory_(&service_)
+        , joystick_(nullptr)
     {
         service_.draw_ = &draw_;
         service_.map_ = &map_;
     }
 
     bool app_init() {
-        if (SDL_Init(SDL_INIT_VIDEO)) {
+        if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)) {
             return false;
         }
         screen_ = SDL_SetVideoMode(640, 480, 32, 0);
@@ -337,11 +339,28 @@ struct app_t {
         if (!target_.valid()) {
             return false;
         }
+        // setup display target
         draw_.set_target(target_);
         // setup frame timer
         timer_.period_ = 1000 / 30;
         timer_.func_ = SDL_GetTicks;
         timer_.reset();
+        // setup gamepad
+        if (SDL_NumJoysticks()) {
+            joystick_ = SDL_JoystickOpen(0);
+            printf("using joystick %s\n", SDL_JoystickName(0));
+        }
+        return true;
+    }
+
+    bool app_quit() {
+        if (joystick_) {
+            SDL_JoystickClose(joystick_);
+        }
+        if (screen_) {
+            SDL_FreeSurface(screen_);
+        }
+        SDL_Quit();
         return true;
     }
 
@@ -374,6 +393,41 @@ struct app_t {
                 draw_.rect(recti_t(x * 16, y * 16, 16, 16, recti_t::e_relative));
             }
         }
+        return true;
+    }
+
+    bool poll_joypad() {
+        if (!joystick_) {
+            return false;
+        }
+        if (!service_.player_.valid()) {
+            return false;
+        }
+        player_t & player = service_.player_->cast<player_t>();
+
+        int16_t xaxis = SDL_JoystickGetAxis(joystick_, 0);
+        float dx = 0.f;
+        dx += xaxis <-0x2000 ? -1.f : 0.f;
+        dx += xaxis > 0x2000 ?  1.f : 0.f;
+        player.move(dx);
+
+        if (SDL_JoystickGetButton(joystick_, 2)) {
+            player.jump();
+        }
+
+        return true;
+    }
+
+    bool poll_keyboard() {
+        float dx = 0.f;
+        {
+            const uint8_t *key = SDL_GetKeyState(nullptr);
+            dx += key[SDLK_LEFT] ? -1.f : 0.f;
+            dx += key[SDLK_RIGHT] ? 1.f : 0.f;
+        }
+        player_t & player = service_.player_->cast<player_t>();
+        player.move(dx);
+        return true;
     }
 
     bool poll_events() {
@@ -383,12 +437,14 @@ struct app_t {
                 return false;
             }
             if (event.type == SDL_KEYDOWN) {
-
                 switch (event.key.keysym.sym) {
                 case (SDLK_ESCAPE):
                     return false;
                 case (SDLK_UP):
                     service_.player_->cast<player_t>().jump();
+                    break;
+                case (SDLK_F11):
+                    SDL_WM_ToggleFullScreen(screen_);
                     break;
                 default:
                     break;
@@ -403,15 +459,8 @@ struct app_t {
         draw_.clear();
         map_draw();
 
-        float dx = 0.f;
-        {
-            const uint8_t *key = SDL_GetKeyState(nullptr);
-            dx += key[SDLK_LEFT] ? -1.f : 0.f;
-            dx += key[SDLK_RIGHT] ? 1.f : 0.f;
-        }
-
-        player_t & player = service_.player_->cast<player_t>();
-        player.move(dx);
+        poll_keyboard();
+        poll_joypad();
 
         factory_.tick();
         return true;
@@ -448,6 +497,8 @@ struct app_t {
                 SDL_Delay(1);
             }
         }
+
+        app_quit();
         return true;
     }
 };

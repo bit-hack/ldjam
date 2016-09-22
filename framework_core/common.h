@@ -13,7 +13,7 @@ constexpr int32_t ipartv(float v) {
 
 template <typename type_t>
 constexpr type_t signv(const type_t v) {
-    return (v==0) ? 0 : ((v>0) ? 1 : -1);
+    return (v==type_t(0)) ? type_t(0) : ((v>type_t(0)) ? type_t(1) : type_t(-1));
 }
 
 template <typename type_t>

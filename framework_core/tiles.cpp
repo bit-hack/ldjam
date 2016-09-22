@@ -1,3 +1,5 @@
+#include <array>
+
 #include "../framework_core/common.h"
 #include "tiles.h"
 
@@ -11,10 +13,10 @@ namespace {
 bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
 
     // find the tile space extent of the bounding rectangle
-    int32_t minx = clampv(0, quantize<int32_t>(r.x0, cell_size_.x), size_.x-1);
-    int32_t miny = clampv(0, quantize<int32_t>(r.y0, cell_size_.y), size_.y-1);
-    int32_t maxx = clampv(0, quantize<int32_t>(r.x1, cell_size_.x), size_.x-1);
-    int32_t maxy = clampv(0, quantize<int32_t>(r.y1, cell_size_.y), size_.y-1);
+    int32_t minx = clampv(0, quantize<int32_t>(int32_t(r.x0), cell_size_.x), size_.x-1);
+    int32_t miny = clampv(0, quantize<int32_t>(int32_t(r.y0), cell_size_.y), size_.y-1);
+    int32_t maxx = clampv(0, quantize<int32_t>(int32_t(r.x1), cell_size_.x), size_.x-1);
+    int32_t maxy = clampv(0, quantize<int32_t>(int32_t(r.y1), cell_size_.y), size_.y-1);
 
     // set the worst case resolution to improve upon
     const float ival = max2(r.x1-r.x0, r.y1-r.y0);
@@ -75,17 +77,17 @@ bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
 }
 
 bool collision_map_t::collide_alt(const rectf_t &r, vec2f_t &out) {
-
+    
     // find the tile space extent of the bounding rectangle
-    int32_t minx = clampv(0, quantize<int32_t>(r.x0, cell_size_.x), size_.x-1);
-    int32_t miny = clampv(0, quantize<int32_t>(r.y0, cell_size_.y), size_.y-1);
-    int32_t maxx = clampv(0, quantize<int32_t>(r.x1, cell_size_.x), size_.x-1);
-    int32_t maxy = clampv(0, quantize<int32_t>(r.y1, cell_size_.y), size_.y-1);
+    int32_t minx = clampv(0, quantize<int32_t>(int32_t(r.x0), cell_size_.x), size_.x-1);
+    int32_t miny = clampv(0, quantize<int32_t>(int32_t(r.y0), cell_size_.y), size_.y-1);
+    int32_t maxx = clampv(0, quantize<int32_t>(int32_t(r.x1), cell_size_.x), size_.x-1);
+    int32_t maxy = clampv(0, quantize<int32_t>(int32_t(r.y1), cell_size_.y), size_.y-1);
 
     // set the worst case resolution to improve upon
-    const float ival = max2(r.x1-r.x0, r.y1-r.y0);
+    const float ival = max2(r.x1-r.x0, r.y1-r.y0) + 1;
     out.x = out.y = 0.f;
-    int32_t best = ival;
+    float best = ival;
 
     // iterate over all touched tiles
     for (int32_t y=miny; y<=maxy; ++y) {
@@ -156,8 +158,8 @@ bool collision_map_t::collide_alt(const rectf_t &r, vec2f_t &out) {
 
 bool collision_map_t::collide(const vec2f_t &p, vec2f_t &out) {
     // find point to map coordinates
-    int32_t tx = clampv(0, quantize<int32_t>(p.x, cell_size_.x), size_.x-1);
-    int32_t ty = clampv(0, quantize<int32_t>(p.y, cell_size_.y), size_.y-1);
+    int32_t tx = clampv(0, quantize<int32_t>(int32_t(p.x), cell_size_.x), size_.x-1);
+    int32_t ty = clampv(0, quantize<int32_t>(int32_t(p.y), cell_size_.y), size_.y-1);
     // get the flags for this tile we are on
     const uint8_t t = get(vec2i_t{tx, ty});
     // non solid tiles do not affect the resolver
@@ -193,8 +195,8 @@ bool collision_map_t::collide(const vec2f_t &p, vec2f_t &out) {
 
 bool collision_map_t::raycast(const vec2f_t &a, const vec2f_t &b, vec2f_t &hit )
 {
-    float csx = cell_size_.x;
-    float csy = cell_size_.y;
+    float csx = float(cell_size_.x);
+    float csy = float(cell_size_.y);
 
     float x1 = a.x/csx; float y1 = a.y/csy;
     float x2 = b.x/csx; float y2 = b.y/csy;
@@ -227,7 +229,7 @@ bool collision_map_t::raycast(const vec2f_t &a, const vec2f_t &b, vec2f_t &hit )
         for ( ;; )
         {
             // check for hit
-            if (is_solid(vec2i_t(y_px, iy)))
+            if (is_solid(vec2i_t(int32_t(y_px), iy)))
             {
                 _1x = (int)y_px;
                 _1y = iy;
@@ -253,7 +255,7 @@ bool collision_map_t::raycast(const vec2f_t &a, const vec2f_t &b, vec2f_t &hit )
         for ( ;; )
         {
             // check for hit
-            if (is_solid(vec2i_t(y_px, iy-1)))
+            if (is_solid(vec2i_t(int32_t(y_px), iy-1)))
             {
                 _1x = (int)y_px;
                 _1y = iy-1;
@@ -280,7 +282,7 @@ bool collision_map_t::raycast(const vec2f_t &a, const vec2f_t &b, vec2f_t &hit )
         for ( ;; )
         {
             // check for hit
-            if (is_solid(vec2i_t(ix, x_py)))
+            if (is_solid(vec2i_t(ix, int32_t(x_py))))
             {
                 _2x = ix;
                 _2y = (int)x_py;
@@ -306,7 +308,7 @@ bool collision_map_t::raycast(const vec2f_t &a, const vec2f_t &b, vec2f_t &hit )
         for ( ;; )
         {
             // check for hit
-            if (is_solid(vec2i_t(ix-1, x_py)))
+            if (is_solid(vec2i_t(ix-1, int32_t(x_py))))
             {
                 _2x = ix-1;
                 _2y = (int)x_py;
