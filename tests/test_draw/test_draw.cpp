@@ -21,6 +21,7 @@ bitmap_t bitmap_;
 bitmap_t font_;
 random_t random_(0x12345);
 bitmap_t sprite_;
+float time_ = 0.f;
 }
 
 bool init() {
@@ -48,7 +49,7 @@ void test_circles() {
         const vec2i_t p = vec2i_t {
             int32_t(random_.rand<uint32_t>() % 320u),
             int32_t(random_.rand<uint32_t>() % 240u)};
-        draw_.colour_ = random_.rand<int32_t>();
+        draw_.colour_ = random_.rand<uint32_t>();
         draw_.circle(p, random_.rand<uint32_t>() % 64);
     }
 }
@@ -64,7 +65,7 @@ void test_lines() {
         const vec2f_t p1 = vec2f_t {
             float(random_.rand<uint32_t>() % 320u),
             float(random_.rand<uint32_t>() % 240u)};
-        draw_.colour_ = random_.rand<int32_t>();
+        draw_.colour_ = random_.rand<uint32_t>();
         draw_.line(p0, p1);
     }
 }
@@ -78,7 +79,7 @@ void test_rect() {
         const vec2i_t p1 = vec2i_t {
             int32_t(random_.rand<uint32_t>() % 320u),
             int32_t(random_.rand<uint32_t>() % 240u)};
-        draw_.colour_ = random_.rand<int32_t>();
+        draw_.colour_ = random_.rand<uint32_t>();
         draw_.rect(recti_t{p0.x, p0.y, p1.x, p1.y});
     }
 }
@@ -89,7 +90,7 @@ void test_plot() {
         const vec2i_t p0 = vec2i_t {
             int32_t(random_.rand<uint32_t>() % 320u),
             int32_t(random_.rand<uint32_t>() % 240u)};
-        draw_.colour_ = random_.rand<int32_t>();
+        draw_.colour_ = random_.rand<uint32_t>();
         draw_.plot(p0);
     }
 }
@@ -116,6 +117,28 @@ void test_blit() {
     }
 }
 
+void test_blit_clip() {
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    if (!sprite_.valid()) {
+        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+            return;
+        }
+    }
+    draw_.key_ = 0x0;
+    blit_info_t info;
+    info.bitmap_ = &sprite_;
+    info.dst_pos_ = vec2i_t {int32_t(160 - 16 + sinf(time_) * 140), int32_t(64)};
+    info.src_rect_ = recti_t {0, 0, 31, 31};
+    info.h_flip_ = false;
+    info.type_ = e_blit_key;
+    draw_.colour_ = random_.rand<uint32_t>();
+    draw_.blit(info);
+
+    info.dst_pos_.y = 128;
+    info.h_flip_ = true;
+    draw_.blit(info);
+}
+
 void test_font() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!font_.valid()) {
@@ -133,7 +156,7 @@ void test_font() {
         const vec2i_t p0 = vec2i_t {
                 int32_t(random_.rand<uint32_t>() % 320u),
                 int32_t(random_.rand<uint32_t>() % 240u)};
-        draw_.colour_ = random_.rand<int32_t>();
+        draw_.colour_ = random_.rand<uint32_t>();
         font.spacing_ = random_.rand_range(6, 32);
         draw_.printf(font, p0, "Hello World");
     }
@@ -203,9 +226,10 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 8> tests = {{
+std::array<test_t, 9> tests = {{
     TEST(test_font),
     TEST(test_blit),
+    TEST(test_blit_clip),
     TEST(test_circles),
     TEST(test_lines),
     TEST(test_plot),
@@ -218,7 +242,7 @@ int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    int32_t test_index = 1;
+    int32_t test_index = 2;
     bool pause = false;
     bool active = true;
     while (active) {
@@ -248,6 +272,9 @@ int main(const int argc, char *args[]) {
         }
         if (!pause) {
             if (timer_.frame()) {
+                //
+                time_ += 0.03f;
+                if (time_ > C_2PI) time_ -= C_2PI;
                 // clear the screen
                 draw_.colour_ = 0x202020;
                 draw_.clear();
