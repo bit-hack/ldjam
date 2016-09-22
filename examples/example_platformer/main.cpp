@@ -37,6 +37,8 @@ struct player_anim_t {
 
     bitmap_t bitmap_;
 
+    bool xflip_;
+
     enum {
         e_foot_fall
     };
@@ -49,6 +51,7 @@ struct player_anim_t {
         , fall_("fall", anim::sequence_t::e_end_hold)
         , slide_("slide", anim::sequence_t::e_end_hold)
         , skid_("skid", anim::sequence_t::e_end_hold)
+        , xflip_(false)
     {
         sheet_.add_grid(12, 13);
         controller_.set_sheet(&sheet_);
@@ -60,7 +63,7 @@ struct player_anim_t {
         jump_ .op_offset(-6, -13).op_frame(5);
         fall_ .op_offset(-6, -13).op_frame(6);
         skid_ .op_offset(-6, -13).op_frame(7);
-        slide_.op_offset(-2, -13).op_frame(8);
+        slide_.op_offset(-6, -13).op_frame(8);
         // set to stand by default
         controller_.push_sequence(&run_);
         // load the sprite sheet
@@ -84,7 +87,7 @@ struct player_anim_t {
             pos + offset,
             src,
             e_blit_key,
-            false
+            xflip_
         };
         draw_.key_ = 0xff00ff;
         draw_.blit(info);
@@ -92,6 +95,16 @@ struct player_anim_t {
 
     void tick(int32_t delta) {
         controller_.tick(delta);
+    }
+
+    void set_x_dir(float dir) {
+        xflip_ = dir<0.f;
+    }
+
+    void play(anim::sequence_t & seq) {
+        if (!controller_.is_playing(&seq)) {
+            controller_.set_sequence(&seq);
+        }
     }
 };
 
@@ -149,6 +162,7 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
         const float _FRICTION = 0.3f;
         const float _Y_FRINGE = 1.f;
 
+
         rectf_t bound = swept_bound();
         bound.y1 += _Y_FRINGE;
 
@@ -164,6 +178,8 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             pos_[1] += res;
             // find velocity (verlet)
             const vec2f_t vel = pos_[1] - pos_[0];
+            // select animation to play
+            anim_.play( (absv(vel.x) > 0.4f) ? anim_.run_ : anim_.stand_);
             // integrate
             pos_[0] = pos_[1];
             pos_[1] += vel + vec2f_t {dx_, _GRAVITY};
@@ -204,6 +220,8 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
         {
             // find velocity (verlet)
             const vec2f_t vel = pos_[1] - pos_[0];
+            // select animation to play
+            anim_.play( (vel.y < 0.0f) ? anim_.jump_ : anim_.fall_);
             // integrate
             pos_[0] = pos_[1];
             pos_[1] += vel + vec2f_t{dx_, _GRAVITY};
@@ -231,6 +249,9 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             fsm_.state_change(fsm_state_run_);
             return;
         }
+        // select animation to play
+        anim_.set_x_dir(res.x);
+        anim_.play(anim_.slide_);
         // reduce size slightly to ensure continuous collision
         res.x -= signv(res.x);
         // apply resolution as simple translate
@@ -287,6 +308,9 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
 
     void move(float dx) {
         dx_ = dx;
+        if (dx!=0.f) {
+            anim_.set_x_dir(dx);
+        }
     }
 
     virtual void tick() override {
@@ -309,10 +333,12 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             service_->draw_->rect(recti_t{8, 8, 16, 16});
         }
         // draw player body
+#if 0
         service_->draw_->colour_ = 0x408060;
         service_->draw_->rect(recti_t(swept_bound()));
         service_->draw_->colour_ = 0x406080;
         service_->draw_->rect(recti_t(bound()));
+#endif
         // draw using animation controller
         anim_.tick(1);
         anim_.render(vec2i_t(pos_[1]), *service_->draw_);
@@ -356,9 +382,11 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
         // smooth out camera position
         pos_ = vec2f_t::lerp(pos_, target_, 0.2f);
         // draw position and target
+#if 0
         service_.draw_->colour_ = 0x509030;
         service_.draw_->plot(vec2i_t(pos_));
         service_.draw_->plot(vec2i_t(target_));
+#endif
         // draw screen frame
         service_.draw_->colour_ = 0xa0a0a0;
         service_.draw_->line(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});
@@ -407,7 +435,9 @@ struct app_t {
         if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK)) {
             return false;
         }
-        screen_ = SDL_SetVideoMode(640, 480, 32, 0);
+
+        const bool fullscreen = false;
+        screen_ = SDL_SetVideoMode(640, 480, 32, fullscreen ? SDL_FULLSCREEN : 0);
         if (!screen_) {
             return false;
         }
