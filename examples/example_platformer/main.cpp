@@ -319,6 +319,7 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             fsm_.state_push(fsm_state_air_);
         }
         fsm_.tick();
+#if 0
         // fsm state indicator
         if (fsm_.state() == fsm_state_run_) {
             service_->draw_->colour_ = 0xff0000;
@@ -333,7 +334,6 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
             service_->draw_->rect(recti_t{8, 8, 16, 16});
         }
         // draw player body
-#if 0
         service_->draw_->colour_ = 0x408060;
         service_->draw_->rect(recti_t(swept_bound()));
         service_->draw_->colour_ = 0x406080;
@@ -388,7 +388,7 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
         service_.draw_->plot(vec2i_t(target_));
 #endif
         // draw screen frame
-        service_.draw_->colour_ = 0xa0a0a0;
+        service_.draw_->colour_ = 0x505050;
         service_.draw_->line(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});
         service_.draw_->line(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{ 64,  48});
         service_.draw_->line(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{-64, -48});
