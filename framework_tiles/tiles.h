@@ -41,11 +41,16 @@ struct collision_map_t {
     // collide a point with the map tiles.
     bool collide(const vec2f_t & p, vec2f_t & out);
 
+    // cast a ray directional ray and return intersection point
     bool raycast(
             const vec2f_t & p0,
             const vec2f_t & p1,
             vec2f_t & hit);
 
+    // check for line of sight between two points
+    bool line_of_sight(const vec2f_t &a, const vec2f_t &b);
+
+    // preprocess map to
     bool preprocess();
 
     bool is_solid(const vec2i_t & p) const {

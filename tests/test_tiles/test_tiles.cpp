@@ -2,7 +2,9 @@
 #define _SDL_main_h
 #include <SDL/SDL.h>
 
-#include "../../framework_core/tiles.h"
+#include "test.h"
+
+#include "../../framework_tiles/tiles.h"
 #include "../../framework_core/random.h"
 
 #include "../../framework_draw/draw.h"
@@ -85,132 +87,128 @@ bool init() {
     return true;
 }
 
-void test_collision() {
-
-    int32_t mx, my;
-    SDL_GetMouseState(&mx, &my);
-
-    rectf_t rect {
-        mx - 24.f, my - 24.f,
-        mx + 24.f, my + 24.f
-    };
-
-    draw_.colour_ = 0xD08040;
-    draw_.rect(recti_t(rect));
-
-    vec2f_t res{0.f, 0.f};
-    if (map_.collide(rect, res)) {
-        rect.x0 += res.x;
-        rect.y0 += res.y;
-        rect.x1 += res.x;
-        rect.y1 += res.y;
-
-        draw_.colour_ = 0x004488;
-        draw_.rect(recti_t{16, 16, 32, 32});
-    }
-
-    draw_.colour_ = 0x40A070;
-    draw_.rect(recti_t(rect));
-}
-
-void test_collision_alt() {
-
-    int32_t mx, my;
-    SDL_GetMouseState(&mx, &my);
-
-    rectf_t rect {
-        mx - 24.f, my - 24.f,
-        mx + 24.f, my + 24.f
-    };
-
-    draw_.colour_ = 0xD08040;
-    draw_.rect(recti_t(rect));
-
-    vec2f_t res{0.f, 0.f};
-    if (map_.collide_alt(rect, res)) {
-        rect.x0 += res.x;
-        rect.y0 += res.y;
-        rect.x1 += res.x;
-        rect.y1 += res.y;
-
-        draw_.colour_ = 0x004488;
-        draw_.rect(recti_t{16, 16, 32, 32});
-    }
-
-    draw_.colour_ = 0x40A070;
-    draw_.rect(recti_t(rect));
-}
-
-void test_collision_point() {
-    int32_t mx, my;
-    SDL_GetMouseState(&mx, &my);
-
-    draw_.colour_ = 0x00ff00;
-
-    vec2f_t res;
-    if (map_.collide(vec2f_t{float(mx), float(my)}, res)) {
-        mx += res.x;
-        my += res.y;
-        draw_.rect(recti_t{mx-1, my-1, mx+1, my+1});
-    }
-}
-
-void test_raycast_1() {
-
-    vec2i_t mouse;
-    int32_t b = SDL_GetMouseState(&mouse.x, &mouse.y);
-
-    if (SDL_BUTTON(SDL_BUTTON_LEFT) & b) {
-        point_ = mouse;
-    }
-
-    vec2f_t hit;
-    map_.raycast(vec2f_t(point_), vec2f_t(mouse), hit);
-
-    draw_.colour_ = 0x667788;
-    draw_.circle(point_, 3);
-    draw_.line(mouse, point_);
-
-    draw_.colour_ = 0x00ff00;
-    draw_.circle(vec2i_t(hit), 3);
-}
-
-void test_raycast_2() {
-    const float _STEP = .1f;
-
-    vec2i_t mouse;
-    SDL_GetMouseState(&mouse.x, &mouse.y);
-
-    for (float i=0; i<C_2PI; i+=_STEP) {
-
-        vec2f_t delta {sinf(i), cosf(i)};
-
-        vec2f_t targ = vec2f_t(mouse) + delta * 128.f;
-        draw_.colour_ = 0xff5060;
-        draw_.plot(vec2i_t(targ));
-
-        vec2f_t hit;
-        if (map_.raycast(vec2f_t(mouse), targ, hit)) {
-            draw_.colour_ = 0x0;
-            draw_.line(hit, targ);
+struct test_collision : public test_t {
+    virtual void tick() override {
+        int32_t mx, my;
+        SDL_GetMouseState(&mx, &my);
+        rectf_t rect{
+                mx - 24.f, my - 24.f,
+                mx + 24.f, my + 24.f
+        };
+        draw_.colour_ = 0xD08040;
+        draw_.rect(recti_t(rect));
+        vec2f_t res{0.f, 0.f};
+        if (map_.collide(rect, res)) {
+            rect.x0 += res.x;
+            rect.y0 += res.y;
+            rect.x1 += res.x;
+            rect.y1 += res.y;
+            draw_.colour_ = 0x004488;
+            draw_.rect(recti_t{16, 16, 32, 32});
         }
+        draw_.colour_ = 0x40A070;
+        draw_.rect(recti_t(rect));
     }
-}
-
-struct test_t {
-    const char * name_;
-    void (*func_)();
 };
 
-#define STRINGY(X) #X
-#define TEST(X) {STRINGY(X), X}
+struct test_collision_alt : public test_t {
+    virtual void tick() override {
+        int32_t mx, my;
+        SDL_GetMouseState(&mx, &my);
+        rectf_t rect{
+                mx - 24.f, my - 24.f,
+                mx + 24.f, my + 24.f
+        };
+        draw_.colour_ = 0xD08040;
+        draw_.rect(recti_t(rect));
+        vec2f_t res{0.f, 0.f};
+        if (map_.collide_alt(rect, res)) {
+            rect.x0 += res.x;
+            rect.y0 += res.y;
+            rect.x1 += res.x;
+            rect.y1 += res.y;
+            draw_.colour_ = 0x004488;
+            draw_.rect(recti_t{16, 16, 32, 32});
+        }
+        draw_.colour_ = 0x40A070;
+        draw_.rect(recti_t(rect));
+    }
+};
 
-std::array<test_t, 5> tests = {{
-    TEST(test_collision),
-    TEST(test_collision_alt),
-    TEST(test_collision_point),
-    TEST(test_raycast_1),
-    TEST(test_raycast_2)
+struct test_collision_point : public test_t {
+    virtual void tick() override {
+        int32_t mx, my;
+        SDL_GetMouseState(&mx, &my);
+        draw_.colour_ = 0x00ff00;
+        vec2f_t res;
+        if (map_.collide(vec2f_t{float(mx), float(my)}, res)) {
+            mx += res.x;
+            my += res.y;
+            draw_.circle(vec2i_t{mx, my}, 2);
+        }
+    }
+};
+
+struct test_raycast_1 : public test_t {
+    virtual void tick() override {
+        vec2i_t mouse;
+        int32_t b = SDL_GetMouseState(&mouse.x, &mouse.y);
+        if (SDL_BUTTON(SDL_BUTTON_LEFT) & b) {
+            point_ = mouse;
+        }
+        vec2f_t hit;
+        map_.raycast(vec2f_t(point_), vec2f_t(mouse), hit);
+        draw_.colour_ = 0x667788;
+        draw_.circle(point_, 3);
+        draw_.line(mouse, point_);
+        draw_.colour_ = 0x00ff00;
+        draw_.circle(vec2i_t(hit), 3);
+    }
+};
+
+struct test_raycast_2 : public test_t {
+    virtual void tick() override {
+        const float _STEP = .1f;
+        vec2i_t mouse;
+        SDL_GetMouseState(&mouse.x, &mouse.y);
+        for (float i = 0; i < C_2PI; i += _STEP) {
+            vec2f_t delta{sinf(i), cosf(i)};
+            vec2f_t targ = vec2f_t(mouse) + delta * 128.f;
+            draw_.colour_ = 0xff5060;
+            draw_.plot(vec2i_t(targ));
+            vec2f_t hit;
+            if (map_.raycast(vec2f_t(mouse), targ, hit)) {
+                draw_.colour_ = 0x0;
+                draw_.line(hit, targ);
+            }
+        }
+    }
+};
+
+struct test_line_of_sight : public test_t {
+    virtual void tick() override {
+        vec2i_t mouse;
+        int32_t b = SDL_GetMouseState(&mouse.x, &mouse.y);
+        if (SDL_BUTTON(SDL_BUTTON_LEFT) & b) {
+            point_ = mouse;
+        }
+        if (map_.line_of_sight(vec2f_t(point_), vec2f_t(mouse))) {
+            draw_.colour_ = 0x00ff00;
+        } else {
+            draw_.colour_ = 0xff0000;
+        }
+        draw_.circle(point_, 3);
+        draw_.line(mouse, point_);
+    }
+};
+
+std::array<test_t *, 6> tests = {{
+    new test_collision,
+    new test_collision_alt,
+    new test_collision_point,
+    new test_raycast_1,
+    new test_raycast_2,
+    new test_line_of_sight
 }};
 
 int main(const int argc, char *args[]) {
@@ -251,7 +249,7 @@ int main(const int argc, char *args[]) {
         // run this specific test
         test_index %= tests.size();
         const auto test = tests[test_index];
-        test.func_();
+        test->tick();
 
         for (int32_t i = 0; i<int32_t(tests.size()); ++i) {
             draw_.colour_ = i==test_index ? 0xffffff : 0x909090;

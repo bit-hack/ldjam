@@ -6,7 +6,8 @@ endif()
 
 set(SOURCE_FILES
     tiles.h
-    tiles.cpp)
+    tiles.cpp
+    pathfind.h)
 
 set(${LIBS}
     framework_core)

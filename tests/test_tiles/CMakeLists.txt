@@ -5,12 +5,15 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
-    test_core_tiles.cpp)
+    test.h
+    test_tiles.cpp
+    test_astar.cpp)
 
 set(LIBRARIES
     framework_core
     framework_draw
+    framework_tiles
     SDL)
 
-add_executable(test_core_tiles ${SOURCE_FILES})
-target_link_libraries(test_core_tiles PUBLIC ${LIBRARIES})
+add_executable(test_tiles ${SOURCE_FILES})
+target_link_libraries(test_tiles PUBLIC ${LIBRARIES})

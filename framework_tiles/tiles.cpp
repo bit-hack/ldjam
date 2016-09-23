@@ -355,3 +355,38 @@ bool collision_map_t::preprocess() {
     }
     return true;
 }
+
+bool collision_map_t::line_of_sight(const vec2f_t &a, const vec2f_t &b) {
+    vec2f_t hit;
+    if (!raycast(a, b, hit)) {
+        return true;
+    }
+    if (a.y < b.y) {
+        if (a.x < b.x) {
+            return !((hit.y >= a.y) &&
+                     (hit.y <= b.y) &&
+                     (hit.x >= a.x) &&
+                     (hit.x <= b.x));
+        }
+        else {
+            return !((hit.y >= a.y) &&
+                     (hit.y <= b.y) &&
+                     (hit.x >= b.x) &&
+                     (hit.x <= a.x));
+        }
+    }
+    else {
+        if (a.x < b.x) {
+            return !((hit.y >= b.y) &&
+                     (hit.y <= a.y) &&
+                     (hit.x >= a.x) &&
+                     (hit.x <= b.x));
+        }
+        else {
+            return !((hit.y >= b.y) &&
+                     (hit.y <= a.y) &&
+                     (hit.x >= b.x) &&
+                     (hit.x <= a.x));
+        }
+    }
+}
