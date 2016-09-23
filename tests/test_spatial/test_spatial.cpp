@@ -5,7 +5,7 @@
 #include <set>
 
 #include "../../framework_core/random.h"
-#include "../../framework_core/spatial.h"
+#include "../../framework_spatial/space_hash.h"
 
 struct app_t {
     SDL_Surface* window_;

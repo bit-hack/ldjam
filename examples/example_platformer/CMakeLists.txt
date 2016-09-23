@@ -5,7 +5,12 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
-    main.cpp)
+    camera.h
+    camera.cpp
+    player.h
+    player.cpp
+    main.cpp
+    common.h)
 
 set(LIBRARIES
     framework_core

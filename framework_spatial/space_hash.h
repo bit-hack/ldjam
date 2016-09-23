@@ -6,8 +6,8 @@
 #include <cstring>
 #include <functional>
 
-#include "vec2.h"
-#include "random.h"
+#include "../framework_core/vec2.h"
+#include "../framework_core/random.h"
 
 struct body_t {
     body_t() = default;

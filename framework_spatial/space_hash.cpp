@@ -1,17 +1,9 @@
 #include <assert.h>
-#include "spatial.h"
+
+#include "space_hash.h"
+#include "../framework_core/common.h"
 
 namespace {
-float clamp(
-    const float min,
-    const float in,
-    const float max)
-{
-    const float t0 = (in < min) ? min : in;
-    const float t1 = (t0 > max) ? max : t0;
-    return t1;
-}
-
 bool overlap(
     const body_t* obj,
     float x0,
@@ -22,8 +14,8 @@ bool overlap(
     assert(obj);
     const vec2f_t p = obj->pos();
     const float radius = obj->radius();
-    const float cx = clamp(x0, p.x, x1);
-    const float cy = clamp(y0, p.y, y1);
+    const float cx = clampv<float>(x0, p.x, x1);
+    const float cy = clampv<float>(y0, p.y, y1);
     const float dx = p.x - cx;
     const float dy = p.y - cy;
     const float ds = dx * dx + dy * dy;

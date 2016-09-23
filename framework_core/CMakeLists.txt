@@ -12,8 +12,6 @@ set(SOURCE_FILES
     objects.cpp
     objects.h
     random.h
-    spatial.cpp
-    spatial.h
     timer.h
     vec2.h
     vec3.h
@@ -21,8 +19,6 @@ set(SOURCE_FILES
     event.h
     buffer.h
     geometry.h
-    bsp.h
-    bsp.cpp
     particle.h)
 
 add_library(framework_core ${SOURCE_FILES})
