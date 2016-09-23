@@ -11,6 +11,7 @@ set(LIBRARIES
     framework_core
     framework_draw
     framework_audio
+    framework_tiles
     SDL)
 
 add_executable(example_platformer ${SOURCE_FILES})

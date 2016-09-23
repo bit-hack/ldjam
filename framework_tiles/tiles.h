@@ -2,8 +2,8 @@
 #include <cstdint>
 #include <memory>
 
-#include "vec2.h"
-#include "rect.h"
+#include "../framework_core/vec2.h"
+#include "../framework_core/rect.h"
 
 /* solid tiles denote which resolution vectors are available
  * non solid tiles denote which movement vectors are valid
