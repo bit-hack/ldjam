@@ -21,7 +21,7 @@ struct map_waypoint_t {
 };
 
 struct map_t {
-    static const uint32_t width_  = 32;
+    static const uint32_t width_  = 48;
     static const uint32_t height_ = 32;
 
     random_t rand_;
@@ -38,9 +38,9 @@ struct map_t {
             bool fill = false;
             // border
             fill |= ((i/width_)==0);
-            fill |= ((i/width_)==width_-1);
+            fill |= ((i/width_)==height_-1);
             fill |= ((i%width_)==0);
-            fill |= ((i%width_)==height_-1);
+            fill |= ((i%width_)==width_-1);
             // random crap
             fill |= (rand_.rand()&0x3)==0;
             tile_[i] = fill;

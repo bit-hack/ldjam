@@ -216,7 +216,7 @@ int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    int32_t test_index = 3;
+    int32_t test_index = 6;
     bool active = true;
     while (active) {
         SDL_Event event;
