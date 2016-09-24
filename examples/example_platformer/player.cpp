@@ -123,10 +123,13 @@ void player_t::tick_run() {
     bound.y1 += _Y_FRINGE;
 
     if (anim_.event_foot_fall()) {
+
+        const vec2f_t vel = pos_[1] - pos_[0];
+
         service_->factory_->create<dust_t>(
             2,
             pos_[1],
-            vec2f_t{0.f, 0.f},
+            vec2f_t{0.f, 0.f} - vel * .1f,
             vec2f_t{0.f, 0.0f},
             .2f
         );
