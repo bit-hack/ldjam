@@ -1,3 +1,5 @@
+#pragma once
+
 template <typename type_t>
 struct node_t {
     enum { e_next, e_prev };

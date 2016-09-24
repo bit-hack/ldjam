@@ -330,6 +330,10 @@ struct astar_t {
         return error_;
     }
 
+    as_heap_t & heap() {
+        return heap_;
+    }
+
 protected:
     as_alloc_t frame_;
     as_mask_t mask_;

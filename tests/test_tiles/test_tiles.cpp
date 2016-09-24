@@ -202,13 +202,14 @@ struct test_line_of_sight : public test_t {
     }
 };
 
-std::array<test_t *, 6> tests = {{
+std::array<test_t *, 7> tests = {{
     new test_collision,
     new test_collision_alt,
     new test_collision_point,
     new test_raycast_1,
     new test_raycast_2,
-    new test_line_of_sight
+    new test_line_of_sight,
+    new_test_astar(draw_)
 }};
 
 int main(const int argc, char *args[]) {
