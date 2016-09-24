@@ -10,6 +10,9 @@
 #include "../../framework_draw/draw.h"
 #include "../../framework_tiles/tiles.h"
 
+#include "input.h"
+
+
 enum {
     e_object_player,
     e_object_camera,
@@ -20,6 +23,7 @@ struct service_t {
     draw_ex_t draw_;
     object_factory_t & factory_;
     collision_map_t & map_;
+    gamepad_t & gamepad_;
 
     object_ref_t player_;
 };

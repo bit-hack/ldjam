@@ -10,7 +10,6 @@ struct app_t {
 
     SDL_Surface * screen_;
     bitmap_t target_;
-    SDL_Joystick * joystick_;
 
     bool active_;
 
@@ -20,6 +19,8 @@ struct app_t {
     draw_t draw_;
     collision_map_t map_;
     object_factory_t factory_;
+    gamepad_key_t input_;
+    gamepad_joy_t joystick_;
 
     service_t service_;
 
@@ -32,8 +33,8 @@ struct app_t {
         , map_(vec2i_t{_MAP_WIDTH, _MAP_HEIGHT}, vec2i_t{16, 16})
         , rand_(0x12345)
         , factory_(&service_)
-        , joystick_(nullptr)
-        , service_{draw_ex_t(draw_), factory_, map_}
+        , joystick_()
+        , service_{draw_ex_t(draw_), factory_, map_, joystick_}
     {
     }
 
@@ -67,21 +68,17 @@ struct app_t {
         timer_.period_ = 1000 / 30;
         timer_.func_ = SDL_GetTicks;
         timer_.reset();
-        // setup gamepad
-        if (SDL_NumJoysticks()) {
-            joystick_ = SDL_JoystickOpen(0);
-            printf("using joystick %s\n", SDL_JoystickName(0));
-        }
+
+        // open the joystick
+        joystick_.open(0);
         return true;
     }
 
     bool app_quit() {
-        if (joystick_) {
-            SDL_JoystickClose(joystick_);
-        }
         if (screen_) {
             SDL_FreeSurface(screen_);
         }
+        joystick_.close();
         SDL_Quit();
         return true;
     }
@@ -119,37 +116,16 @@ struct app_t {
         return true;
     }
 
-    bool poll_joypad() {
-        if (!joystick_) {
-            return false;
+    bool poll_input() {
+        gamepad_t & gamepad = service_.gamepad_;
+        if (service_.player_.valid()) {
+            player_t &player = service_.player_->cast<player_t>();
+            player.move(gamepad.axis_.x);
+            if (gamepad.delta_[input_.e_button_x] &&
+                gamepad.button_[input_.e_button_x]) {
+                player.cast<player_t>().jump();
+            }
         }
-        if (!service_.player_.valid()) {
-            return false;
-        }
-        player_t & player = service_.player_->cast<player_t>();
-
-        int16_t xaxis = SDL_JoystickGetAxis(joystick_, 0);
-        float dx = 0.f;
-        dx += xaxis <-0x2000 ? -1.f : 0.f;
-        dx += xaxis > 0x2000 ?  1.f : 0.f;
-        player.move(dx);
-
-        if (SDL_JoystickGetButton(joystick_, 2)) {
-            player.jump();
-        }
-
-        return true;
-    }
-
-    bool poll_keyboard() {
-        float dx = 0.f;
-        {
-            const uint8_t *key = SDL_GetKeyState(nullptr);
-            dx += key[SDLK_LEFT] ? -1.f : 0.f;
-            dx += key[SDLK_RIGHT] ? 1.f : 0.f;
-        }
-        player_t & player = service_.player_->cast<player_t>();
-        player.move(dx);
         return true;
     }
 
@@ -164,7 +140,6 @@ struct app_t {
                 case (SDLK_ESCAPE):
                     return false;
                 case (SDLK_UP):
-                    service_.player_->cast<player_t>().jump();
                     break;
                 case (SDLK_F11):
                     SDL_WM_ToggleFullScreen(screen_);
@@ -182,8 +157,8 @@ struct app_t {
         draw_.clear();
         map_draw();
 
-        poll_keyboard();
-        poll_joypad();
+        service_.gamepad_.tick();
+        poll_input();
 
         factory_.tick();
         return true;

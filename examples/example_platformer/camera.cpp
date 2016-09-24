@@ -9,6 +9,9 @@ camera_t::camera_t(object_service_t s)
 }
 
 void camera_t::tick() {
+    //
+    const float C_SMOOTH_1 = 0.5f;
+    const float C_SMOOTH_2 = 0.1f;
     // if we have a valid player
     if (service_.player_.valid()) {
         // get player state
@@ -22,15 +25,15 @@ void camera_t::tick() {
         if (service_.map_.raycast(pos + vec2f_t{0, -8}, proj, hit)) {
             hit = vec2f_t::nearest(pos, hit, proj);
             // ease towards map intersection
-            target_ = vec2f_t::lerp(target_, hit, .5f);
+            target_ = vec2f_t::lerp(target_, hit, C_SMOOTH_1);
         }
         else {
             // ease towards future projection
-            target_ = vec2f_t::lerp(target_, proj, .5f);
+            target_ = vec2f_t::lerp(target_, proj, C_SMOOTH_1);
         }
     }
     // smooth out camera position
-    pos_ = vec2f_t::lerp(pos_, target_, 0.1f);
+    pos_ = vec2f_t::lerp(pos_, target_, C_SMOOTH_2);
     service_.draw_.offset_ = vec2i_t(-pos_) + vec2i_t{ 80, 60 };
     // draw position and target
 #if 0

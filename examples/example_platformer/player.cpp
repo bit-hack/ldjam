@@ -210,7 +210,9 @@ void player_t::tick_air() {
     {
         // find velocity (verlet)
         const vec2f_t vel = pos_[1] - pos_[0];
-        if (false /* not holding jump */ && vel.y < 0.f) {
+        gamepad_t & gamepad = service_->gamepad_;
+
+        if (!gamepad.button_[gamepad_joy_t::e_button_x] && vel.y < 0.f) {
             pos_[0].y = lerp(pos_[0].y, pos_[1].y, 0.2f);
         }
 
@@ -263,6 +265,10 @@ void player_t::tick_slide() {
 }
 
 void player_t::jump() {
+
+    if (fsm_.empty())
+        return;
+
     const float _WJMP_Y = 6.f;
     const float _WJMP_X = 3.f;
     const float _JMP_SIZE = 4.f;
@@ -296,7 +302,6 @@ void player_t::jump() {
                 pos_[1] += vec2f_t {-_WJMP_X,-_WJMP_Y};
             }
             fsm_.state_change(fsm_state_air_);
-
             service_->factory_.create<dust_t>(
                 4,
                 pos_[1],
@@ -304,7 +309,6 @@ void player_t::jump() {
                 vec2f_t{0.f, 0.0f},
                 .5f
             );
-
             return;
         }
     }
