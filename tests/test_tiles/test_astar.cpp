@@ -43,7 +43,7 @@ struct map_t {
             fill |= ((i%width_)==width_-1);
             // random crap
             fill |= (rand_.rand()&0x3)==0;
-            tile_[i] = fill;
+            tile_[i] = uint8_t(fill ? 0x1 : 0x0);
         }
     }
 
@@ -133,22 +133,30 @@ struct test_astar_t : public test_t {
 
         draw_.colour_ = 0x404040;
         draw_.clear();
-
-        int mx, my;
-        int b = SDL_GetMouseState(&mx, &my);
+        map_.draw();
+        // get mouse state
+        int32_t mx, my;
+        int32_t b = SDL_GetMouseState(&mx, &my);
         mx = clampv<int32_t>(1, mx/C_SIZE, map_.width_-2);
         my = clampv<int32_t>(1, my/C_SIZE, map_.height_-2);
-
+        // check mouse buttons
         if (SDL_BUTTON_LMASK & b) {
             start_.x = mx;
             start_.y = my;
         }
-
+        // set end point
         map_waypoint_t end{mx, my};
+        // create waypoint stack to receive output path
         pathfind::stack_t<map_waypoint_t> path;
-
-        map_.draw();
-
+        // 
+        bool path_found = false;
+        // perform and A* search
+        if (!map_.get(start_)&&!map_.get(end)) {
+            if (astar_.search(start_, end, path)) {
+                path_found = true;
+            }
+        }
+        // debug draw the closed list
         for (int i = 0; i<map_.width_*map_.height_; ++i) {
             const int32_t x = i%map_.width_;
             const int32_t y = i/map_.width_;
@@ -156,19 +164,17 @@ struct test_astar_t : public test_t {
                 rect(x, y, 0x202020);
             }
         }
-
+        // debug draw the open list
         while (!astar_.heap().empty()) {
             auto node = astar_.heap().pop();
             map_waypoint_t wp = node->waypoint_;
             rect(wp.x, wp.y, 0x202090);
         }
-
-        if (!map_.get(start_)&&!map_.get(end)) {
-            if (astar_.search(start_, end, path)) {
-                while (!path.empty()) {
-                    rect(path.top().x, path.top().y, 0x00ff00);
-                    path.pop();
-                }
+        // draw the output path
+        if (path_found) {
+            while (!path.empty()) {
+                rect(path.top().x, path.top().y, 0x00ff00);
+                path.pop();
             }
         }
     }
