@@ -19,7 +19,7 @@ void camera_t::tick() {
         const vec2f_t proj = pos + vel * 12.f;
         // raycast from player to future point
         vec2f_t hit;
-        if (service_.map_->raycast(pos + vec2f_t{0, -8}, proj, hit)) {
+        if (service_.map_.raycast(pos + vec2f_t{0, -8}, proj, hit)) {
             hit = vec2f_t::nearest(pos, hit, proj);
             // ease towards map intersection
             target_ = vec2f_t::lerp(target_, hit, .5f);
@@ -31,16 +31,19 @@ void camera_t::tick() {
     }
     // smooth out camera position
     pos_ = vec2f_t::lerp(pos_, target_, 0.2f);
+    service_.draw_.offset_ = vec2i_t(-pos_) + vec2i_t{ 80, 60 };
     // draw position and target
-#if 0
-    service_.draw_->colour_ = 0x509030;
-    service_.draw_->plot(vec2i_t(pos_));
-    service_.draw_->plot(vec2i_t(target_));
+#if 1
+    service_.draw_.colour_ = 0x509030;
+    service_.draw_.plot<true>(vec2i_t(pos_));
+    service_.draw_.plot<true>(vec2i_t(target_));
 #endif
+#if 1
     // draw screen frame
-    service_.draw_->colour_ = 0x505050;
-    service_.draw_->line(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});
-    service_.draw_->line(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{ 64,  48});
-    service_.draw_->line(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{-64, -48});
-    service_.draw_->line(pos_+vec2f_t{ 64,  48}, pos_+vec2f_t{ 64, -48});
+    service_.draw_.colour_ = 0x505050;
+    service_.draw_.line<true>(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});
+    service_.draw_.line<true>(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{ 64,  48});
+    service_.draw_.line<true>(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{-64, -48});
+    service_.draw_.line<true>(pos_+vec2f_t{ 64,  48}, pos_+vec2f_t{ 64, -48});
+#endif
 }

@@ -25,7 +25,7 @@ struct player_anim_t {
 
     player_anim_t();
 
-    void render(const vec2i_t & pos, draw_t & draw_);
+    void render(const vec2i_t & pos, draw_ex_t & draw_);
 
     void tick(int32_t delta);
 

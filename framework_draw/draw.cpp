@@ -22,6 +22,7 @@ void draw_t::circle(
     const vec2i_t & center,
     const int32_t radius) {
     assert(target_);
+
     int32_t xC = center.x, yC = center.y;
     int32_t p = 1 - radius, x = 0, y = radius;
     _span(xC - y, xC + y, yC);
@@ -133,6 +134,7 @@ void draw_t::line(
 void draw_t::line(
     const vec2i_t & p0,
     const vec2i_t & p1) {
+
     // <---- ---- ---- ---- ---- ---- ---- ---- todo: clip line to viewport
     bool yLonger = false;
     int32_t x=p0.x, y=p0.y;
@@ -202,11 +204,12 @@ void _draw_t_blit(bitmap_t & target,
                   const uint32_t colour,
                   const uint32_t key) {
     // calculate dest rect
-    recti_t dst_rect{
+    recti_t dst_rect(
         info.dst_pos_.x,
         info.dst_pos_.y,
-        info.dst_pos_.x + info.src_rect_.dx(),
-        info.dst_pos_.y + info.src_rect_.dy()};
+        info.src_rect_.dx(),
+        info.src_rect_.dy(),
+        recti_t::e_relative);
     // quickly classify sprite on viewport
     recti_t::classify_t c = viewport.classify(dst_rect);
     if (c == recti_t::e_rect_outside) {

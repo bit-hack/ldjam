@@ -40,7 +40,7 @@ bool player_anim_t::event_slide_loop() {
     return out;
 }
 
-void player_anim_t::render(const vec2i_t & pos, draw_t & draw_) {
+void player_anim_t::render(const vec2i_t & pos, draw_ex_t & draw_) {
     if (!bitmap_.valid()) {
         return;
     }
@@ -60,7 +60,7 @@ void player_anim_t::render(const vec2i_t & pos, draw_t & draw_) {
         xflip_
     };
     draw_.key_ = 0xff00ff;
-    draw_.blit(info);
+    draw_.blit<true>(info);
 }
 
 void player_anim_t::tick(int32_t delta) {
@@ -126,7 +126,7 @@ void player_t::tick_run() {
 
         const vec2f_t vel = pos_[1] - pos_[0];
 
-        service_->factory_->create<dust_t>(
+        service_->factory_.create<dust_t>(
             2,
             pos_[1],
             vec2f_t{0.f, 0.f} - vel * .1f,
@@ -136,7 +136,7 @@ void player_t::tick_run() {
     }
 
     vec2f_t res;
-    if (!service_->map_->collide(bound, res)) {
+    if (!service_->map_.collide(bound, res)) {
         fsm_.state_change(fsm_state_air_);
         return;
     }
@@ -163,14 +163,14 @@ void player_t::tick_air() {
     const float _Y_RESIST = .04f;
 
     vec2f_t res;
-    if (service_->map_->collide(swept_bound(), res)) {
+    if (service_->map_.collide(swept_bound(), res)) {
         const vec2f_t vel = pos_[1] - pos_[0];
         const bool falling = vel.y > 0.f;
         // feet landed on something
         if (res.y < 0.f && falling) {
 
             if (vel.y > 2.f) {
-                service_->factory_->create<dust_t>(
+                service_->factory_.create<dust_t>(
                         4,
                         pos_[1],
                         vec2f_t{0.f, 0.f},
@@ -219,7 +219,7 @@ void player_t::tick_slide() {
 
     const bool falling = (pos_[1] - pos_[0]).y > 0.f;
     vec2f_t res;
-    if (!service_->map_->collide(swept_bound(), res)) {
+    if (!service_->map_.collide(swept_bound(), res)) {
         // no collision so falling
         fsm_.state_change(fsm_state_air_);
         return;
@@ -231,15 +231,15 @@ void player_t::tick_slide() {
     }
     //
     if (anim_.event_slide_loop()) {
-        service_->factory_->create<dust_t>(
+        service_->factory_.create<dust_t>(
             2,
             pos_[1] + vec2f_t{0,-10},
             vec2f_t{0.f, 0.f},
             vec2f_t{0.f, 0.1f},
             .2f
         );
-        service_->draw_->colour_ = 0x00ff00;
-        service_->draw_->circle(vec2i_t{4, 4}, 2);
+        service_->draw_.colour_ = 0x00ff00;
+        service_->draw_.circle<true>(vec2i_t{4, 4}, 2);
     }
     // select animation to play
     anim_.set_x_dir(res.x);
@@ -267,7 +267,7 @@ void player_t::jump() {
     if (fsm_.state() == fsm_state_run_) {
         pos_[0].y += _JMP_SIZE;
         fsm_.state_change(fsm_state_air_);
-        service_->factory_->create<dust_t>(
+        service_->factory_.create<dust_t>(
             4,
             pos_[1],
             vec2f_t{0.f, .5f},
@@ -284,7 +284,7 @@ void player_t::jump() {
         b.x1 += _X_SENSE;
         // test for collision to deduce slide side
         vec2f_t res;
-        if (service_->map_->collide(b, res)) {
+        if (service_->map_.collide(b, res)) {
             if (res.x > 0.f) {
                 pos_[1] += vec2f_t {_WJMP_X,-_WJMP_Y};
             }
@@ -293,7 +293,7 @@ void player_t::jump() {
             }
             fsm_.state_change(fsm_state_air_);
 
-            service_->factory_->create<dust_t>(
+            service_->factory_.create<dust_t>(
                 4,
                 pos_[1],
                 vec2f_t{0.f, 0.f},
@@ -349,5 +349,5 @@ void player_t::tick() {
 #endif
     // draw using animation controller
     anim_.tick(1);
-    anim_.render(vec2i_t(pos_[1]), *service_->draw_);
+    anim_.render(vec2i_t(pos_[1]), service_->draw_);
 }

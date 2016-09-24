@@ -47,7 +47,7 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
         vec2f_t * p0 = p0_.get();
         vec2f_t * p1 = p1_.get();
 
-        service_.draw_->colour_ = 0xD0F0D0;
+        service_.draw_.colour_ = 0xD0F0D0;
 
         for (int i=0; i<count_; ++i) {
             const vec2f_t vel = p1[i] - p0[i];
@@ -55,7 +55,7 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
             p1[i] += vel + grav_;
             age[i] -= 1.f;
 
-            service_.draw_->circle(vec2i_t(p1[i]), 3);
+            service_.draw_.circle<true>(vec2i_t(p1[i]), 3);
 
             alive_ |= age[i] > 0.f;
         }

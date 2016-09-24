@@ -33,10 +33,8 @@ struct app_t {
         , rand_(0x12345)
         , factory_(&service_)
         , joystick_(nullptr)
+        , service_{draw_ex_t(draw_), factory_, map_}
     {
-        service_.draw_ = &draw_;
-        service_.map_ = &map_;
-        service_.factory_ = &factory_;
     }
 
     bool app_init() {
@@ -110,7 +108,8 @@ struct app_t {
                 if (!(t & e_tile_solid)) {
                     continue;
                 }
-                draw_.rect(recti_t(x * 16, y * 16, 16, 16, recti_t::e_relative));
+                service_.draw_.rect<true>(
+                        recti_t(x * 16, y * 16, 16, 16, recti_t::e_relative));
             }
         }
         return true;
@@ -201,6 +200,8 @@ struct app_t {
         object_ref_t camera = factory_.create(e_object_camera);
 
         factory_.add_creator<dust_t>();
+
+        draw_.viewport(recti_t{0, 0, 160, 120});
 
         while (active_) {
             if (!poll_events()) {

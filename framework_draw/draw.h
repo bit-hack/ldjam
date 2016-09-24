@@ -106,3 +106,79 @@ protected:
     recti_t viewport_;
     bitmap_t * target_;
 };
+
+struct draw_ex_t {
+protected:
+    template <bool C_OFFSET, typename vec_t>
+    vec_t select(const vec_t & vec) {
+        return C_OFFSET ? vec + vec_t(offset_) : vec;
+    }
+
+    template <bool C_OFFSET, typename type_t>
+    type_t select_x(const type_t & val) {
+        return C_OFFSET ? val + offset_.x : val;
+    }
+
+    template <bool C_OFFSET, typename type_t>
+    type_t select_y(const type_t & val) {
+        return C_OFFSET ? val + offset_.y : val;
+    }
+
+public:
+    draw_ex_t(draw_t & draw)
+        : draw_(draw)
+        , colour_(draw.colour_)
+        , key_(draw.key_)
+        , offset_{0, 0}
+    {
+    }
+
+    template <bool C_OFFSET>
+    void rect(const recti_t p) {
+        draw_.rect(recti_t{
+            select_x<C_OFFSET>(p.x0),
+            select_y<C_OFFSET>(p.y0),
+            select_x<C_OFFSET>(p.x1),
+            select_y<C_OFFSET>(p.y1)
+        });
+    }
+
+    template <bool C_OFFSET>
+    void circle(const vec2i_t & p,
+                const int32_t radius) {
+        draw_.circle(select<C_OFFSET, vec2i_t>(p), radius);
+    }
+
+    template <bool C_OFFSET, typename vec_t>
+    void line(const vec_t & p0,
+              const vec_t & p1) {
+        draw_.line(select<C_OFFSET, vec_t>(p0),
+                   select<C_OFFSET, vec_t>(p1));
+    }
+
+    template <bool C_OFFSET>
+    void plot(const vec2i_t & p) {
+        draw_.plot(select<C_OFFSET>(p));
+    }
+
+    template <bool C_OFFSET>
+    void triangle(const vec2f_t & a,
+                  const vec2f_t & b,
+                  const vec2f_t & c) {
+        draw_.triangle(select<C_OFFSET>(a),
+                       select<C_OFFSET>(b),
+                       select<C_OFFSET>(c));
+    }
+
+    template <bool C_OFFSET>
+    void blit(const blit_info_t & info) {
+        blit_info_t info_b = info;
+        info_b.dst_pos_ = select<C_OFFSET>(info.dst_pos_);
+        draw_.blit(info_b);
+    }
+
+    draw_t & draw_;
+    uint32_t & colour_;
+    uint32_t & key_;
+    vec2i_t offset_;
+};

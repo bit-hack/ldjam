@@ -17,8 +17,9 @@ enum {
 };
 
 struct service_t {
-    object_factory_t * factory_;
-    draw_t * draw_;
-    collision_map_t * map_;
+    draw_ex_t draw_;
+    object_factory_t & factory_;
+    collision_map_t & map_;
+
     object_ref_t player_;
 };
