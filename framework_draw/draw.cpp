@@ -511,7 +511,7 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
             // advance along this row
             info.dst_pos_.x += cell_w;
         }
-        // wrap and step one columb
+        // wrap and step one column
         pos.y += cell_h;
     }
 }

@@ -12,6 +12,10 @@ struct node_t {
 template <typename type_t>
 struct sweep_prune_t {
 
+    /* type_t contract:
+     * - rectf_t & type_t::get_pos()
+     */
+
     std::set<type_pair_t> type_pair_set_t;
     std::pair_t<const type_t*, const type_t*> type_pair_t;
 

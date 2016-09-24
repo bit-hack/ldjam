@@ -2,7 +2,8 @@
 #include "player.h"
 
 camera_t::camera_t(object_service_t s)
-    : service_(*reinterpret_cast<service_t*>(s))
+    : object_ex_t()
+    , service_(*reinterpret_cast<service_t*>(s))
     , pos_{32, 32}
 {
 }

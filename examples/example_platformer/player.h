@@ -19,7 +19,8 @@ struct player_anim_t {
     bool xflip_;
 
     enum {
-        e_foot_fall
+        e_foot_fall,
+        e_slide_loop
     };
 
     player_anim_t();
@@ -31,6 +32,13 @@ struct player_anim_t {
     void set_x_dir(float dir);
 
     void play(anim::sequence_t & seq);
+
+    bool event_foot_fall();
+    bool event_slide_loop();
+
+protected:
+    bool foot_fall_;
+    bool slide_loop_;
 };
 
 struct player_t : public object_ex_t<e_object_player, player_t> {

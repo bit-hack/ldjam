@@ -41,7 +41,6 @@ struct bin_heap_t {
 
     // Note:
     //  To simplify the implementation, heap_ is base 1 (index 0 unused).
-
     bin_heap_t(): index_(c_root) {}
 
     // pop the current best node in the heap (root node)

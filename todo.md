@@ -20,6 +20,7 @@
 . add perlin noise
 . add vector noise
 . make anim use vec2
+. add tick order to object factory map
 
 ##### tilemap
 . move out into stand alone library

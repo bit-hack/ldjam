@@ -12,7 +12,8 @@
 
 enum {
     e_object_player,
-    e_object_camera
+    e_object_camera,
+    e_object_particles,
 };
 
 struct service_t {

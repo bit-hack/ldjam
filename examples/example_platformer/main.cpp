@@ -1,6 +1,7 @@
 #include "common.h"
 #include "camera.h"
 #include "player.h"
+#include "particles.h"
 
 struct app_t {
 
@@ -35,6 +36,7 @@ struct app_t {
     {
         service_.draw_ = &draw_;
         service_.map_ = &map_;
+        service_.factory_ = &factory_;
     }
 
     bool app_init() {
@@ -197,6 +199,8 @@ struct app_t {
 
         factory_.add_creator<camera_t>();
         object_ref_t camera = factory_.create(e_object_camera);
+
+        factory_.add_creator<dust_t>();
 
         while (active_) {
             if (!poll_events()) {

@@ -14,7 +14,7 @@ struct particles_t {
         part_.p0_.reset(new vec2f_t[count_]);
     }
 
-    virtual void tick() = 0;
+    virtual void particle_tick() = 0;
 
 protected:
     size_t count_;

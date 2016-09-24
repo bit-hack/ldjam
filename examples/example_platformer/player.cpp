@@ -1,4 +1,5 @@
 #include "player.h"
+#include "particles.h"
 
 player_anim_t::player_anim_t()
     : sheet_(108, 24)
@@ -6,7 +7,7 @@ player_anim_t::player_anim_t()
     , stand_("stand", anim::sequence_t::e_end_hold)
     , jump_("jump", anim::sequence_t::e_end_hold)
     , fall_("fall", anim::sequence_t::e_end_hold)
-    , slide_("slide", anim::sequence_t::e_end_hold)
+    , slide_("slide", anim::sequence_t::e_end_loop)
     , skid_("skid", anim::sequence_t::e_end_hold)
     , xflip_(false)
 {
@@ -20,11 +21,23 @@ player_anim_t::player_anim_t()
     jump_ .op_offset(-6, -13).op_frame(5);
     fall_ .op_offset(-6, -13).op_frame(6);
     skid_ .op_offset(-6, -13).op_frame(7);
-    slide_.op_offset(-6, -13).op_frame(8);
+    slide_.op_interval(6).op_offset(-6, -13).op_event(e_slide_loop).op_frame(8);
     // set to stand by default
     controller_.push_sequence(&run_);
     // load the sprite sheet
     bitmap_t::load("assets/ninja.bmp", bitmap_);
+}
+
+bool player_anim_t::event_foot_fall() {
+    bool out = foot_fall_;
+    foot_fall_ = false;
+    return out;
+}
+
+bool player_anim_t::event_slide_loop() {
+    bool out = slide_loop_;
+    slide_loop_ = false;
+    return out;
 }
 
 void player_anim_t::render(const vec2i_t & pos, draw_t & draw_) {
@@ -40,11 +53,11 @@ void player_anim_t::render(const vec2i_t & pos, draw_t & draw_) {
         return;
     }
     blit_info_t info = {
-            &bitmap_,
-            pos + offset,
-            src,
-            e_blit_key,
-            xflip_
+        &bitmap_,
+        pos + offset,
+        src,
+        e_blit_key,
+        xflip_
     };
     draw_.key_ = 0xff00ff;
     draw_.blit(info);
@@ -52,6 +65,11 @@ void player_anim_t::render(const vec2i_t & pos, draw_t & draw_) {
 
 void player_anim_t::tick(int32_t delta) {
     controller_.tick(delta);
+    uint32_t event;
+    while (controller_.get_event(event)) {
+        foot_fall_ |= (event == e_foot_fall);
+        slide_loop_ |= (event == e_slide_loop);
+    }
 }
 
 void player_anim_t::set_x_dir(float dir) {
@@ -104,6 +122,16 @@ void player_t::tick_run() {
     rectf_t bound = swept_bound();
     bound.y1 += _Y_FRINGE;
 
+    if (anim_.event_foot_fall()) {
+        service_->factory_->create<dust_t>(
+            2,
+            pos_[1],
+            vec2f_t{0.f, 0.f},
+            vec2f_t{0.f, 0.0f},
+            .2f
+        );
+    }
+
     vec2f_t res;
     if (!service_->map_->collide(bound, res)) {
         fsm_.state_change(fsm_state_air_);
@@ -137,6 +165,17 @@ void player_t::tick_air() {
         const bool falling = vel.y > 0.f;
         // feet landed on something
         if (res.y < 0.f && falling) {
+
+            if (vel.y > 2.f) {
+                service_->factory_->create<dust_t>(
+                        4,
+                        pos_[1],
+                        vec2f_t{0.f, 0.f},
+                        vec2f_t{0.f, 0.0f},
+                        0.3f
+                );
+            }
+
             fsm_.state_change(fsm_state_run_);
             return;
         }
@@ -187,6 +226,18 @@ void player_t::tick_slide() {
         fsm_.state_change(fsm_state_run_);
         return;
     }
+    //
+    if (anim_.event_slide_loop()) {
+        service_->factory_->create<dust_t>(
+            2,
+            pos_[1] + vec2f_t{0,-10},
+            vec2f_t{0.f, 0.f},
+            vec2f_t{0.f, 0.1f},
+            .2f
+        );
+        service_->draw_->colour_ = 0x00ff00;
+        service_->draw_->circle(vec2i_t{4, 4}, 2);
+    }
     // select animation to play
     anim_.set_x_dir(res.x);
     anim_.play(anim_.slide_);
@@ -213,6 +264,13 @@ void player_t::jump() {
     if (fsm_.state() == fsm_state_run_) {
         pos_[0].y += _JMP_SIZE;
         fsm_.state_change(fsm_state_air_);
+        service_->factory_->create<dust_t>(
+            4,
+            pos_[1],
+            vec2f_t{0.f, .5f},
+            vec2f_t{0.f, 0.0f},
+            .5f
+        );
         return;
     }
     // if we are sliding
@@ -231,6 +289,15 @@ void player_t::jump() {
                 pos_[1] += vec2f_t {-_WJMP_X,-_WJMP_Y};
             }
             fsm_.state_change(fsm_state_air_);
+
+            service_->factory_->create<dust_t>(
+                4,
+                pos_[1],
+                vec2f_t{0.f, 0.f},
+                vec2f_t{0.f, 0.0f},
+                .5f
+            );
+
             return;
         }
     }

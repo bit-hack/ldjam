@@ -10,7 +10,7 @@ set(SOURCE_FILES
     player.h
     player.cpp
     main.cpp
-    common.h)
+    common.h particles.h)
 
 set(LIBRARIES
     framework_core
