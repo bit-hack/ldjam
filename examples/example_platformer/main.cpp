@@ -42,16 +42,20 @@ struct app_t {
             return false;
         }
 
+        const int32_t C_WIDTH = 160;
+        const int32_t C_HEIGHT = 120;
+
         const bool fullscreen = false;
         screen_ = SDL_SetVideoMode(
-               640,
-               480,
+               C_WIDTH * 3,
+               C_HEIGHT * 3,
                32,
                fullscreen ? SDL_FULLSCREEN : 0);
         if (!screen_) {
             return false;
         }
-        if (!bitmap_t::create(320, 240, target_)) {
+
+        if (!bitmap_t::create(C_WIDTH, C_HEIGHT, target_)) {
             return false;
         }
         if (!target_.valid()) {
@@ -212,7 +216,7 @@ struct app_t {
                     return false;
                 }
                 assert(screen_);
-                draw_.render_2x(screen_->pixels,
+                draw_.render_3x(screen_->pixels,
                                 screen_->pitch / sizeof(uint32_t));
                 SDL_Flip(screen_);
             }

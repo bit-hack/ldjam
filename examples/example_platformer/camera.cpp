@@ -30,15 +30,15 @@ void camera_t::tick() {
         }
     }
     // smooth out camera position
-    pos_ = vec2f_t::lerp(pos_, target_, 0.2f);
+    pos_ = vec2f_t::lerp(pos_, target_, 0.1f);
     service_.draw_.offset_ = vec2i_t(-pos_) + vec2i_t{ 80, 60 };
     // draw position and target
-#if 1
+#if 0
     service_.draw_.colour_ = 0x509030;
     service_.draw_.plot<true>(vec2i_t(pos_));
     service_.draw_.plot<true>(vec2i_t(target_));
 #endif
-#if 1
+#if 0
     // draw screen frame
     service_.draw_.colour_ = 0x505050;
     service_.draw_.line<true>(pos_+vec2f_t{-64, -48}, pos_+vec2f_t{ 64, -48});

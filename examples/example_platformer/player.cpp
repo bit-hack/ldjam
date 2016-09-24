@@ -208,6 +208,12 @@ void player_t::tick_air() {
     }
     // air resistance
     {
+        // find velocity (verlet)
+        const vec2f_t vel = pos_[1] - pos_[0];
+        if (false /* not holding jump */ && vel.y < 0.f) {
+            pos_[0].y = lerp(pos_[0].y, pos_[1].y, 0.2f);
+        }
+
         pos_[0].x = lerp(pos_[0].x, pos_[1].x, _X_RESIST);
         pos_[0].y = lerp(pos_[0].y, pos_[1].y, _Y_RESIST);
     }
@@ -238,8 +244,6 @@ void player_t::tick_slide() {
             vec2f_t{0.f, 0.1f},
             .2f
         );
-        service_->draw_.colour_ = 0x00ff00;
-        service_->draw_.circle<true>(vec2i_t{4, 4}, 2);
     }
     // select animation to play
     anim_.set_x_dir(res.x);
@@ -350,4 +354,17 @@ void player_t::tick() {
     // draw using animation controller
     anim_.tick(1);
     anim_.render(vec2i_t(pos_[1]), service_->draw_);
+
+    vec2f_t hit;
+    if (service_->map_.raycast(vec2f_t{pos_[1].x, pos_[1].y-4},
+                               vec2f_t{pos_[1].x, pos_[1].y+10.f}, hit)) {
+
+
+        if (vec2f_t::distance_sqr(pos_[1], hit) < 32*32) {
+            service_->draw_.colour_ = 0x101010;
+            service_->draw_.rect<true>(
+                    recti_t(rectf_t{hit.x - 3, hit.y, hit.x + 3, hit.y + 2}));
+        }
+    }
+
 }
