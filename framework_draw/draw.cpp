@@ -372,17 +372,37 @@ void draw_t::render_2x(void * mem, const uint32_t pitch) {
         uint32_t * x1 = dst + pitch;
         // draw spans
         for (uint32_t i = 0; i < src_pitch; ++i) {
-            // pixel colour
             const uint32_t rgb = src[i];
-            // upper
-            x0[i * 2 + 0] = rgb;
-            x0[i * 2 + 1] = rgb;
-            // lower
-            x1[i * 2 + 0] = rgb;
-            x1[i * 2 + 1] = rgb;
+            x0[i * 2 + 0] = rgb; x0[i * 2 + 1] = rgb;
+            x1[i * 2 + 0] = rgb; x1[i * 2 + 1] = rgb;
         }
         // advance scan lines
         dst += pitch * 2;
+        src += target_->width();
+    }
+}
+
+void draw_t::render_3x(void * mem, const uint32_t pitch) {
+    assert(mem);
+    // data access
+    uint32_t * dst = reinterpret_cast<uint32_t*>(mem);
+    const uint32_t * src = target_->data();
+    const uint32_t src_pitch = target_->width();
+    // height iterator
+    for (int32_t y=0; y<target_->height(); ++y) {
+        // scan lines
+        uint32_t * x0 = dst;
+        uint32_t * x1 = x0 + pitch;
+        uint32_t * x2 = x1 + pitch;
+        // draw spans
+        for (uint32_t i = 0; i < src_pitch; ++i) {
+            const uint32_t rgb = src[i];
+            x0[i * 3 + 0] = rgb; x0[i * 3 + 1] = rgb; x0[i * 3 + 2] = rgb;
+            x1[i * 3 + 0] = rgb; x1[i * 3 + 1] = rgb; x1[i * 3 + 2] = rgb;
+            x2[i * 3 + 0] = rgb; x2[i * 3 + 1] = rgb; x2[i * 3 + 2] = rgb;
+        }
+        // advance scan lines
+        dst += pitch * 3;
         src += target_->width();
     }
 }

@@ -84,6 +84,9 @@ struct draw_t {
         return * target_;
     }
 
+    void render_3x(void *dst,
+                   const uint32_t pitch);
+
     void render_2x(void *dst,
                    const uint32_t pitch);
 
