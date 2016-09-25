@@ -134,6 +134,7 @@ struct object_t {
     object_t(object_type_t type)
         : type_(type)
         , alive_(true)
+        , order_(0)
     {
         // retain reference to self
         ref_.inc();
@@ -217,8 +218,16 @@ struct object_t {
         return alive_;
     }
 
+    // std compare function for ordering
+    static bool compare(const object_t * a, const object_t * b) {
+        assert(a && b);
+        return a->order_ < b->order_;
+    }
+
 protected:
     friend struct object_ref_t;
+
+    int32_t order_;
     ref_t ref_;
     bool alive_;
 };
@@ -267,8 +276,16 @@ struct object_factory_t {
     // tick all objects
     void tick();
 
+    // sort all objects according to their sort order
+    void sort();
+
 protected:
+    // todo: <--- covert to vector
+#if 1
     std::list<object_t*> obj_;
+#else
+    std::vector<object_t*> obj_;
+#endif
 
     typedef std::unique_ptr<creator_t> up_object_creator_t;
     std::map<object_type_t, up_object_creator_t> creator_;

@@ -11,7 +11,7 @@ player_anim_t::player_anim_t()
     , skid_("skid", anim::sequence_t::e_end_hold)
     , xflip_(false)
 {
-    sheet_.add_grid(12, 13);
+    sheet_.add_grid(12, 12);
     controller_.set_sheet(&sheet_);
     // construct animation sequences
     run_.op_interval(3).op_offset(-6, -13)
@@ -222,8 +222,9 @@ void player_t::tick_air() {
 }
 
 void player_t::tick_slide() {
-    const float _GRAVITY = 0.4f;
-    const float _FRICTION = 0.4f;
+    const float _GRAVITY = .4f;
+    const float _FRICTION_DOWN = .4f;
+    const float _FRICTION_UP = .1f;
 
     const bool falling = (pos_[1] - pos_[0]).y > 0.f;
     vec2f_t res;
@@ -231,6 +232,10 @@ void player_t::tick_slide() {
         // no collision so falling
         fsm_.state_change(fsm_state_air_);
         return;
+    }
+    // head hit something
+    if (res.y > 0.f) {
+        pos_[1].y += res.y;
     }
     // feet landed on something
     if (res.y < 0.f && falling) {
@@ -261,11 +266,12 @@ void player_t::tick_slide() {
     pos_[0] = pos_[1];
     pos_[1] += vel + vec2f_t{0.f, _GRAVITY};
     // wall friction
-    pos_[0].y = lerp(pos_[0].y, pos_[1].y, _FRICTION);
+    pos_[0].y = lerp(pos_[0].y, pos_[1].y,
+                     (vel.y > 0.f) ? _FRICTION_DOWN :
+                                     _FRICTION_UP);
 }
 
 void player_t::jump() {
-
     if (fsm_.empty())
         return;
 

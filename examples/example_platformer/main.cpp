@@ -31,10 +31,13 @@ struct app_t {
         , target_()
         , active_(true)
         , map_(vec2i_t{_MAP_WIDTH, _MAP_HEIGHT}, vec2i_t{16, 16})
-        , rand_(0x12345)
+        , rand_(0x12342)
         , factory_(&service_)
         , joystick_()
-        , service_{draw_ex_t(draw_), factory_, map_, joystick_}
+        , service_{draw_ex_t(draw_),
+                   factory_,
+                   map_,
+                   input_}
     {
     }
 
@@ -84,9 +87,7 @@ struct app_t {
     }
 
     bool map_init() {
-
         const int32_t _CHANCE = 10;
-
         map_.clear(0);
         uint8_t * tile = map_.get();
         for (int32_t y=0; y<map_.size().y; ++y) {
@@ -101,7 +102,7 @@ struct app_t {
     }
 
     bool map_draw() {
-        draw_.colour_ = 0x204060;
+        draw_.colour_ = 0x4092c3;
         uint8_t * tile = map_.get();
         for (int32_t y=0; y<map_.size().y; ++y) {
             for (int32_t x=0; x<map_.size().x; ++x) {
@@ -139,8 +140,6 @@ struct app_t {
                 switch (event.key.keysym.sym) {
                 case (SDLK_ESCAPE):
                     return false;
-                case (SDLK_UP):
-                    break;
                 case (SDLK_F11):
                     SDL_WM_ToggleFullScreen(screen_);
                     break;
@@ -153,7 +152,7 @@ struct app_t {
     }
 
     bool tick() {
-        draw_.colour_ = 0x202020;
+        draw_.colour_ = 0x305192;
         draw_.clear();
         map_draw();
 

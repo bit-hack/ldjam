@@ -1,7 +1,7 @@
+#include <algorithm>
 #include "objects.h"
 
-object_ref_t object_t::get_ref()
-{
+object_ref_t object_t::get_ref() {
     return object_ref_t(this);
 }
 
@@ -12,8 +12,7 @@ void object_factory_t::add_creator(
     creator_[type] = std::unique_ptr<creator_t>(creator);
 }
 
-object_ref_t object_factory_t::create(object_type_t type)
-{
+object_ref_t object_factory_t::create(object_type_t type) {
     auto itt = creator_.find(type);
     if (itt == creator_.end()) {
         return object_ref_t();
@@ -21,13 +20,15 @@ object_ref_t object_factory_t::create(object_type_t type)
     else {
         assert(itt->second);
         object_t* obj = itt->second->create(type, service_);
-        obj_.push_front(obj);
+        obj_.push_back(obj);
         return object_ref_t(obj);
     }
 }
 
-void object_factory_t::collect()
-{
+void object_factory_t::sort() {
+}
+
+void object_factory_t::collect() {
     for (auto itt = obj_.begin(); itt != obj_.end();) {
         // deref to get our object
         object_t* obj = *itt;
@@ -50,11 +51,11 @@ void object_factory_t::collect()
     }
 }
 
-void object_factory_t::tick()
-{
-    for (auto itt = obj_.rbegin(); itt != obj_.rend(); ++itt) {
+void object_factory_t::tick() {
+    for (auto itt = obj_.begin(); itt != obj_.end(); ++itt) {
         // deref to get our object
         object_t* obj = *itt;
+        assert(obj);
         // check if this object is disposed
         if (!obj->is_disposed() && obj->is_alive()) {
             obj->tick();
@@ -62,15 +63,13 @@ void object_factory_t::tick()
     }
 }
 
-void object_ref_t::dec()
-{
+void object_ref_t::dec() {
     if (obj_) {
         obj_->ref_.dec();
     }
 }
 
-void object_ref_t::inc()
-{
+void object_ref_t::inc() {
     if (obj_) {
         obj_->ref_.inc();
     }
