@@ -41,7 +41,19 @@ protected:
     bool slide_loop_;
 };
 
+struct player_shadow_t : public object_ex_t<e_object_player_shadow, player_shadow_t> {
+
+    static const uint32_t _ORDER = 1;
+
+    service_t & service_;
+    player_shadow_t(object_service_t service);
+    virtual void tick() override;
+};
+
 struct player_t : public object_ex_t<e_object_player, player_t> {
+
+    static const uint32_t _ORDER = 3;
+
     const int32_t _WIDTH = 4;
     const int32_t _HEIGHT = 10;
 
@@ -58,6 +70,8 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
     player_state_t fsm_state_slide_; // wall slide
 
     player_anim_t anim_;
+
+    object_ref_t shadow_;
 
     player_t(object_service_t s);
 

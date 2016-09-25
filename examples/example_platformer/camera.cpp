@@ -7,6 +7,7 @@ camera_t::camera_t(object_service_t s)
     , pos_{32, 32}
     , target_{0, 0}
 {
+    order_ = _ORDER;
 }
 
 void camera_t::tick() {

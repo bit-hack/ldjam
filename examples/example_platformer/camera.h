@@ -3,6 +3,8 @@
 
 struct camera_t : public object_ex_t<e_object_camera, camera_t> {
 
+    static const uint32_t _ORDER = 0;
+
     service_t & service_;
 
     vec2f_t target_;

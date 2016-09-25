@@ -15,6 +15,7 @@
 
 enum {
     e_object_player,
+    e_object_player_shadow,
     e_object_camera,
     e_object_particles,
 };

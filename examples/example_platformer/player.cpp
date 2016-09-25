@@ -82,6 +82,34 @@ void player_anim_t::play(anim::sequence_t & seq) {
     }
 }
 
+player_shadow_t::player_shadow_t(object_service_t service)
+    : service_(*static_cast<service_t*>(service))
+{
+    order_ = _ORDER;
+}
+
+void player_shadow_t::tick() {
+    if (!service_.player_.valid()) {
+        return;
+    }
+    player_t & player = service_.player_->cast<player_t>();
+    const vec2f_t p = player.pos_[1];
+    vec2f_t hit;
+    if (service_.map_.raycast(vec2f_t{p.x, p.y-4.f},
+                              vec2f_t{p.x, p.y+10.f}, hit)) {
+
+        if (vec2f_t::distance_sqr(p, hit) < 32*32) {
+            service_.draw_.colour_ = 0x303030;
+            service_.draw_.rect<true>(
+                    recti_t(rectf_t{
+                            hit.x - 3,
+                            hit.y + 0,
+                            hit.x + 3,
+                            hit.y + 2}));
+        }
+    }
+}
+
 player_t::player_t(object_service_t s)
     : object_ex_t()
     , service_(static_cast<service_t*>(s))
@@ -92,6 +120,9 @@ player_t::player_t(object_service_t s)
     , dx_(0.f)
 {
     pos_[0] = pos_[1] = vec2f_t{64, 64};
+    order_ = _ORDER;
+
+    shadow_ = service_->factory_.create<player_shadow_t>();
 }
 
 rectf_t player_t::bound() const {
@@ -364,17 +395,4 @@ void player_t::tick() {
     // draw using animation controller
     anim_.tick(1);
     anim_.render(vec2i_t(pos_[1]), service_->draw_);
-
-    vec2f_t hit;
-    if (service_->map_.raycast(vec2f_t{pos_[1].x, pos_[1].y-4},
-                               vec2f_t{pos_[1].x, pos_[1].y+10.f}, hit)) {
-
-
-        if (vec2f_t::distance_sqr(pos_[1], hit) < 32*32) {
-            service_->draw_.colour_ = 0x101010;
-            service_->draw_.rect<true>(
-                    recti_t(rectf_t{hit.x - 3, hit.y, hit.x + 3, hit.y + 2}));
-        }
-    }
-
 }

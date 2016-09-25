@@ -1,4 +1,5 @@
 #include "../../framework_core/objects.h"
+#include "../../framework_core/random.h"
 
 #define TEST_ASSERT(X) {if (!(X)) { return false; }}
 
@@ -48,8 +49,8 @@ struct test_obj_2_t : public object_t {
     }
 };
 
-struct test_obj_3_t : public object_t {
-    struct make_t : public object_factory_t::creator_t {
+struct test_obj_3_t: public object_t {
+    struct make_t: public object_factory_t::creator_t {
         make_t()
             : ref_(0)
         {
@@ -229,6 +230,88 @@ bool test_object_5()
     TEST_ASSERT(obj_2->is_alive());
     TEST_ASSERT(obj_2->cast<obj_test_t>().service_ == &value);
     TEST_ASSERT(obj_2->cast<obj_test_t>().value_ == 1);
+
+    return true;
+}
+
+extern
+bool test_object_6() {
+
+    random_t random(0x1234);
+
+    struct obj_t: object_ex_t<0, obj_t> {
+
+        random_t * random_;
+
+        obj_t(object_service_t service)
+            : object_ex_t()
+            , random_(static_cast<random_t*>(service))
+        {
+            order_ = random_->rand() & 0xff;
+        }
+
+        void kill() {
+            if (alive_) {
+                ref_.dec();
+                alive_ = false;
+            }
+        }
+
+        virtual void tick() override {
+            if (random_->rand_chance(10)) {
+                kill();
+            }
+        }
+    };
+
+    object_factory_t factory(&random);
+    factory.add_creator<obj_t>();
+
+    for (int j = 0; j<100; ++j) {
+        for (int j = 0; j<10; ++j) {
+            factory.create<obj_t>();
+        }
+        factory.tick();
+        factory.sort();
+        factory.collect();
+    }
+
+    return true;
+}
+
+extern
+bool test_object_7() {
+
+    struct obj_t: object_ex_t<0, obj_t> {
+        uint32_t id_;
+        obj_t(object_service_t service)
+            : object_ex_t()
+            , id_(-1)
+        {
+        }
+        void init(uint32_t id, uint32_t order) {
+            id_ = id;
+            order_ = order;
+        }
+        virtual void tick() override {}
+    };
+
+    uint32_t id = 0;
+    object_factory_t factory(nullptr);
+    factory.add_creator<obj_t>();
+
+    factory.create<obj_t>(0, 0);
+    factory.create<obj_t>(1, 1);
+    factory.create<obj_t>(2, 1);
+    factory.create<obj_t>(3, 1);
+    factory.create<obj_t>(4, 2);
+
+    factory.tick();
+
+    factory.sort();
+    factory.sort();
+    factory.sort();
+    factory.sort();
 
     return true;
 }

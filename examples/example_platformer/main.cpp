@@ -5,8 +5,8 @@
 
 struct app_t {
 
-    static const int32_t _MAP_WIDTH = 320 / 16;
-    static const int32_t _MAP_HEIGHT = 240 / 16;
+    static const int32_t _MAP_WIDTH = 32;
+    static const int32_t _MAP_HEIGHT = 32;
 
     SDL_Surface * screen_;
     bitmap_t target_;
@@ -92,7 +92,11 @@ struct app_t {
         uint8_t * tile = map_.get();
         for (int32_t y=0; y<map_.size().y; ++y) {
             for (int32_t x=0; x<map_.size().x; ++x) {
-                bool set = rand_.rand_chance(_CHANCE) || y==(map_.size().y-1);
+                bool set = rand_.rand_chance(_CHANCE);
+                set |= y==0;
+                set |= y==(map_.size().y-1);
+                set |= x==0;
+                set |= x==(map_.size().x-1);
                 tile[x + y * map_.size().x] = set ? e_tile_solid : 0;
             }
         }
@@ -160,6 +164,8 @@ struct app_t {
         poll_input();
 
         factory_.tick();
+        factory_.sort();
+        factory_.collect();
         return true;
     }
 
@@ -171,13 +177,13 @@ struct app_t {
             return false;
         }
 
-        factory_.add_creator<player_t>();
-        service_.player_ = factory_.create(e_object_player);
-
-        factory_.add_creator<camera_t>();
-        object_ref_t camera = factory_.create(e_object_camera);
-
         factory_.add_creator<dust_t>();
+        factory_.add_creator<player_shadow_t>();
+        factory_.add_creator<player_t>();
+        factory_.add_creator<camera_t>();
+
+        service_.player_ = factory_.create(e_object_player);
+        factory_.create(e_object_camera);
 
         draw_.viewport(recti_t{0, 0, 160, 120});
 

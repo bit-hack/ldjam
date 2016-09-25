@@ -2,14 +2,18 @@
 #include <array>
 
 #include "common.h"
+#include "../../framework_core/common.h"
 #include "../../framework_core/vec2.h"
 
 struct dust_t : public object_ex_t<e_object_particles, dust_t> {
+
+    static const uint32_t _ORDER = 2;
 
     dust_t(object_service_t service)
         : service_(*static_cast<service_t*>(service))
         , rand_(SDL_GetTicks())
     {
+        order_ = _ORDER;
     }
 
     void init(
@@ -51,11 +55,14 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
 
         for (uint32_t i=0; i<count_; ++i) {
             const vec2f_t vel = p1[i] - p0[i];
+
             p0[i] = p1[i];
             p1[i] += vel + grav_;
             age[i] -= 1.f;
 
-            service_.draw_.circle<true>(vec2i_t(p1[i]), 3);
+            float size = clampv(1.f, age[i], 3.f);
+
+            service_.draw_.circle<true>(vec2i_t(p1[i]), size);
 
             alive_ |= age[i] > 0.f;
         }

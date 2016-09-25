@@ -26,6 +26,23 @@ object_ref_t object_factory_t::create(object_type_t type) {
 }
 
 void object_factory_t::sort() {
+    const size_t count = obj_.size();
+    // shuffle into the correct position.  while not a great sort
+    // its reasonable for the general case where the list is mostly
+    // ordered.
+    for (size_t i = 1; i<count; ++i) {
+        size_t j = i;
+        while (j>=1 && object_t::compare(obj_[j], obj_[j-1])) {
+            std::swap(obj_[j-1], obj_[j]);
+            --j;
+        }
+    }
+#if 1
+    // assert that orders are upheld
+    for (size_t i = 1; i<count; ++i) {
+        assert(!object_t::compare(obj_[i], obj_[i-1]));
+    }
+#endif
 }
 
 void object_factory_t::collect() {
