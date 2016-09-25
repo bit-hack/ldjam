@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <map>
 #include <list>
+#include <vector>
 
 struct ref_t;
 struct object_t;
@@ -280,12 +281,12 @@ struct object_factory_t {
     void sort();
 
 protected:
-    // todo: <--- covert to vector
-#if 1
-    std::list<object_t*> obj_;
-#else
+    // list of currently alive objects
     std::vector<object_t*> obj_;
-#endif
+
+    // when objects are created they are added to the staging list at the
+    // beginning of factory tick this is merged into the obj_ list.
+    std::vector<object_t*> stage_;
 
     typedef std::unique_ptr<creator_t> up_object_creator_t;
     std::map<object_type_t, up_object_creator_t> creator_;

@@ -29,7 +29,7 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
         float * age = age_.get();
         vec2f_t * p0 = p0_.get();
         vec2f_t * p1 = p1_.get();
-        for (int i=0; i<count_; ++i) {
+        for (uint32_t i=0; i<count_; ++i) {
 
             age[i] = 8.f;
 
@@ -49,7 +49,7 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
 
         service_.draw_.colour_ = 0xD0F0D0;
 
-        for (int i=0; i<count_; ++i) {
+        for (uint32_t i=0; i<count_; ++i) {
             const vec2f_t vel = p1[i] - p0[i];
             p0[i] = p1[i];
             p1[i] += vel + grav_;

@@ -20,7 +20,7 @@ object_ref_t object_factory_t::create(object_type_t type) {
     else {
         assert(itt->second);
         object_t* obj = itt->second->create(type, service_);
-        obj_.push_back(obj);
+        stage_.push_back(obj);
         return object_ref_t(obj);
     }
 }
@@ -52,6 +52,7 @@ void object_factory_t::collect() {
 }
 
 void object_factory_t::tick() {
+    // itterate over all active objects
     for (auto itt = obj_.begin(); itt != obj_.end(); ++itt) {
         // deref to get our object
         object_t* obj = *itt;
@@ -60,6 +61,12 @@ void object_factory_t::tick() {
         if (!obj->is_disposed() && obj->is_alive()) {
             obj->tick();
         }
+    }
+    // merge stage_ into obj_
+    if (!stage_.empty()) {
+        obj_.reserve(obj_.size() + stage_.size());
+        obj_.insert(obj_.end(), stage_.begin(), stage_.end());
+        stage_.clear();
     }
 }
 
