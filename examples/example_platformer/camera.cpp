@@ -10,32 +10,46 @@ camera_t::camera_t(object_service_t s)
     order_ = _ORDER;
 }
 
+void camera_t::shake() {
+    // todo:
+}
+
 void camera_t::tick() {
-    //
+    // smoothign factors
     const float C_SMOOTH_1 = 0.5f;
     const float C_SMOOTH_2 = 0.1f;
     // if we have a valid player
     if (service_.player_.valid()) {
         // get player state
         player_t & player = service_.player_->cast<player_t>();
-        const vec2f_t pos = player.get_pos();
-        const vec2f_t vel = player.get_velocity();
+        const vec2f_t player_pos = player.get_pos();
+        const vec2f_t player_vel = player.get_velocity();
+        // calculate an deadzone factor
+        const float deadzone = max2(falloff(6.f, vec2f_t::distance(player_pos, pos_), 8.f), 
+                                    falloff(1.f, vec2f_t::length(player_vel), 2.f));
+#if 0
+        // debug show movement factor
+        service_.draw_.colour_ = speed*255;
+        service_.draw_.circle<false>(vec2i_t{8, 8}, 3);
+#endif
         // project where the player is going
-        const vec2f_t proj = pos + vel * 12.f;
+        const vec2f_t proj = player_pos + player_vel * 12.f;
         // raycast from player to future point
         vec2f_t hit;
-        if (service_.map_.raycast(pos + vec2f_t{0, -8}, proj, hit)) {
-            hit = vec2f_t::nearest(pos, hit, proj);
-            // ease towards map intersection
+        if (service_.map_.raycast(player_pos + vec2f_t{0, -8}, proj, hit)) {
+            hit = vec2f_t::nearest(player_pos, hit, proj);
+            // ease towards map intersection point
             target_ = vec2f_t::lerp(target_, hit, C_SMOOTH_1);
         }
         else {
             // ease towards future projection
             target_ = vec2f_t::lerp(target_, proj, C_SMOOTH_1);
         }
+        // smooth out camera position
+        const vec2f_t new_pos = vec2f_t::lerp(pos_, target_, C_SMOOTH_2);
+        // final update based on deadzone
+        pos_ = vec2f_t::lerp(pos_, new_pos, deadzone);
     }
-    // smooth out camera position
-    pos_ = vec2f_t::lerp(pos_, target_, C_SMOOTH_2);
     service_.draw_.offset_ = vec2i_t(-pos_) + vec2i_t{ 80, 60 };
     // draw position and target
 #if 0

@@ -3,7 +3,8 @@
 
 struct camera_t : public object_ex_t<e_object_camera, camera_t> {
 
-    static const uint32_t _ORDER = 0;
+    // note: should update after all visible entities
+    static const uint32_t _ORDER = 6;
 
     service_t & service_;
 
@@ -11,6 +12,8 @@ struct camera_t : public object_ex_t<e_object_camera, camera_t> {
     vec2f_t pos_;
 
     camera_t(object_service_t s);
+
+    void shake();
 
     virtual void tick() override;
 };

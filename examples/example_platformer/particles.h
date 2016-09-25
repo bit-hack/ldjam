@@ -60,9 +60,8 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
             p1[i] += vel + grav_;
             age[i] -= 1.f;
 
-            float size = clampv(1.f, age[i], 3.f);
-
-            service_.draw_.circle<true>(vec2i_t(p1[i]), size);
+            const float size = clampv(1.f, age[i], 3.f);
+            service_.draw_.circle<true>(vec2i_t(p1[i]), int32_t(size));
 
             alive_ |= age[i] > 0.f;
         }

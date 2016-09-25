@@ -166,6 +166,7 @@ struct app_t {
         factory_.tick();
         factory_.sort();
         factory_.collect();
+
         return true;
     }
 

@@ -273,7 +273,7 @@ void player_t::tick_slide() {
         fsm_.state_change(fsm_state_run_);
         return;
     }
-    //
+    // create dust while sliding
     if (anim_.event_slide_loop()) {
         service_->factory_.create<dust_t>(
             2,

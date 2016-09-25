@@ -97,6 +97,11 @@ type_t quantize(const type_t in, const type_t divisor) {
 }
 
 template <typename type_t>
+constexpr type_t falloff(const type_t lo, const type_t in, const type_t hi) {
+    return clampv(0.f, (in - lo) / (hi - lo), 1.f);
+}
+
+template <typename type_t>
 struct valid_t {
 
     valid_t()
