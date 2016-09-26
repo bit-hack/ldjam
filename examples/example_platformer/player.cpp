@@ -1,4 +1,5 @@
 #include "player.h"
+#include "camera.h"
 #include "particles.h"
 
 player_anim_t::player_anim_t()
@@ -161,7 +162,7 @@ void player_t::tick_run() {
     }
     // integration stage
     {
-        // find velocity (verlet)
+        //
         const vec2f_t vel = pos_[1] - pos_[0];
         // select animation to play
         anim_.play((absv(vel.x) > 0.4f) ? anim_.run_ : anim_.stand_);
@@ -174,7 +175,7 @@ void player_t::tick_run() {
     // collision response
     rectf_t bound = swept_bound();
     vec2f_t res;
-    if (service_->map_.collide(bound, res)) {
+    if (service_->map_.collide(bound, /* vel */ pos_[1]-pos_[0], res)) {
         // reduce size slightly to ensure continuous collision
         res.y -= signv<float>(res.y) * _Y_FRINGE;
         // apply collision response as impulse
@@ -209,6 +210,11 @@ void player_t::tick_air() {
                 );
             }
 
+            if (vel.y > 6.f) {
+                service_->camera_->cast<camera_t>().shake(1.f);
+            }
+
+
             fsm_.state_change(fsm_state_run_);
             return;
         }
@@ -240,7 +246,7 @@ void player_t::tick_air() {
     {
         // find velocity (verlet)
         const vec2f_t vel = pos_[1] - pos_[0];
-        gamepad_t & gamepad = service_->gamepad_;
+        gamepad_t & gamepad = *service_->gamepad_;
 
         if (!gamepad.button_[gamepad_joy_t::e_button_x] && vel.y < 0.f) {
             pos_[0].y = lerp(pos_[0].y, pos_[1].y, 0.2f);

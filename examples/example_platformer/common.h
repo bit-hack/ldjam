@@ -24,7 +24,8 @@ struct service_t {
     draw_ex_t draw_;
     object_factory_t & factory_;
     collision_map_t & map_;
-    gamepad_t & gamepad_;
+    gamepad_t * gamepad_;
 
     object_ref_t player_;
+    object_ref_t camera_;
 };

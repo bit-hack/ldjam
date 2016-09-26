@@ -76,6 +76,71 @@ bool collision_map_t::collide(const rectf_t &r, vec2f_t &out) {
     return setx | sety;
 }
 
+bool collision_map_t::collide(const rectf_t &r,
+                              const vec2f_t & vel,
+                              vec2f_t &out) {
+
+    // find the tile space extent of the bounding rectangle
+    int32_t minx = clampv(0, quantize<int32_t>(int32_t(r.x0), cell_size_.x), size_.x-1);
+    int32_t miny = clampv(0, quantize<int32_t>(int32_t(r.y0), cell_size_.y), size_.y-1);
+    int32_t maxx = clampv(0, quantize<int32_t>(int32_t(r.x1), cell_size_.x), size_.x-1);
+    int32_t maxy = clampv(0, quantize<int32_t>(int32_t(r.y1), cell_size_.y), size_.y-1);
+
+    // set the worst case resolution to improve upon
+    const float ival = max2(r.x1-r.x0, r.y1-r.y0);
+    out.x = ival;
+    out.y = ival;
+
+    vec2f_t best = {0, 0};
+    bool set = false;
+
+    // iterate over all touched tiles
+    for (int32_t y=miny; y<=maxy; ++y) {
+        for (int32_t x=minx; x<=maxx; ++x) {
+
+            // get the flags for this tile we are on
+            const uint8_t t = get(vec2i_t{x, y});
+
+            // non solid tiles do not affect the resolver
+            if ((t & e_tile_solid) == 0)
+                continue;
+
+            // find the full size tile
+            const rectf_t b {
+                    float(x+0) * cell_size_.x,
+                    float(y+0) * cell_size_.y,
+                    float(x+1) * cell_size_.x,
+                    float(y+1) * cell_size_.y };
+
+            // find all possible resolution vectors (r = collider, b = blocker)
+            const std::array<float, 4> res = {
+                    (t & e_tile_push_up)    ? b.y0 - r.y1 : -ival,
+                    (t & e_tile_push_down)  ? b.y1 - r.y0 :  ival,
+                    (t & e_tile_push_left)  ? b.x0 - r.x1 : -ival,
+                    (t & e_tile_push_right) ? b.x1 - r.x0 :  ival};
+
+            // compute all of the resolution vectors
+            const std::array<vec2f_t, 4> vec = {{
+                    vec2f_t { 0.f, res[0] },
+                    vec2f_t { 0.f, res[1] },
+                    vec2f_t { res[2], 0.f },
+                    vec2f_t { res[3], 0.f }}};
+
+            // select resolution that squashes the most of the velocity
+            for (size_t i=0; i<vec.size(); ++i) {
+                if (!set || vec2f_t::length(vel+vec[i]) <
+                            vec2f_t::length(vel+best)) {
+                    best = vec[i];
+                    set = true;
+                }
+            }
+        }
+    }
+    // take any resolutions that were chosen
+    out = best;
+    return set;
+}
+
 bool collision_map_t::collide_alt(const rectf_t &r, vec2f_t &out) {
     
     // find the tile space extent of the bounding rectangle

@@ -37,7 +37,7 @@ struct app_t {
         , service_{draw_ex_t(draw_),
                    factory_,
                    map_,
-                   input_}
+                   &input_}
     {
     }
 
@@ -73,7 +73,9 @@ struct app_t {
         timer_.reset();
 
         // open the joystick
-        joystick_.open(0);
+        if (joystick_.open(0)) {
+            service_.gamepad_ = &joystick_;
+        }
         return true;
     }
 
@@ -122,7 +124,7 @@ struct app_t {
     }
 
     bool poll_input() {
-        gamepad_t & gamepad = service_.gamepad_;
+        gamepad_t & gamepad = *service_.gamepad_;
         if (service_.player_.valid()) {
             player_t &player = service_.player_->cast<player_t>();
             player.move(gamepad.axis_.x);
@@ -147,6 +149,9 @@ struct app_t {
                 case (SDLK_F11):
                     SDL_WM_ToggleFullScreen(screen_);
                     break;
+                case (SDLK_s):
+                    service_.camera_->cast<camera_t>().shake(1.f);
+                    break;
                 default:
                     break;
                 }
@@ -160,7 +165,7 @@ struct app_t {
         draw_.clear();
         map_draw();
 
-        service_.gamepad_.tick();
+        service_.gamepad_->tick();
         poll_input();
 
         factory_.tick();
@@ -184,7 +189,7 @@ struct app_t {
         factory_.add_creator<camera_t>();
 
         service_.player_ = factory_.create(e_object_player);
-        factory_.create(e_object_camera);
+        service_.camera_ = factory_.create(e_object_camera);
 
         draw_.viewport(recti_t{0, 0, 160, 120});
 

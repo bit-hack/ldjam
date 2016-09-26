@@ -27,9 +27,13 @@ struct collision_map_t {
     }
 
     // collide a bounding rect with solid tiles in the collision map.
-    // this is the most robust solver of the two.  the need for solid
+    // this is a fairly robust solver, yet the need for solid
     // tiles however may be a limitation in some situations.
     bool collide(const rectf_t & r, vec2f_t & out);
+
+    // a resolver specialised for platformer games, and minimising the
+    // movement covered during collision.
+    bool collide(const rectf_t & r, const vec2f_t & vel, vec2f_t & out);
 
     // collide a bounding rect with the collision map via tile flags.
     // In this case we do not require solid tiles, only edge flags in

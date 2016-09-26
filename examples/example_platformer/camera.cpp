@@ -10,8 +10,8 @@ camera_t::camera_t(object_service_t s)
     order_ = _ORDER;
 }
 
-void camera_t::shake() {
-    // todo:
+void camera_t::shake(float magnitude) {
+    shake_.mag_ = max2(shake_.mag_, magnitude);
 }
 
 void camera_t::tick() {
@@ -50,7 +50,6 @@ void camera_t::tick() {
         // final update based on deadzone
         pos_ = vec2f_t::lerp(pos_, new_pos, deadzone);
     }
-    service_.draw_.offset_ = vec2i_t(-pos_) + vec2i_t{ 80, 60 };
     // draw position and target
 #if 0
     service_.draw_.colour_ = 0x509030;
@@ -65,4 +64,18 @@ void camera_t::tick() {
     service_.draw_.line<true>(pos_+vec2f_t{-64,  48}, pos_+vec2f_t{-64, -48});
     service_.draw_.line<true>(pos_+vec2f_t{ 64,  48}, pos_+vec2f_t{ 64, -48});
 #endif
+    {
+        shake_.mag_ *= 0.8f;
+
+
+        // update camera shake
+        if (shake_.counter_.frame()) {
+            shake_.offset_[0] = shake_.offset_[1];
+            shake_.offset_[1];
+            shake_.rand_.randfs_vec2(shake_.offset_[1]);
+        }
+        const float dt = shake_.counter_.deltaf();
+        vec2f_t rumble = vec2f_t::lerp(shake_.offset_[0], shake_.offset_[1], dt) * shake_.mag_;
+        service_.draw_.offset_ = vec2i_t(-pos_) + vec2i_t{ 80, 60 } + vec2i_t(rumble);
+    }
 }
