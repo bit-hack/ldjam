@@ -148,15 +148,9 @@ void player_t::tick_run() {
     const float _GRAVITY  = .4f;
     const float _FRICTION = 0.3f;
     const float _Y_FRINGE = 1.f;
-
-
-    rectf_t bound = swept_bound();
-    bound.y1 += _Y_FRINGE;
-
+    // create foot fall dust splodges
     if (anim_.event_foot_fall()) {
-
         const vec2f_t vel = pos_[1] - pos_[0];
-
         service_->factory_.create<dust_t>(
             2,
             pos_[1],
@@ -165,26 +159,31 @@ void player_t::tick_run() {
             .2f
         );
     }
-
-    vec2f_t res;
-    if (!service_->map_.collide(bound, res)) {
-        fsm_.state_change(fsm_state_air_);
-        return;
-    }
-    else {
-        // reduce size slightly to ensure continuous collision
-        res.y -= signv<float>(res.y) * _Y_FRINGE;
-        // apply collision response as impulse
-        pos_[1] += res;
+    // integration stage
+    {
         // find velocity (verlet)
         const vec2f_t vel = pos_[1] - pos_[0];
         // select animation to play
-        anim_.play( (absv(vel.x) > 0.4f) ? anim_.run_ : anim_.stand_);
+        anim_.play((absv(vel.x) > 0.4f) ? anim_.run_ : anim_.stand_);
         // integrate
         pos_[0] = pos_[1];
         pos_[1] += vel + vec2f_t {dx_, _GRAVITY};
         // ground friction
         pos_[0].x = lerp(pos_[0].x, pos_[1].x, _FRICTION);
+    }
+    // collision response
+    rectf_t bound = swept_bound();
+    vec2f_t res;
+    if (service_->map_.collide(bound, res)) {
+        // reduce size slightly to ensure continuous collision
+        res.y -= signv<float>(res.y) * _Y_FRINGE;
+        // apply collision response as impulse
+        pos_[1] += res;
+        // avoid bounce with certain responses
+        pos_[0].y = min2(pos_[0].y, pos_[1].y);
+    }
+    else {
+        fsm_.state_change(fsm_state_air_);
     }
 }
 
@@ -372,25 +371,25 @@ void player_t::tick() {
         fsm_.state_push(fsm_state_air_);
     }
     fsm_.tick();
-#if 0
+#if 1
     // fsm state indicator
     if (fsm_.state() == fsm_state_run_) {
-        service_->draw_->colour_ = 0xff0000;
-        service_->draw_->rect(recti_t{8, 8, 16, 16});
+        service_->draw_.colour_ = 0xff0000;
     }
     if (fsm_.state() == fsm_state_air_) {
-        service_->draw_->colour_ = 0x00ff00;
-        service_->draw_->rect(recti_t{8, 8, 16, 16});
+        service_->draw_.colour_ = 0x00ff00;
     }
     if (fsm_.state() == fsm_state_slide_) {
-        service_->draw_->colour_ = 0x0000ff;
-        service_->draw_->rect(recti_t{8, 8, 16, 16});
+        service_->draw_.colour_ = 0x0000ff;
     }
+    service_->draw_.circle<false>(vec2i_t{8, 16}, 3);
+#endif
+#if 0
     // draw player body
-    service_->draw_->colour_ = 0x408060;
-    service_->draw_->rect(recti_t(swept_bound()));
-    service_->draw_->colour_ = 0x406080;
-    service_->draw_->rect(recti_t(bound()));
+    service_->draw_.colour_ = 0x408060;
+    service_->draw_.rect<true>(recti_t(swept_bound()));
+    service_->draw_.colour_ = 0x406080;
+    service_->draw_.rect<true>(recti_t(bound()));
 #endif
     // draw using animation controller
     anim_.tick(1);
