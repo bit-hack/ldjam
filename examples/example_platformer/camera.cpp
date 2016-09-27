@@ -19,9 +19,9 @@ void camera_t::tick() {
     const float C_SMOOTH_1 = 0.5f;
     const float C_SMOOTH_2 = 0.1f;
     // if we have a valid player
-    if (service_.player_.valid()) {
+    if (service_.objects_["player"].valid()) {
         // get player state
-        player_t & player = service_.player_->cast<player_t>();
+        player_t & player = service_.objects_["player"]->cast<player_t>();
         const vec2f_t player_pos = player.get_pos();
         const vec2f_t player_vel = player.get_velocity();
         // calculate an deadzone factor

@@ -6,6 +6,8 @@
 #include <map>
 #include <list>
 #include <vector>
+#include <unordered_map>
+#include <cstring>
 
 struct ref_t;
 struct object_t;
@@ -21,12 +23,12 @@ struct ref_t {
     {
     }
 
-    uint32_t inc()
+    int32_t inc()
     {
         return ++value_;
     }
 
-    uint32_t dec()
+    int32_t dec()
     {
         return --value_;
     }
@@ -324,4 +326,75 @@ struct object_ex_t : public object_t {
     {
         return new object_create_t<type_t>();
     }
+};
+
+struct object_map_t {
+
+    struct const_str_t {
+
+        const_str_t(const char * str)
+            : str_(str)
+            , hash_(hash(str))
+        {
+        }
+
+        bool operator == (const const_str_t & rhs) const {
+            if (hash_ == rhs.hash_) {
+                return strcmp(str_, rhs.str_) == 0;
+            }
+            return false;
+        }
+
+        struct hash_t {
+            size_t operator () (const const_str_t & in) const {
+                return in.hash_;
+            }
+        };
+
+    protected:
+
+        friend struct hash_t;
+
+        static uint32_t hash(const char * str) {
+            uint32_t hash = 5381, c;
+            for (;c = *str++; hash = hash * 33 + c);
+            return hash;
+        }
+
+        const uint32_t hash_;
+        const char * str_;
+    };
+
+    object_map_t()
+        : map_()
+    {}
+
+    bool contains(const const_str_t & key) const {
+        auto itt = map_.find(key);
+        return itt != map_.end();
+    }
+
+    void insert(const const_str_t & key, object_ref_t obj) {
+        map_[key] = obj;
+    }
+
+    void remove(const const_str_t & key) {
+        auto itt = map_.find(key);
+        if (itt != map_.end()) {
+            map_.erase(itt);
+        }
+    }
+
+    object_ref_t operator [] (const const_str_t & key) {
+        typename map_t::iterator itt = map_.find(key);
+        assert(itt != map_.end());
+        return itt->second;
+    }
+
+protected:
+    typedef std::unordered_map<
+            const_str_t,
+            object_ref_t,
+            const_str_t::hash_t> map_t;
+    map_t map_;
 };

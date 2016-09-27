@@ -60,7 +60,7 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
     typedef fsm_t<player_t> player_fsm_t;
     typedef player_fsm_t::fsm_state_t player_state_t;
 
-    service_t * service_;
+    service_t & service_;
     vec2f_t pos_[2];
     float dx_;
 

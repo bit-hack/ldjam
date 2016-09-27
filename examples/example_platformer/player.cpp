@@ -90,10 +90,12 @@ player_shadow_t::player_shadow_t(object_service_t service)
 }
 
 void player_shadow_t::tick() {
-    if (!service_.player_.valid()) {
+
+    object_ref_t player_ref = service_.objects_["player"];
+    if (!player_ref.valid()) {
         return;
     }
-    player_t & player = service_.player_->cast<player_t>();
+    player_t & player = player_ref->cast<player_t>();
     const vec2f_t p = player.pos_[1];
     vec2f_t hit;
     if (service_.map_.raycast(vec2f_t{p.x, p.y-4.f},
@@ -113,7 +115,7 @@ void player_shadow_t::tick() {
 
 player_t::player_t(object_service_t s)
     : object_ex_t()
-    , service_(static_cast<service_t*>(s))
+    , service_(*static_cast<service_t*>(s))
     , fsm_(this)
     , fsm_state_air_(&player_t::tick_air)
     , fsm_state_run_(&player_t::tick_run)
@@ -122,8 +124,7 @@ player_t::player_t(object_service_t s)
 {
     pos_[0] = pos_[1] = vec2f_t{64, 64};
     order_ = _ORDER;
-
-    shadow_ = service_->factory_.create<player_shadow_t>();
+    shadow_ = service_.factory_.create<player_shadow_t>();
 }
 
 rectf_t player_t::bound() const {
@@ -152,7 +153,7 @@ void player_t::tick_run() {
     // create foot fall dust splodges
     if (anim_.event_foot_fall()) {
         const vec2f_t vel = pos_[1] - pos_[0];
-        service_->factory_.create<dust_t>(
+        service_.factory_.create<dust_t>(
             2,
             pos_[1],
             vec2f_t{0.f, 0.f} - vel * .1f,
@@ -175,7 +176,7 @@ void player_t::tick_run() {
     // collision response
     rectf_t bound = swept_bound();
     vec2f_t res;
-    if (service_->map_.collide(bound, /* vel */ pos_[1]-pos_[0], res)) {
+    if (service_.map_.collide(bound, /* vel */ pos_[1]-pos_[0], res)) {
         // reduce size slightly to ensure continuous collision
         res.y -= signv<float>(res.y) * _Y_FRINGE;
         // apply collision response as impulse
@@ -194,14 +195,14 @@ void player_t::tick_air() {
     const float _Y_RESIST = .04f;
 
     vec2f_t res;
-    if (service_->map_.collide(swept_bound(), res)) {
+    if (service_.map_.collide(swept_bound(), res)) {
         const vec2f_t vel = pos_[1] - pos_[0];
         const bool falling = vel.y > 0.f;
         // feet landed on something
         if (res.y < 0.f && falling) {
 
             if (vel.y > 2.f) {
-                service_->factory_.create<dust_t>(
+                service_.factory_.create<dust_t>(
                         4,
                         pos_[1],
                         vec2f_t{0.f, 0.f},
@@ -211,7 +212,7 @@ void player_t::tick_air() {
             }
 
             if (vel.y > 6.f) {
-                service_->camera_->cast<camera_t>().shake(1.f);
+                service_.objects_["camera"]->cast<camera_t>().shake(1.f);
             }
 
 
@@ -246,7 +247,7 @@ void player_t::tick_air() {
     {
         // find velocity (verlet)
         const vec2f_t vel = pos_[1] - pos_[0];
-        gamepad_t & gamepad = *service_->gamepad_;
+        gamepad_t & gamepad = *service_.gamepad_;
 
         if (!gamepad.button_[gamepad_joy_t::e_button_x] && vel.y < 0.f) {
             pos_[0].y = lerp(pos_[0].y, pos_[1].y, 0.2f);
@@ -264,7 +265,7 @@ void player_t::tick_slide() {
 
     const bool falling = (pos_[1] - pos_[0]).y > 0.f;
     vec2f_t res;
-    if (!service_->map_.collide(swept_bound(), res)) {
+    if (!service_.map_.collide(swept_bound(), res)) {
         // no collision so falling
         fsm_.state_change(fsm_state_air_);
         return;
@@ -280,7 +281,7 @@ void player_t::tick_slide() {
     }
     // create dust while sliding
     if (anim_.event_slide_loop()) {
-        service_->factory_.create<dust_t>(
+        service_.factory_.create<dust_t>(
             2,
             pos_[1] + vec2f_t{0,-10},
             vec2f_t{0.f, 0.f},
@@ -319,7 +320,7 @@ void player_t::jump() {
     if (fsm_.state() == fsm_state_run_) {
         pos_[0].y += _JMP_SIZE;
         fsm_.state_change(fsm_state_air_);
-        service_->factory_.create<dust_t>(
+        service_.factory_.create<dust_t>(
             4,
             pos_[1],
             vec2f_t{0.f, .5f},
@@ -336,7 +337,7 @@ void player_t::jump() {
         b.x1 += _X_SENSE;
         // test for collision to deduce slide side
         vec2f_t res;
-        if (service_->map_.collide(b, res)) {
+        if (service_.map_.collide(b, res)) {
             if (res.x > 0.f) {
                 pos_[1] += vec2f_t {_WJMP_X,-_WJMP_Y};
             }
@@ -344,7 +345,7 @@ void player_t::jump() {
                 pos_[1] += vec2f_t {-_WJMP_X,-_WJMP_Y};
             }
             fsm_.state_change(fsm_state_air_);
-            service_->factory_.create<dust_t>(
+            service_.factory_.create<dust_t>(
                 4,
                 pos_[1],
                 vec2f_t{0.f, 0.f},
@@ -380,15 +381,15 @@ void player_t::tick() {
 #if 1
     // fsm state indicator
     if (fsm_.state() == fsm_state_run_) {
-        service_->draw_.colour_ = 0xff0000;
+        service_.draw_.colour_ = 0xff0000;
     }
     if (fsm_.state() == fsm_state_air_) {
-        service_->draw_.colour_ = 0x00ff00;
+        service_.draw_.colour_ = 0x00ff00;
     }
     if (fsm_.state() == fsm_state_slide_) {
-        service_->draw_.colour_ = 0x0000ff;
+        service_.draw_.colour_ = 0x0000ff;
     }
-    service_->draw_.circle<false>(vec2i_t{8, 16}, 3);
+    service_.draw_.circle<false>(vec2i_t{8, 16}, 3);
 #endif
 #if 0
     // draw player body
@@ -399,5 +400,5 @@ void player_t::tick() {
 #endif
     // draw using animation controller
     anim_.tick(1);
-    anim_.render(vec2i_t(pos_[1]), service_->draw_);
+    anim_.render(vec2i_t(pos_[1]), service_.draw_);
 }

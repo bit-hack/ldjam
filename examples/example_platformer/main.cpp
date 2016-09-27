@@ -125,8 +125,8 @@ struct app_t {
 
     bool poll_input() {
         gamepad_t & gamepad = *service_.gamepad_;
-        if (service_.player_.valid()) {
-            player_t &player = service_.player_->cast<player_t>();
+        if (service_.objects_["player"].valid()) {
+            player_t &player = service_.objects_["player"]->cast<player_t>();
             player.move(gamepad.axis_.x);
             if (gamepad.delta_[input_.e_button_x] &&
                 gamepad.button_[input_.e_button_x]) {
@@ -150,7 +150,7 @@ struct app_t {
                     SDL_WM_ToggleFullScreen(screen_);
                     break;
                 case (SDLK_s):
-                    service_.camera_->cast<camera_t>().shake(1.f);
+                    service_.objects_["camera"]->cast<camera_t>().shake(1.f);
                     break;
                 default:
                     break;
@@ -188,8 +188,8 @@ struct app_t {
         factory_.add_creator<player_t>();
         factory_.add_creator<camera_t>();
 
-        service_.player_ = factory_.create(e_object_player);
-        service_.camera_ = factory_.create(e_object_camera);
+        service_.objects_.insert("player", factory_.create(e_object_player));
+        service_.objects_.insert("camera", factory_.create(e_object_camera));
 
         draw_.viewport(recti_t{0, 0, 160, 120});
 
@@ -217,6 +217,6 @@ struct app_t {
 };
 
 int main(const int argc, char *args[]) {
-    app_t app;
-    return app.main(argc, args) ? 0 : 1;
+    app_t * app = new app_t;
+    return app->main(argc, args) ? 0 : 1;
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <SDL/SDL.h>
+#include <unordered_map>
+#include <string>
 
 #include "../../framework_core/fsm.h"
 #include "../../framework_core/random.h"
@@ -25,7 +27,5 @@ struct service_t {
     object_factory_t & factory_;
     collision_map_t & map_;
     gamepad_t * gamepad_;
-
-    object_ref_t player_;
-    object_ref_t camera_;
+    object_map_t objects_;
 };
