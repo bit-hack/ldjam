@@ -1,5 +1,9 @@
 #pragma once
 
+#include <cstdint>
+#include <set>
+#include <vector>
+
 template <typename type_t>
 struct node_t {
     enum { e_next, e_prev };
@@ -16,8 +20,8 @@ struct sweep_prune_t {
      * - rectf_t & type_t::get_pos()
      */
 
-    std::set<type_pair_t> type_pair_set_t;
-    std::pair_t<const type_t*, const type_t*> type_pair_t;
+    typedef std::set<type_pair_t> type_pair_set_t;
+    std::pair<const type_t*, const type_t*> type_pair_t;
 
     void insert(type_t *object) {
     }
@@ -32,7 +36,6 @@ struct sweep_prune_t {
     }
 
 protected:
-
     std::vector<node_t> x_, y_;
     type_pair_set_t pairs_;
 };

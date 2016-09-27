@@ -52,21 +52,21 @@ struct test_obj_2_t : public object_t {
 struct test_obj_3_t: public object_t {
     struct make_t: public object_factory_t::creator_t {
         make_t()
-            : ref_(0)
+            : counter_(0)
         {
         }
         virtual object_t* create(object_type_t, object_service_t service)
         {
-            ++ref_;
+            ++counter_;
             object_t* obj = new test_obj_3_t(service);
             return obj;
         }
         virtual void destroy(object_t* obj)
         {
             delete obj;
-            --ref_;
+            --counter_;
         }
-        int ref_;
+        int counter_;
     };
 
     test_obj_3_t(object_service_t)
@@ -132,16 +132,18 @@ bool test_object_2()
     object_factory_t factory(nullptr);
     factory.add_creator(e_type_obj_3, make);
 
-    TEST_ASSERT(make->ref_ == 0);
+    TEST_ASSERT(make->counter_ == 0);
     {
         object_ref_t obj1 = factory.create<test_obj_3_t>();
+        factory.tick();
         TEST_ASSERT(obj1->ref_count() == 1);
-        TEST_ASSERT(make->ref_ == 1);
+        TEST_ASSERT(make->counter_ == 1);
         factory.collect();
-        TEST_ASSERT(make->ref_ == 1);
+        TEST_ASSERT(make->counter_ == 1);
     }
     factory.collect();
-    TEST_ASSERT(make->ref_ == 0);
+
+    TEST_ASSERT(make->counter_ == 0);
 
     return true;
 }
