@@ -5,6 +5,7 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
+    astar.h
     anim.h
     common.h
     file.h

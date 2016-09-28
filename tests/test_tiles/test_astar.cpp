@@ -5,7 +5,7 @@
 
 #include "../../framework_core/common.h"
 #include "../../framework_core/random.h"
-#include "../../framework_tiles/pathfind.h"
+#include "../../framework_core/astar.h"
 #include "../../framework_draw/draw.h"
 
 #include "test.h"
