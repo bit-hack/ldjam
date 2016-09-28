@@ -36,14 +36,49 @@ struct player_anim_t {
     bool event_foot_fall();
     bool event_slide_loop();
 
+    const blit_info_t & blit_info() const {
+        return blit_;
+    }
+
 protected:
+
+    blit_info_t blit_;
+
     bool foot_fall_;
     bool slide_loop_;
 };
 
-struct player_shadow_t : public object_ex_t<e_object_player_shadow, player_shadow_t> {
+struct player_splash_t : public object_ex_t<e_object_player_splash, player_splash_t> {
+    static const uint32_t _ORDER = e_object_player_splash;
 
-    static const uint32_t _ORDER = 1;
+    draw_ex_t & draw_;
+    blit_info_t info_;
+    int32_t count_;
+
+    player_splash_t(object_service_t svc)
+        : draw_(static_cast<service_t*>(svc)->draw_)
+        , count_(5)
+    {
+        order_ = _ORDER;
+    }
+
+    void init(const blit_info_t & info) {
+        info_ = info;
+        info_.type_ = e_blit_gliss;
+    }
+
+    virtual void tick() override {
+        if (--count_ == 0) {
+            ref_.dec();
+            alive_ = false;
+        }
+        draw_.key_ = 0xff00ff;
+        draw_.blit<true>(info_);
+    }
+};
+
+struct player_shadow_t : public object_ex_t<e_object_player_shadow, player_shadow_t> {
+    static const uint32_t _ORDER = e_object_player_shadow;
 
     service_t & service_;
     player_shadow_t(object_service_t service);
@@ -51,8 +86,7 @@ struct player_shadow_t : public object_ex_t<e_object_player_shadow, player_shado
 };
 
 struct player_t : public object_ex_t<e_object_player, player_t> {
-
-    static const uint32_t _ORDER = 3;
+    static const uint32_t _ORDER = e_object_player;
 
     const int32_t _WIDTH = 4;
     const int32_t _HEIGHT = 10;

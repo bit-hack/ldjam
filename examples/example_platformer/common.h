@@ -16,16 +16,17 @@
 
 
 enum {
-    e_object_player,
+    e_object_map = 0,
     e_object_player_shadow,
-    e_object_camera,
     e_object_particles,
+    e_object_player_splash,
+    e_object_player,
+    e_object_camera,
 };
 
 struct service_t {
     draw_ex_t draw_;
     object_factory_t & factory_;
-    collision_map_t & map_;
     gamepad_t * gamepad_;
     object_map_t objects_;
 };

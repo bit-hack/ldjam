@@ -1,6 +1,7 @@
 #include "player.h"
 #include "camera.h"
 #include "particles.h"
+#include "map.h"
 
 player_anim_t::player_anim_t()
     : sheet_(108, 24)
@@ -53,7 +54,7 @@ void player_anim_t::render(const vec2i_t & pos, draw_ex_t & draw_) {
     if (!controller_.get_frame(src)) {
         return;
     }
-    blit_info_t info = {
+    blit_ = blit_info_t {
         &bitmap_,
         pos + offset,
         src,
@@ -61,7 +62,7 @@ void player_anim_t::render(const vec2i_t & pos, draw_ex_t & draw_) {
         xflip_
     };
     draw_.key_ = 0xff00ff;
-    draw_.blit<true>(info);
+    draw_.blit<true>(blit_);
 }
 
 void player_anim_t::tick(int32_t delta) {
@@ -98,7 +99,8 @@ void player_shadow_t::tick() {
     player_t & player = player_ref->cast<player_t>();
     const vec2f_t p = player.pos_[1];
     vec2f_t hit;
-    if (service_.map_.raycast(vec2f_t{p.x, p.y-4.f},
+    obj_map_t & map = service_.objects_["map"]->cast<obj_map_t>();
+    if (map.collide_.raycast(vec2f_t{p.x, p.y-4.f},
                               vec2f_t{p.x, p.y+10.f}, hit)) {
 
         if (vec2f_t::distance_sqr(p, hit) < 32*32) {
@@ -176,7 +178,8 @@ void player_t::tick_run() {
     // collision response
     rectf_t bound = swept_bound();
     vec2f_t res;
-    if (service_.map_.collide(bound, /* vel */ pos_[1]-pos_[0], res)) {
+    obj_map_t & map = service_.objects_["map"]->cast<obj_map_t>();
+    if (map.collide_.collide(bound, /* vel */ pos_[1]-pos_[0], res)) {
         // reduce size slightly to ensure continuous collision
         res.y -= signv<float>(res.y) * _Y_FRINGE;
         // apply collision response as impulse
@@ -195,7 +198,8 @@ void player_t::tick_air() {
     const float _Y_RESIST = .04f;
 
     vec2f_t res;
-    if (service_.map_.collide(swept_bound(), res)) {
+    obj_map_t & map = service_.objects_["map"]->cast<obj_map_t>();
+    if (map.collide_.collide(swept_bound(), res)) {
         const vec2f_t vel = pos_[1] - pos_[0];
         const bool falling = vel.y > 0.f;
         // feet landed on something
@@ -265,7 +269,8 @@ void player_t::tick_slide() {
 
     const bool falling = (pos_[1] - pos_[0]).y > 0.f;
     vec2f_t res;
-    if (!service_.map_.collide(swept_bound(), res)) {
+    obj_map_t & map = service_.objects_["map"]->cast<obj_map_t>();
+    if (!map.collide_.collide(swept_bound(), res)) {
         // no collision so falling
         fsm_.state_change(fsm_state_air_);
         return;
@@ -316,8 +321,11 @@ void player_t::jump() {
     const float _WJMP_X = 3.f;
     const float _JMP_SIZE = 4.f;
     const int32_t _X_SENSE = 2;
+
+    bool jumping = false;
+
     // if we are on the ground
-    if (fsm_.state() == fsm_state_run_) {
+    if (!jumping && fsm_.state() == fsm_state_run_) {
         pos_[0].y += _JMP_SIZE;
         fsm_.state_change(fsm_state_air_);
         service_.factory_.create<dust_t>(
@@ -327,17 +335,18 @@ void player_t::jump() {
             vec2f_t{0.f, 0.0f},
             .5f
         );
-        return;
+        jumping = true;
     }
     // if we are sliding
-    if (fsm_.state() == fsm_state_slide_) {
+    if (!jumping && fsm_.state() == fsm_state_slide_) {
         rectf_t b = bound();
         // fatten bound in x axis
         b.x0 -= _X_SENSE;
         b.x1 += _X_SENSE;
         // test for collision to deduce slide side
         vec2f_t res;
-        if (service_.map_.collide(b, res)) {
+        obj_map_t & map = service_.objects_["map"]->cast<obj_map_t>();
+        if (map.collide_.collide(b, res)) {
             if (res.x > 0.f) {
                 pos_[1] += vec2f_t {_WJMP_X,-_WJMP_Y};
             }
@@ -352,8 +361,12 @@ void player_t::jump() {
                 vec2f_t{0.f, 0.0f},
                 .5f
             );
-            return;
+            jumping = true;
         }
+    }
+    //
+    if (jumping) {
+        service_.factory_.create<player_splash_t>(anim_.blit_info());
     }
 }
 

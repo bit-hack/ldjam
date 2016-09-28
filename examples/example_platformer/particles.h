@@ -6,8 +6,7 @@
 #include "../../framework_core/vec2.h"
 
 struct dust_t : public object_ex_t<e_object_particles, dust_t> {
-
-    static const uint32_t _ORDER = 2;
+    static const uint32_t _ORDER = e_object_particles;
 
     dust_t(object_service_t service)
         : service_(*static_cast<service_t*>(service))

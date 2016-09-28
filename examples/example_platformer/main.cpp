@@ -2,11 +2,9 @@
 #include "camera.h"
 #include "player.h"
 #include "particles.h"
+#include "map.h"
 
 struct app_t {
-
-    static const int32_t _MAP_WIDTH = 32;
-    static const int32_t _MAP_HEIGHT = 32;
 
     SDL_Surface * screen_;
     bitmap_t target_;
@@ -17,7 +15,6 @@ struct app_t {
     random_t rand_;
 
     draw_t draw_;
-    collision_map_t map_;
     object_factory_t factory_;
     gamepad_key_t input_;
     gamepad_joy_t joystick_;
@@ -30,13 +27,11 @@ struct app_t {
         , timer_()
         , target_()
         , active_(true)
-        , map_(vec2i_t{_MAP_WIDTH, _MAP_HEIGHT}, vec2i_t{16, 16})
         , rand_(0x12342)
         , factory_(&service_)
         , joystick_()
         , service_{draw_ex_t(draw_),
                    factory_,
-                   map_,
                    &input_}
     {
     }
@@ -58,7 +53,6 @@ struct app_t {
         if (!screen_) {
             return false;
         }
-
         if (!bitmap_t::create(C_WIDTH, C_HEIGHT, target_)) {
             return false;
         }
@@ -85,41 +79,6 @@ struct app_t {
         }
         joystick_.close();
         SDL_Quit();
-        return true;
-    }
-
-    bool map_init() {
-        const int32_t _CHANCE = 10;
-        map_.clear(0);
-        uint8_t * tile = map_.get();
-        for (int32_t y=0; y<map_.size().y; ++y) {
-            for (int32_t x=0; x<map_.size().x; ++x) {
-                bool set = rand_.rand_chance(_CHANCE);
-                set |= y==0;
-                set |= y==(map_.size().y-1);
-                set |= x==0;
-                set |= x==(map_.size().x-1);
-                tile[x + y * map_.size().x] = set ? e_tile_solid : 0;
-            }
-        }
-        // preprocess map for collision data
-        map_.preprocess();
-        return true;
-    }
-
-    bool map_draw() {
-        draw_.colour_ = 0x4092c3;
-        uint8_t * tile = map_.get();
-        for (int32_t y=0; y<map_.size().y; ++y) {
-            for (int32_t x=0; x<map_.size().x; ++x) {
-                const uint8_t t = tile[x + y * map_.size().x];
-                if (!(t & e_tile_solid)) {
-                    continue;
-                }
-                service_.draw_.rect<true>(
-                        recti_t(x * 16, y * 16, 16, 16, recti_t::e_relative));
-            }
-        }
         return true;
     }
 
@@ -163,7 +122,6 @@ struct app_t {
     bool tick() {
         draw_.colour_ = 0x305192;
         draw_.clear();
-        map_draw();
 
         service_.gamepad_->tick();
         poll_input();
@@ -179,15 +137,15 @@ struct app_t {
         if (!app_init()) {
             return false;
         }
-        if (!map_init()) {
-            return false;
-        }
 
         factory_.add_creator<dust_t>();
         factory_.add_creator<player_shadow_t>();
         factory_.add_creator<player_t>();
         factory_.add_creator<camera_t>();
+        factory_.add_creator<player_splash_t>();
+        factory_.add_creator<obj_map_t>();
 
+        service_.objects_.insert("map", factory_.create(e_object_map));
         service_.objects_.insert("player", factory_.create(e_object_player));
         service_.objects_.insert("camera", factory_.create(e_object_camera));
 

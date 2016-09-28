@@ -1,5 +1,6 @@
 #include "camera.h"
 #include "player.h"
+#include "map.h"
 
 camera_t::camera_t(object_service_t s)
     : object_ex_t()
@@ -36,7 +37,8 @@ void camera_t::tick() {
         const vec2f_t proj = player_pos + player_vel * 12.f;
         // raycast from player to future point
         vec2f_t hit;
-        if (service_.map_.raycast(player_pos + vec2f_t{0, -8}, proj, hit)) {
+        obj_map_t & map = service_.objects_["map"]->cast<obj_map_t>();
+        if (map.collide_.raycast(player_pos + vec2f_t{0, -8}, proj, hit)) {
             hit = vec2f_t::nearest(player_pos, hit, proj);
             // ease towards map intersection point
             target_ = vec2f_t::lerp(target_, hit, C_SMOOTH_1);
