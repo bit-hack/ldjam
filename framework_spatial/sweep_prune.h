@@ -3,39 +3,84 @@
 #include <cstdint>
 #include <set>
 #include <vector>
+#include <array>
 
-template <typename type_t>
-struct node_t {
-    enum { e_next, e_prev };
-    enum { e_start, e_end };
-    uint32_t type_;
-    type_t & object_;
-    const float & value_;
-};
+#include "../framework_core/objects.h"
+#include "../framework_core/rect.h"
 
-template <typename type_t>
-struct sweep_prune_t {
+struct sweep_prune_proxy_t {
 
-    /* type_t contract:
-     * - rectf_t & type_t::get_pos()
-     */
-
-    typedef std::set<type_pair_t> type_pair_set_t;
-    std::pair<const type_t*, const type_t*> type_pair_t;
-
-    void insert(type_t *object) {
+    sweep_prune_proxy_t(object_t * obj, const rectf_t & aabb)
+        : rect_(aabb)
+        , object_(obj)
+    {
     }
 
-    void remove(type_t *object) {
+    const rectf_t & get_rect() const {
+        return rect_;
     }
 
-    void tick(type_t *object) {
-    }
-
-    void get_pairs(type_pair_set_t & pairs) {
+    const object_t * get_object() const {
+        return object_;
     }
 
 protected:
-    std::vector<node_t> x_, y_;
-    type_pair_set_t pairs_;
+    friend struct sweep_prune_t;
+    rectf_t rect_;
+    object_t * const object_;
+
+    struct axis_t {
+        std::array<size_t, 2> index_;
+    };
+
+    std::array<axis_t, 2> axis_;
+};
+
+struct sweep_prune_t {
+
+    typedef std::pair<const sweep_prune_proxy_t*,
+                      const sweep_prune_proxy_t*> proxy_pair_t;
+    typedef std::set<proxy_pair_t> type_pair_set_t;
+
+    void insert(sweep_prune_proxy_t & proxy) {
+    }
+
+    void remove(sweep_prune_proxy_t & proxy) {
+    }
+
+    void move(sweep_prune_proxy_t & proxy, const rectf_t & dest) {
+    }
+
+protected:
+
+    enum marker_t {
+        e_mark_start,
+        e_mark_end
+    };
+
+    struct entry_t {
+        float value_;
+        sweep_prune_proxy_t * proxy_;
+        marker_t marker_;
+    };
+
+    struct axis_t {
+
+        // insert a fresh node into this axis
+        void insert(sweep_prune_proxy_t*, size_t axis);
+
+        // sort a specific node in this axis
+        void sort(size_t index);
+
+        // structure of arrays entry_t
+        std::vector<float> value_;
+        std::vector<sweep_prune_proxy_t*> Proxy_;
+        std::vector<marker_t> marker_;
+    };
+
+    // the x and y axis
+    std::array<axis_t, 2> axis_;
+
+    // persistant pair object for better cache and alloc perf.
+    proxy_pair_t pairs_;
 };

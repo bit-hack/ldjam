@@ -2,6 +2,7 @@
 
 ##### framework
 . add animation test
+. add bsp edge generation
 
 ##### spatial hash
 . add raycast
@@ -12,6 +13,7 @@
 ##### draw
 . add bitmap save
 . add sprite bounds checking
+. add bitmap load from memory
 
 ##### core
 . add perlin noise
@@ -20,12 +22,10 @@
 . add tick order to object factory map
 
 ##### tilemap
-. move out into stand alone library
-. add string pulling path finder
-. add navmesh generator
-. add edge list generator
-. variable number of planes
-. add potential fields
+. navmesh generator
+. string pulling path finder
+. edge list generator
+. potential fields
 
 ##### events
 . add event downcasting
@@ -40,4 +40,4 @@
 . check looping
 
 ##### particles
-
+. can be generalized?

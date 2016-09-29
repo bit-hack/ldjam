@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+
 #include "../framework_core/rect.h"
 #include "../framework_core/objects.h"
 #include "../framework_core/vec2.h"

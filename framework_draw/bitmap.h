@@ -15,6 +15,8 @@ struct bitmap_t {
     static bool load(const char * path,
                      bitmap_t & out);
 
+    // todo: load from memory
+
     int32_t width() const {
         return int32_t(width_);
     }
