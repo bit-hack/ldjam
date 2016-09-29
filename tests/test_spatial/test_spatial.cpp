@@ -91,8 +91,9 @@ struct test_shash_t : test_t {
     void draw_occupancy() {
         for (int y = 0; y < 512 / spatial_t::width; ++y) {
             for (int x = 0; x < 512 / spatial_t::width; ++x) {
-                draw_->colour_ = hash_.dbg_ocupancy(x, y) * 8;
-                draw_->rect(recti_t(x * 32, y * 32, 32, 32, recti_t::e_relative));
+                draw_->colour_ = uint32_t(hash_.dbg_ocupancy(x, y) * 8);
+                draw_->rect(recti_t(x * 32, y * 32, 32, 32,
+                                    recti_t::e_relative));
             }
         }
     }
@@ -155,9 +156,9 @@ struct test_shash_t : test_t {
     void draw_world() {
         for (int i = 0; i < 512; i += spatial_t::width) {
             draw_->colour_ = 0x202020;
-            draw_->line(vec2f_t{0, i}, vec2f_t{512, i});
-            draw_->colour_ = 0x202020;
-            draw_->line(vec2f_t{i, 0}, vec2f_t{i, 512});
+            float j = i;
+            draw_->line(vec2f_t{0.f, j}, vec2f_t{512.f, j});
+            draw_->line(vec2f_t{j, 0.f}, vec2f_t{j, 512.f});
         }
         draw_->colour_ = 0x203090;
         draw_->line(vec2f_t{0, 128}, vec2f_t{512, 128});
@@ -175,24 +176,25 @@ struct test_shash_t : test_t {
     }
 };
 
+// test list
 std::array<test_t *, 1> s_tests = {
     new test_shash_t
 };
 
 int main(int argc, char *args[]) {
+    // setup app
     app_t app;
     if (!app.init(512, 512)) {
         return false;
     }
-
+    // init all tests
     for (test_t * test : s_tests) {
         test->init(app.draw_);
     }
-
+    // main loop
     while (app.tick()) {
         s_tests[0]->tick();
         SDL_Delay(0);
     }
-
     return 0;
 }

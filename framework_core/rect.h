@@ -48,6 +48,8 @@ struct rect_t {
     {
     }
 
+    /* find a rect which bounds two points
+     */
     template <typename vec_t>
     static rect_t bound(const vec_t & a, const vec_t & b) {
         return rect_t{
@@ -58,6 +60,8 @@ struct rect_t {
         };
     }
 
+    /* find the intersection of two rects
+     */
     static rect_t intersect(const rect_t & a,
                             const rect_t & b) {
         return rect_t{
@@ -68,6 +72,8 @@ struct rect_t {
         };
     }
 
+    /* find the combined size of two rects
+     */
     static rect_t combine(const rect_t & a,
                           const rect_t & b) {
         return rect_t{
@@ -84,6 +90,8 @@ struct rect_t {
         e_rect_overlap
     };
 
+    /* test for levels of intersection between two rects
+     */
     classify_t classify(const rect_t & a) const {
         if (a.x0 >= x0 && a.x1 <= x1 && a.y0 >= y0 && a.y1 <= y1)
             return e_rect_inside;
@@ -93,25 +101,41 @@ struct rect_t {
             return e_rect_overlap;
     }
 
+    /* check if a point is contained by this rect
+     */
     template <typename vec_t>
     bool contains(const vec_t & v) {
         return (v.x>=x0) && (v.x<=x1) && (v.y>=y0) && (v.y<=y1);
     }
 
+    /* projected size on x axis
+     */
     type_t dx() const {
         return x1 - x0;
     }
 
+    /* projected size on y axis
+     */
     type_t dy() const {
         return y1 - y0;
     }
 
+    /* size of this rect as a vector
+     */
     template <typename vec_t>
     vec_t size() const {
         return vec_t{dx(), dy()};
     }
 
-    rect_t operator * (const int32_t scale) const {
+    /* return the area of this rect
+     */
+    type_t area() const {
+        return (x1-x0) * (y1-y0);
+    }
+
+    /* scale this rect
+     */
+    rect_t operator * (const type_t scale) const {
         return rect_t{
             x0 * scale,
             y0 * scale,
@@ -120,7 +144,9 @@ struct rect_t {
         };
     }
 
-    rect_t operator / (const int32_t scale) const {
+    /* scale this rect
+     */
+    rect_t operator / (const type_t scale) const {
         return rect_t{
             x0 / scale,
             y0 / scale,
@@ -129,6 +155,8 @@ struct rect_t {
         };
     }
 
+    /* sum the components of two rects
+     */
     rect_t operator + (const rect_t & rhs) const {
         return rect_t{
             x0 + rhs.x0,

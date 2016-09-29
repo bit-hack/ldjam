@@ -7,7 +7,7 @@ endif()
 set(SOURCE_FILES
     space_hash.h
     space_hash.cpp
-    sweep_prune.h)
+    sweep_prune.h aabb_tree.h aabb_tree.cpp)
 
 set(${LIBS}
     framework_core)
