@@ -561,41 +561,56 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
     }
 }
 
+namespace {
+vec2f_t _rotate(const std::array<float, 4> & mat,
+                const vec2f_t & in) {
+    return vec2f_t {
+        in.x * mat[0] + in.y * mat[1],
+        in.x * mat[2] + in.y * mat[3]
+    };
+}
+} // namespace {}
+
 void draw_t::blit(const blit_info_ex_t & info) {
     // alias
     const auto & src = info.src_rect_;
     const auto & dst = info.dst_pos_;
     const auto & mat = info.matrix_;
-    // rotated aabb size
-    // <---- this is broken/borked/wrong
-    const float aabb_dx = (absv(mat[0] * src.dx() + mat[1] * src.dy())) / 2;
-    const float aabb_dy = (absv(mat[2] * src.dx() + mat[3] * src.dy())) / 2;
-    // starting read position
-    // midpoint  - left corner
-    float rx = (src.x0 + src.x1) / 2 - (mat[0] * aabb_dx + mat[1] * aabb_dy) / 2;
-    float ry = (src.y0 + src.y1) / 2 - (mat[2] * aabb_dx + mat[3] * aabb_dy) / 2;
-    // starting write position
-    recti_t rect = {
-        int32_t(dst.x - aabb_dx),
-        int32_t(dst.y - aabb_dy),
-        int32_t(dst.x + aabb_dx),
-        int32_t(dst.y + aabb_dy),
+    // magnitudes
+    float vxm = sqrtf(mat[0]*mat[0] + mat[2]*mat[2]); // x mag
+    float vym = sqrtf(mat[1]*mat[1] + mat[3]*mat[3]); // y mag
+    // source pos at mid point
+    const float sx = float(src.x0 + src.x1) * .5f;
+    const float sy = float(src.y0 + src.y1) * .5f;
+    // sprite size
+    const vec2f_t size = vec2f_t::scale(vec2f_t{
+        float(src.dx()) * .5f,
+        float(src.dy()) * .5f
+    }, vec2f_t{1.f/vxm, 1.f/vym});
+    // aabb half edge size
+    const float mx = absv(mat[0] * size.x) + absv(mat[1] * size.y);
+    const float my = absv(mat[2] * size.x) + absv(mat[3] * size.y);
+    // rotated sprites aabb
+    const rectf_t rect = {
+        dst.x - mx, dst.y - my,
+        dst.x + mx, dst.y + my
     };
-    // clip to viewport
-    // discover starting read
+    // top left source pos (using transpose)
+    float rx = sx - (mx * mat[0] + my * mat[2]);
+    float ry = sy - (mx * mat[1] + my * mat[3]);
     // y axis iteration
-    for (int32_t y = rect.y0; y < rect.y1; ++y) {
+    for (int32_t y = rect.y0; y <= rect.y1; ++y) {
         float tx = rx;
         float ty = ry;
         // x axis iteration
-        for (int32_t x = rect.x0; x < rect.x1; ++x) {
+        for (int32_t x = rect.x0; x <= rect.x1; ++x) {
             // if the
             if (src.contains(vec2i_t{int32_t(tx),
                                      int32_t(ty)})) {
                 colour_ = 0xff00ff;
             }
             else {
-                colour_ = 0xff00;
+                colour_ = 0x00ff00;
             }
             // plot pixel
             plot(vec2i_t{x, y});

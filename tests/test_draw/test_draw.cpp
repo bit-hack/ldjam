@@ -120,14 +120,15 @@ void test_blit() {
 void test_rotosprite() {
     draw_.viewport(recti_t{32, 32, 320-32, 240-32});
     draw_.key_ = 0x0;
-
     blit_info_ex_t info;
-    info.dst_pos_ = vec2i_t { 320/2, 240/2 };
-    info.src_rect_ = recti_t {0, 0, 31, 31};
-    info.type_ = e_blit_key;
+    {
+        info.dst_pos_ = vec2i_t {320 / 2, 240 / 2};
+        info.src_rect_ = recti_t {0, 0, 16, 31};
+        info.type_ = e_blit_key;
+        info.matrix_[0] =  cosf(time_) * 1.f; info.matrix_[1] = -sinf(time_) * 1.f;
+        info.matrix_[2] =  sinf(time_) * 1.f; info.matrix_[3] =  cosf(time_) * 1.f;
+    }
     draw_.colour_ = 0xff00ff;
-    info.matrix_[0] = cosf(time_); info.matrix_[1] =-sinf(time_);
-    info.matrix_[2] = sinf(time_); info.matrix_[3] = cosf(time_);
     draw_.blit(info);
 }
 
