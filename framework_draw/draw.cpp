@@ -576,17 +576,14 @@ void draw_t::blit(const blit_info_ex_t & info) {
     const auto & src = info.src_rect_;
     const auto & dst = info.dst_pos_;
     const auto & mat = info.matrix_;
-    // magnitudes
-    float vxm = sqrtf(mat[0]*mat[0] + mat[2]*mat[2]); // x mag
-    float vym = sqrtf(mat[1]*mat[1] + mat[3]*mat[3]); // y mag
     // source pos at mid point
     const float sx = float(src.x0 + src.x1) * .5f;
     const float sy = float(src.y0 + src.y1) * .5f;
     // sprite size
-    const vec2f_t size = vec2f_t::scale(vec2f_t{
+    const vec2f_t size = vec2f_t{
         float(src.dx()) * .5f,
         float(src.dy()) * .5f
-    }, vec2f_t{1.f/vxm, 1.f/vym});
+    };
     // aabb half edge size
     const float mx = absv(mat[0] * size.x) + absv(mat[1] * size.y);
     const float my = absv(mat[2] * size.x) + absv(mat[3] * size.y);
