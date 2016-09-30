@@ -117,6 +117,20 @@ void test_blit() {
     }
 }
 
+void test_rotosprite() {
+    draw_.viewport(recti_t{32, 32, 320-32, 240-32});
+    draw_.key_ = 0x0;
+
+    blit_info_ex_t info;
+    info.dst_pos_ = vec2i_t { 320/2, 240/2 };
+    info.src_rect_ = recti_t {0, 0, 31, 31};
+    info.type_ = e_blit_key;
+    draw_.colour_ = 0xff00ff;
+    info.matrix_[0] = cosf(time_); info.matrix_[1] =-sinf(time_);
+    info.matrix_[2] = sinf(time_); info.matrix_[3] = cosf(time_);
+    draw_.blit(info);
+}
+
 void test_blit_clip() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!sprite_.valid()) {
@@ -228,7 +242,7 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 9> tests = {{
+std::array<test_t, 10> tests = {{
     TEST(test_font),
     TEST(test_blit),
     TEST(test_blit_clip),
@@ -237,14 +251,15 @@ std::array<test_t, 9> tests = {{
     TEST(test_plot),
     TEST(test_rect),
     TEST(test_triangle),
-    TEST(test_tilemap)
+    TEST(test_tilemap),
+    TEST(test_rotosprite)
 }};
 
 int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    int32_t test_index = 2;
+    int32_t test_index = 9;
     bool pause = false;
     bool active = true;
     while (active) {

@@ -104,20 +104,20 @@ struct rect_t {
     /* check if a point is contained by this rect
      */
     template <typename vec_t>
-    bool contains(const vec_t & v) {
+    bool contains(const vec_t & v) const {
         return (v.x>=x0) && (v.x<=x1) && (v.y>=y0) && (v.y<=y1);
     }
 
     /* projected size on x axis
      */
     type_t dx() const {
-        return x1 - x0;
+        return (x1+1) - x0;
     }
 
     /* projected size on y axis
      */
     type_t dy() const {
-        return y1 - y0;
+        return (y1+1) - y0;
     }
 
     /* size of this rect as a vector

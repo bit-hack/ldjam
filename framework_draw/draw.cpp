@@ -561,8 +561,50 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
     }
 }
 
-void draw_t::blit(const blit_info_ex_t &info) {
-    auto & matrix = info.matrix_;
-
-    // todo: roto sprite blit
+void draw_t::blit(const blit_info_ex_t & info) {
+    // alias
+    const auto & src = info.src_rect_;
+    const auto & dst = info.dst_pos_;
+    const auto & mat = info.matrix_;
+    // rotated aabb size
+    // <---- this is broken/borked/wrong
+    const float aabb_dx = (absv(mat[0] * src.dx() + mat[1] * src.dy())) / 2;
+    const float aabb_dy = (absv(mat[2] * src.dx() + mat[3] * src.dy())) / 2;
+    // starting read position
+    // midpoint  - left corner
+    float rx = (src.x0 + src.x1) / 2 - (mat[0] * aabb_dx + mat[1] * aabb_dy) / 2;
+    float ry = (src.y0 + src.y1) / 2 - (mat[2] * aabb_dx + mat[3] * aabb_dy) / 2;
+    // starting write position
+    recti_t rect = {
+        int32_t(dst.x - aabb_dx),
+        int32_t(dst.y - aabb_dy),
+        int32_t(dst.x + aabb_dx),
+        int32_t(dst.y + aabb_dy),
+    };
+    // clip to viewport
+    // discover starting read
+    // y axis iteration
+    for (int32_t y = rect.y0; y < rect.y1; ++y) {
+        float tx = rx;
+        float ty = ry;
+        // x axis iteration
+        for (int32_t x = rect.x0; x < rect.x1; ++x) {
+            // if the
+            if (src.contains(vec2i_t{int32_t(tx),
+                                     int32_t(ty)})) {
+                colour_ = 0xff00ff;
+            }
+            else {
+                colour_ = 0xff00;
+            }
+            // plot pixel
+            plot(vec2i_t{x, y});
+            // step x
+            tx += mat[0];
+            ty += mat[1];
+        }
+        // step y
+        rx += mat[2];
+        ry += mat[3];
+    }
 }
