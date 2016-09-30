@@ -1,16 +1,22 @@
 #pragma once
 #include <cstdint>
+#include <array>
+
 #include "../framework_core/vec2.h"
 #include "../framework_core/vec3.h"
 #include "../framework_core/rect.h"
 #include "bitmap.h"
 
-
 enum blit_type_t {
-    e_blit_opaque,  // no colour key
-    e_blit_key,     // colour key
-    e_blit_gliss,   // half transparency
-    e_blit_mask,    // white masked by key
+    e_blit_opaque,   // no colour key
+    e_blit_key,      // colour key
+    e_blit_gliss,    // half transparency
+    e_blit_mask,     // white masked by key
+    e_blit_dither_1, // ordered dither 1
+    e_blit_dither_2, // ordered dither 2
+    e_blit_dither_3, // ordered dither 3
+    e_blit_dither_4, // ordered dither 4
+    e_blit_dither_5, // ordered dither 5
 };
 
 struct blit_info_t {
@@ -19,6 +25,14 @@ struct blit_info_t {
     recti_t src_rect_;
     blit_type_t type_;
     bool h_flip_;
+};
+
+struct blit_info_ex_t {
+    const struct bitmap_t * bitmap_;
+    vec2i_t dst_pos_;
+    recti_t src_rect_;
+    blit_type_t type_;
+    std::array<float, 4> matrix_;
 };
 
 struct font_t {
@@ -63,6 +77,8 @@ struct draw_t {
     void plot(const vec2i_t & p);
 
     void blit(const blit_info_t & info);
+
+    void blit(const blit_info_ex_t & info);
 
     void blit(const tilemap_t & tiles, vec2i_t & p);
 
