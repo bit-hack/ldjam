@@ -18,8 +18,7 @@ struct rect_t {
 
     rect_t() = default;
 
-    rect_t(const std::initializer_list<type_t> & l)
-    {
+    rect_t(const std::initializer_list<type_t> & l) {
         assert(l.size()==4);
         const type_t * a = l.begin();
         x0 = a[0];
@@ -35,8 +34,7 @@ struct rect_t {
            mode_t mode=e_absolute)
         : x0(a), y0(b)
         , x1(mode==e_relative ? a+c : c)
-        , y1(mode==e_relative ? b+d : d)
-    {
+        , y1(mode==e_relative ? b+d : d) {
     }
 
     template <typename other_t>
@@ -44,8 +42,7 @@ struct rect_t {
         : x0(type_t(other.x0))
         , y0(type_t(other.y0))
         , x1(type_t(other.x1))
-        , y1(type_t(other.y1))
-    {
+        , y1(type_t(other.y1)) {
     }
 
     /* find a rect which bounds two points
@@ -177,6 +174,17 @@ struct rect_t {
             y0 + rhs.y0,
             x1 + rhs.x1,
             y1 + rhs.y1};
+    }
+
+    /* move rect via vector
+     */
+    template <typename vec_t>
+    rect_t operator + (const vec_t & rhs) const {
+    return rect_t{
+        x0 + rhs.x,
+        y0 + rhs.y,
+        x1 + rhs.x,
+        y1 + rhs.y};
     }
 };
 

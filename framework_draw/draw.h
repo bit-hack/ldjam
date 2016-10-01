@@ -149,7 +149,7 @@ public:
     {
     }
 
-    template <bool C_OFFSET>
+    template <bool C_OFFSET=true>
     void rect(const recti_t p) {
         draw_.rect(recti_t{
             select_x<C_OFFSET>(p.x0),
@@ -159,25 +159,25 @@ public:
         });
     }
 
-    template <bool C_OFFSET>
+    template <bool C_OFFSET=true>
     void circle(const vec2i_t & p,
                 const int32_t radius) {
         draw_.circle(select<C_OFFSET, vec2i_t>(p), radius);
     }
 
-    template <bool C_OFFSET, typename vec_t>
+    template <typename vec_t, bool C_OFFSET=true>
     void line(const vec_t & p0,
               const vec_t & p1) {
         draw_.line(select<C_OFFSET, vec_t>(p0),
                    select<C_OFFSET, vec_t>(p1));
     }
 
-    template <bool C_OFFSET>
+    template <bool C_OFFSET=true>
     void plot(const vec2i_t & p) {
         draw_.plot(select<C_OFFSET>(p));
     }
 
-    template <bool C_OFFSET>
+    template <bool C_OFFSET=true>
     void triangle(const vec2f_t & a,
                   const vec2f_t & b,
                   const vec2f_t & c) {
@@ -186,9 +186,16 @@ public:
                        select<C_OFFSET>(c));
     }
 
-    template <bool C_OFFSET>
+    template <bool C_OFFSET=true>
     void blit(const blit_info_t & info) {
         blit_info_t info_b = info;
+        info_b.dst_pos_ = select<C_OFFSET>(info.dst_pos_);
+        draw_.blit(info_b);
+    }
+
+    template <bool C_OFFSET=true>
+    void blit(const blit_info_ex_t & info) {
+        blit_info_ex_t info_b = info;
         info_b.dst_pos_ = select<C_OFFSET>(info.dst_pos_);
         draw_.blit(info_b);
     }

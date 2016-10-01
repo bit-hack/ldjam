@@ -656,6 +656,7 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
 
 // rotosprite blit
 void draw_t::blit(const blit_info_ex_t & info) {
+    assert(info.bitmap_ && info.bitmap_->valid());
     // blit function prototype
     typedef void (*blit_func_t)(bitmap_t & target,
                                 const recti_t & viewport,

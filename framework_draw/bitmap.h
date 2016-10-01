@@ -30,7 +30,9 @@ struct bitmap_t {
     }
 
     const uint32_t * data() const {
-        return pix_.get<const uint32_t>(0);
+        const uint32_t * pix = pix_.get<const uint32_t>();
+        assert(pix);
+        return pix;
     }
 
     void colour_key(uint32_t key);
