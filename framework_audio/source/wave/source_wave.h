@@ -6,7 +6,7 @@
 struct audio_source_wave_t :
         public audio_source_t {
 
-    virtual void render(const mix_out_t &);
+    virtual void render(const mix_out_t &) override;
 
     struct play_wave_t {
         const struct wave_t *wave_;

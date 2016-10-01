@@ -20,6 +20,7 @@ set(SOURCE_FILES
     event.h
     buffer.h
     geometry.h
-    particle.h)
+    particle.h
+    mat2.h)
 
 add_library(framework_core ${SOURCE_FILES})

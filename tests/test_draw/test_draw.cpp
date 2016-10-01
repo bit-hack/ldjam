@@ -129,8 +129,8 @@ void test_rotosprite() {
     {
         info.bitmap_ = &sprite_;
         info.dst_pos_ = vec2f_t {320 / 2, 240 / 2};
-        info.src_rect_ = recti_t {0, 0, 16, 31};
-        info.type_ = e_blit_key;
+        info.src_rect_ = recti_t {0, 0, 31, 31};
+        info.type_ = e_blit_dither_2;
         const float s = sinf(time_) * .4f;
         const float c = cosf(time_) * .4f;
 
@@ -142,6 +142,79 @@ void test_rotosprite() {
     }
     draw_.colour_ = 0xff00ff;
     draw_.blit(info);
+}
+
+void test_rotosprite_2() {
+    if (!sprite_.valid()) {
+        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+            return;
+        }
+    }
+    draw_.viewport(recti_t{32, 32, 320-32, 240-32});
+    draw_.key_ = 0x0;
+
+    blit_info_ex_t info;
+    info.bitmap_ = &sprite_;
+    info.type_ = e_blit_gliss;
+    draw_.colour_ = 0xff00ff;
+
+    for (int i=0; i<1000; ++i) {
+
+        random_t prng(random_t::hash32(i));
+
+        info.dst_pos_ = vec2f_t {float(prng.rand_range(0, 320)),
+                                 float(prng.rand_range(0, 240))};
+        info.src_rect_ = recti_t {0, 0, 31, 31};
+
+        float dt = time_ + prng.randfu() * C_2PI;
+        float sx = .5f + prng.randfu();
+        float sy = .5f + prng.randfu();
+
+        const float s = sinf(dt);
+        const float c = cosf(dt);
+
+        info.matrix_[0] = c * sx; info.matrix_[1] =-s * sy;
+        info.matrix_[2] = s * sx; info.matrix_[3] = c * sy;
+
+        draw_.blit(info);
+    }
+}
+
+void test_rotosprite_3() {
+    if (!sprite_.valid()) {
+        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+            return;
+        }
+    }
+    draw_.viewport(recti_t{32, 32, 320-32, 240-32});
+    draw_.key_ = 0x0;
+
+    blit_info_ex_t info;
+    info.bitmap_ = &sprite_;
+    info.type_ = e_blit_key;
+    draw_.colour_ = 0xff00ff;
+
+    for (int i=0; i<1000; ++i) {
+
+        random_t prng(random_t::hash32(i));
+
+        info.dst_pos_ = vec2f_t {float(prng.rand_range(0, 320)),
+                                 float(prng.rand_range(0, 240))};
+        info.src_rect_ = recti_t {0, 0, 31, 31};
+
+        float dt = time_ + prng.randfu() * C_2PI;
+        float dz = 3 * time_ + prng.randfu() * C_2PI;
+        float sx = .5f + prng.randfu() * (1.f+sinf(dz));
+        float sy = .5f + prng.randfu() * (1.f+cosf(dz));
+
+        const float s = sinf(dt);
+        const float c = cosf(dt);
+
+        info.matrix_[0] = c * sx; info.matrix_[1] =-s * sy;
+        info.matrix_[2] = s * sx; info.matrix_[3] = c * sy;
+
+        draw_.blit(info);
+    }
 }
 
 void test_blit_clip() {
@@ -255,7 +328,7 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 10> tests = {{
+std::array<test_t, 12> tests = {{
     TEST(test_font),
     TEST(test_blit),
     TEST(test_blit_clip),
@@ -265,7 +338,9 @@ std::array<test_t, 10> tests = {{
     TEST(test_rect),
     TEST(test_triangle),
     TEST(test_tilemap),
-    TEST(test_rotosprite)
+    TEST(test_rotosprite),
+    TEST(test_rotosprite_2),
+    TEST(test_rotosprite_3)
 }};
 
 int main(const int argc, char *args[]) {

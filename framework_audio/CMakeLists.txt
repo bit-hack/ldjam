@@ -20,7 +20,11 @@ set(SOURCE_FILES_SRC
     source/vorbis/stb_vorbis.c
     source/vorbis/stb_vorbis.h
     source/wave/source_wave.cpp
-    source/wave/source_wave.h)
+    source/wave/source_wave.h
+    source/chip/source_chip.cpp
+    source/chip/source_chip.h
+    source/chip/decimate.h
+    source/chip/blip_table.cpp)
 
 add_library(
     framework_audio 

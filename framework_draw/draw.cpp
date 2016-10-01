@@ -5,11 +5,6 @@
 #include "draw.h"
 #include "../framework_core/common.h"
 
-constexpr uint8_t bin8(uint8_t a, uint8_t b, uint8_t c, uint8_t d,
-                       uint8_t e, uint8_t f, uint8_t g, uint8_t h) {
-    return (a<<7) | (b<<6) | (c<<5) | (d<<4) | (e<<3) | (f<<2) | (g<<1) | h;
-}
-
 namespace {
 const std::array<uint32_t, 5> _dither = {
      0x44001100u, // dither 1
@@ -20,9 +15,9 @@ const std::array<uint32_t, 5> _dither = {
 };
 
 template <typename typea_t, typename typeb_t>
-float orient2d(const vec2_t<typea_t> & a,
-               const vec2_t<typea_t> & b,
-               const vec2_t<typeb_t> & c) {
+float _orient2d(const vec2_t<typea_t> & a,
+                const vec2_t<typea_t> & b,
+                const vec2_t<typeb_t> & c) {
     return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
 }
 
@@ -50,6 +45,7 @@ typedef uint32_t pixel_func_t(const uint32_t src,
                               const uint32_t key,
                               const uint32_t order);
 
+// 1:1 sprite blit function
 template <bool hflip, pixel_func_t mode_t>
 void _draw_t_blit_2(bitmap_t & target,
                     const recti_t & viewport,
@@ -74,7 +70,7 @@ void _draw_t_blit_2(bitmap_t & target,
     if (c == recti_t::e_rect_overlap) {
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
-    //
+    // if we are horozontal flipping
     if (hflip) {
         const int32_t xshift = src_rect.x0 - info.src_rect_.x0;
         src_rect.x1 -= xshift;
@@ -99,12 +95,13 @@ void _draw_t_blit_2(bitmap_t & target,
         for (int32_t x = 0; x <= dst_rect.dx(); x++) {
             // dither order
             const uint32_t dither = ((x^xn)&0x7) + ((y^yn)<<3);
+            const uint32_t sc = src[hflip ? src_rect.dx()-x : x];
             // invoke blend function
-            dst[x] = mode_t(src[hflip ? src_rect.dx() - x : x],
-                            dst[x],
-                            colour,
-                            key,
-                            dither);
+            dst[x] = mode_t(sc,        /* source */
+                            dst[x],    /* dest */
+                            colour,    /* colour */
+                            key,       /* key */
+                            dither);   /* dither */
         }
         dst += dst_pitch;
         src += src_pitch;
@@ -119,6 +116,7 @@ vec2f_t _rotate(const std::array<float, 4> & mat,
     };
 }
 
+// rotospite blit function
 template <pixel_func_t func>
 void _draw_t_blit_2(bitmap_t & target,
                    const recti_t & viewport,
@@ -132,8 +130,8 @@ void _draw_t_blit_2(bitmap_t & target,
     // invert 2D matrix
     const float det = 1.f / (mat[0]*mat[3]-mat[1]*mat[2]);
     const std::array<float, 4> imat = {
-            det * mat[3], -det * mat[1],
-            -det * mat[2],  det * mat[0]
+         det * mat[3], -det * mat[1],
+        -det * mat[2],  det * mat[0]
     };
     // source pos at mid point
     const float sx = float(src.x0 + src.x1) * .5f;
@@ -144,22 +142,20 @@ void _draw_t_blit_2(bitmap_t & target,
             float(src.dy()) * .5f
     };
     // find edge points
-    const vec2f_t p1 = dst+_rotate(imat, vec2f_t{-src.width(), -src.height()}) * .5f;
-    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{ src.width(), -src.height()}) * .5f;
-    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{-src.width(),  src.height()}) * .5f;
-    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{ src.width(),  src.height()}) * .5f;
+    const vec2f_t p1 = dst+_rotate(imat, vec2f_t{float(-src.width()), float(-src.height())}) * .5f;
+    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{float( src.width()), float(-src.height())}) * .5f;
+    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{float(-src.width()), float( src.height())}) * .5f;
+    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{float( src.width()), float( src.height())}) * .5f;
     // rotated sprites aabb
-    const rectf_t dst_rect = rectf_t::intersect(
-            rectf_t(viewport),
-            rectf_t{
-                    min4(p1.x, p2.x, p3.x, p4.x),
-                    min4(p1.y, p2.y, p3.y, p4.y),
-                    max4(p1.x, p2.x, p3.x, p4.x),
-                    max4(p1.y, p2.y, p3.y, p4.y)
-            });
+    const recti_t dst_rect = recti_t::intersect(
+        viewport,
+        recti_t{int32_t(min4(p1.x, p2.x, p3.x, p4.x)),
+                int32_t(min4(p1.y, p2.y, p3.y, p4.y)),
+                int32_t(max4(p1.x, p2.x, p3.x, p4.x)+1),
+                int32_t(max4(p1.y, p2.y, p3.y, p4.y)+1)});
     // top left source pos
-    const float mx = dst_rect.x0 - dst.x;
-    const float my = dst_rect.y0 - dst.y;
+    const float mx = float(dst_rect.x0) - dst.x;
+    const float my = float(dst_rect.y0) - dst.y;
     float rx = sx + (mx * mat[0] + my * mat[2]);
     float ry = sy + (mx * mat[1] + my * mat[3]);
     // src buffer setup
@@ -167,11 +163,10 @@ void _draw_t_blit_2(bitmap_t & target,
     const uint32_t * src_pix = info.bitmap_->data();
     // destination buffer setup
     const int32_t dst_pitch = target.width();
-    uint32_t * dst_pix = target.data() +
-                         int32_t(dst_rect.y0) * dst_pitch;
+    uint32_t * dst_pix = target.data() + dst_rect.y0 * dst_pitch;
     // dither nudge
-    const int32_t xn = int32_t(dst_rect.x0) & 1;
-    const int32_t yn = int32_t(dst_rect.y0) & 1;
+    const int32_t xn = dst_rect.x0 & 1;
+    const int32_t yn = dst_rect.y0 & 1;
     // y axis iteration
     for (int32_t y = dst_rect.y0; y <= dst_rect.y1; ++y) {
         float tx = rx;
@@ -186,11 +181,11 @@ void _draw_t_blit_2(bitmap_t & target,
                 // dither order
                 const uint32_t dither = ((x^xn)&0x7) + ((y^yn)<<3);
                 // plot pixel
-                dst_pix[x] = func(sc,
-                                  dst_pix[x],
-                                  colour,
-                                  key,
-                                  dither);
+                dst_pix[x] = func(sc,           /* source */
+                                  dst_pix[x],   /* dest */
+                                  colour,       /* colour */
+                                  key,          /* key */
+                                  dither);      /* dither */
             }
             // step x
             tx += mat[0];
@@ -205,42 +200,42 @@ void _draw_t_blit_2(bitmap_t & target,
 }
 
 // opaque blend mode (100% src, no key)
-constexpr uint32_t mode_opaque(const uint32_t src,
-                               const uint32_t,
-                               const uint32_t,
-                               const uint32_t,
-                               const uint32_t) {
+constexpr uint32_t _blend_opaque(const uint32_t src,
+                                 const uint32_t,
+                                 const uint32_t,
+                                 const uint32_t,
+                                 const uint32_t) {
     return src;
 }
 
 // colour key blend mode
-constexpr uint32_t mode_key(const uint32_t src,
-                            const uint32_t dst,
-                            const uint32_t,
-                            const uint32_t key,
-                            const uint32_t) {
+constexpr uint32_t _blend_key(const uint32_t src,
+                              const uint32_t dst,
+                              const uint32_t,
+                              const uint32_t key,
+                              const uint32_t) {
     return (src == key) ?
            dst :
            src;
 }
 
 // 50% transparency
-constexpr uint32_t mode_gliss(const uint32_t src,
-                              const uint32_t dst,
-                              const uint32_t,
-                              const uint32_t key,
-                              const uint32_t) {
+constexpr uint32_t _blend_gliss(const uint32_t src,
+                               const uint32_t dst,
+                               const uint32_t,
+                               const uint32_t key,
+                               const uint32_t) {
     return (src == key) ?
            (dst) :
            ((src>>1)&0x7f7f7f) + ((dst>>1)&0x7f7f7f);
 }
 
 // colour keyed overlay
-constexpr uint32_t mode_mask(const uint32_t src,
-                             const uint32_t dst,
-                             const uint32_t colour,
-                             const uint32_t key,
-                             const uint32_t) {
+constexpr uint32_t _blend_mask(const uint32_t src,
+                               const uint32_t dst,
+                               const uint32_t colour,
+                               const uint32_t key,
+                               const uint32_t) {
     return (src == key) ?
            (dst) :
            (colour);
@@ -248,17 +243,18 @@ constexpr uint32_t mode_mask(const uint32_t src,
 
 // ordered dither
 template <int32_t _ORDER>
-constexpr uint32_t mode_dither(const uint32_t src,
-                               const uint32_t dst,
-                               const uint32_t colour,
-                               const uint32_t key,
-                               const uint32_t order) {
+constexpr uint32_t _blend_dither(const uint32_t src,
+                                 const uint32_t dst,
+                                 const uint32_t colour,
+                                 const uint32_t key,
+                                 const uint32_t order) {
     // ordered dither
     return (src == key || (_dither[_ORDER]&(1 << order)) == 0) ?
            (dst) :
            (src);
 }
 
+// 1:1 sprite blit (blend dispatch)
 template <bool hflip>
 void _draw_t_blit_1(bitmap_t & target,
                     const recti_t & viewport,
@@ -272,24 +268,23 @@ void _draw_t_blit_1(bitmap_t & target,
                                 const uint32_t colour,
                                 const uint32_t key);
     // blend mode table
-    // must be kept in order of blit_type_t
+    // note: must be kept in order of blit_type_t
     static const std::array<blit_func_t, 9> func = {{
-        _draw_t_blit_2<hflip, mode_opaque>,
-        _draw_t_blit_2<hflip, mode_key>,
-        _draw_t_blit_2<hflip, mode_gliss>,
-        _draw_t_blit_2<hflip, mode_mask>,
-        _draw_t_blit_2<hflip, mode_dither<0>>,
-        _draw_t_blit_2<hflip, mode_dither<1>>,
-        _draw_t_blit_2<hflip, mode_dither<2>>,
-        _draw_t_blit_2<hflip, mode_dither<3>>,
-        _draw_t_blit_2<hflip, mode_dither<4>>
+        _draw_t_blit_2<hflip, _blend_opaque>,
+        _draw_t_blit_2<hflip, _blend_key>,
+        _draw_t_blit_2<hflip, _blend_gliss>,
+        _draw_t_blit_2<hflip, _blend_mask>,
+        _draw_t_blit_2<hflip, _blend_dither<0>>,
+        _draw_t_blit_2<hflip, _blend_dither<1>>,
+        _draw_t_blit_2<hflip, _blend_dither<2>>,
+        _draw_t_blit_2<hflip, _blend_dither<3>>,
+        _draw_t_blit_2<hflip, _blend_dither<4>>
     }};
     // dispatch to blit function
     assert(info.type_ < func.size());
     func[info.type_](target, viewport, info, colour, key);
 };
 } // namespace {}
-
 
 void draw_t::clear() {
     assert(target_);
@@ -376,9 +371,9 @@ void draw_t::triangle(
     vec2i_t p = { minx, miny };
     // barycentric value at start point
     vec3f_t wy = {
-        orient2d(v0, v1, p) * area, // W2 -> A01, B01
-        orient2d(v1, v2, p) * area, // W0 -> A12, B12
-        orient2d(v2, v0, p) * area, // W1 -> A20, B20
+        _orient2d(v0, v1, p) * area, // W2 -> A01, B01
+        _orient2d(v1, v2, p) * area, // W0 -> A12, B12
+        _orient2d(v2, v0, p) * area, // W1 -> A20, B20
     };
     const uint32_t dst_pitch = target_->width();
     const uint32_t colour = colour_;
@@ -449,6 +444,7 @@ void draw_t::plot(const vec2i_t & p) {
     }
 }
 
+// 1:1 sprite blit (hflip dispatch)
 void draw_t::blit(const blit_info_t & info) {
     assert(target_ && info.bitmap_->valid());
     // dispatch based on hflip
@@ -608,6 +604,7 @@ void draw_t::printf(const font_t & font,
     va_end(vl);
 }
 
+// tilemap blit function
 void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
     // cell size
     const int32_t cell_w = tiles.cell_size_.x;
@@ -636,7 +633,7 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
         info.dst_pos_ = pos;
 
         for (int32_t x=x0; x<=x1; ++x) {
-            // 
+            //
             const uint8_t cell =
                     tiles.cells_[x + y * tiles.map_size_.x];
             // calculate source rectangle
@@ -657,6 +654,7 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
     }
 }
 
+// rotosprite blit
 void draw_t::blit(const blit_info_ex_t & info) {
     // blit function prototype
     typedef void (*blit_func_t)(bitmap_t & target,
@@ -667,15 +665,15 @@ void draw_t::blit(const blit_info_ex_t & info) {
     // blend mode table
     // must be kept in order of blit_type_t
     static const std::array<blit_func_t, 9> func = {{
-        _draw_t_blit_2<mode_opaque>,
-        _draw_t_blit_2<mode_key>,
-        _draw_t_blit_2<mode_gliss>,
-        _draw_t_blit_2<mode_mask>,
-        _draw_t_blit_2<mode_dither<0>>,
-        _draw_t_blit_2<mode_dither<1>>,
-        _draw_t_blit_2<mode_dither<2>>,
-        _draw_t_blit_2<mode_dither<3>>,
-        _draw_t_blit_2<mode_dither<4>>
+        _draw_t_blit_2<_blend_opaque>,
+        _draw_t_blit_2<_blend_key>,
+        _draw_t_blit_2<_blend_gliss>,
+        _draw_t_blit_2<_blend_mask>,
+        _draw_t_blit_2<_blend_dither<0>>,
+        _draw_t_blit_2<_blend_dither<1>>,
+        _draw_t_blit_2<_blend_dither<2>>,
+        _draw_t_blit_2<_blend_dither<3>>,
+        _draw_t_blit_2<_blend_dither<4>>
     }};
     // dispatch to blit function
     assert(info.type_ < func.size());
