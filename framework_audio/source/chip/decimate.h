@@ -28,6 +28,10 @@ public:
         R.fill(0.f);
     }
 
+    void reset() {
+        R.fill(0.f);
+    }
+
     float operator () (const float x0, const float x1) {
         const float h5x0 = h5 * x0;
         const float h3x0 = h3 * x0;
@@ -55,6 +59,10 @@ public:
         , h3(-116/1604.0f)
         , h5( 33 /1604.0f)
         , h7(-6  /1604.0f){
+        R.fill(0.f);
+    }
+
+    void reset() {
         R.fill(0.f);
     }
 
@@ -89,6 +97,10 @@ public:
         , h5( 429 /16384.0f)
         , h7(-116 /16384.0f)
         , h9( 18  /16384.0f) {
+        R.fill(0.f);
+    }
+
+    void reset() {
         R.fill(0.f);
     }
 

@@ -5,12 +5,6 @@
 #include "decimate.h"
 #include "../../audio.h"
 
-struct audio_source_chip_t :
-    public audio_source_t {
-
-    virtual void render(const mix_out_t &) override;
-};
-
 /* intermediate sound buffer
  */
 struct sound_t {
@@ -19,15 +13,23 @@ struct sound_t {
     sound_t()
         : decimate_()
         , dither_(1)
-        , dc_(0.f)
-    {
+        , dc_(0.f) {
         data_.fill(0.f);
     }
 
     void clear() {
         data_.fill(0.f);
+    }
+
+    void reset() {
+        data_.fill(0.f);
         dc_ = 0.f;
         dither_ = 1;
+        decimate_.reset();
+    }
+
+    size_t size() const {
+        return data_.size();
     }
 
     std::array<float, _SIZE> & data() {
@@ -38,21 +40,24 @@ struct sound_t {
         return data_;
     }
 
-    enum format_t {
-        e_mono,
-        e_stereo
-    };
-
-    void render(int16_t * out, size_t num_samples, format_t fmt);
+    size_t render(int32_t * l,
+                  int32_t * r,
+                  size_t num_samples);
 
 protected:
-
-    void _render_stereo(int16_t * out, size_t num_samples);
-
     decimate_9_t decimate_;
     uint64_t dither_;
     float dc_;
     std::array<float, _SIZE> data_;
+};
+
+struct event_t {
+    enum {
+        e_note_on,  // chan note vel
+        e_note_off, // chan note
+        e_cc,       // chan cc val
+    };
+    uint8_t data_[4];
 };
 
 struct pulse_t {
@@ -81,7 +86,15 @@ struct pulse_t {
         volume_ = volume;
     }
 
-    void render(size_t samples, sound_t & out);
+    size_t render(size_t samples, sound_t & out);
+
+    // <--- todo add vibrato
+
+    // <--- todo envelope
+
+    // <--- todo add glide
+
+    void on_event(const event_t & event);
 
 protected:
     float freq_;
@@ -109,7 +122,7 @@ struct nestri_t {
         delta_ = (32.f/sample_rate) * freq;
     }
 
-    void render(size_t samples, sound_t & out);
+    size_t render(size_t samples, sound_t & out);
 
 protected:
     float accum_;
@@ -135,13 +148,13 @@ struct lfsr_t {
         period_ = period;
     }
 
-    void render(size_t samples, sound_t & out);
+    size_t render(size_t samples, sound_t & out);
 
 protected:
     uint32_t lfsr_;
     uint32_t period_;
     uint32_t counter_;
-    float    volume_;
+    float volume_;
 };
 
 struct blit_t {
@@ -183,17 +196,31 @@ struct blit_t {
         volume_ = volume;
     }
 
-    void render(size_t samples, sound_t & out);
+    size_t render(size_t samples, sound_t & out);
 
 protected:
     static const size_t c_ring_size = 32;
-    float    period_;
-    float    duty_;
-    float    volume_;
-    float    accum_;
-    float    out_;
-    int32_t  edge_;
-    float    hcycle_[2];
+    float period_;
+    float duty_;
+    float volume_;
+    float accum_;
+    float out_;
+    int32_t edge_;
+    float hcycle_[2];
     uint32_t index_;
     std::array<float, c_ring_size> ring_;
+};
+
+struct audio_source_chip_t :
+        public audio_source_t {
+
+    virtual void render(const mix_out_t &) override;
+
+protected:
+    sound_t buffer_;
+
+    std::vector<blit_t*> source_blit_;
+    std::vector<lfsr_t*> source_lfsr_;
+    std::vector<pulse_t*> source_pulse_;
+    std::vector<nestri_t*> source_nestri_;
 };
