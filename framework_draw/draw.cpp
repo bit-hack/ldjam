@@ -565,8 +565,8 @@ namespace {
 vec2f_t _rotate(const std::array<float, 4> & mat,
                 const vec2f_t & in) {
     return vec2f_t {
-        in.x * mat[0] + in.y * mat[1],
-        in.x * mat[2] + in.y * mat[3]
+        in.x * mat[0] + in.y * mat[2],
+        in.x * mat[1] + in.y * mat[3]
     };
 }
 } // namespace {}
@@ -576,6 +576,12 @@ void draw_t::blit(const blit_info_ex_t & info) {
     const auto & src = info.src_rect_;
     const auto & dst = info.dst_pos_;
     const auto & mat = info.matrix_;
+    // invert 2D matrix
+    const float det = 1.f / (mat[0]*mat[3]-mat[1]*mat[2]);
+    const std::array<float, 4> imat = {
+         det * mat[3], -det * mat[1],
+        -det * mat[2],  det * mat[0]
+    };
     // source pos at mid point
     const float sx = float(src.x0 + src.x1) * .5f;
     const float sy = float(src.y0 + src.y1) * .5f;
@@ -584,26 +590,31 @@ void draw_t::blit(const blit_info_ex_t & info) {
         float(src.dx()) * .5f,
         float(src.dy()) * .5f
     };
-    // aabb half edge size
-    const float mx = absv(mat[0] * size.x) + absv(mat[1] * size.y);
-    const float my = absv(mat[2] * size.x) + absv(mat[3] * size.y);
+    // find edge points
+    const vec2f_t p1 = dst+_rotate(imat, vec2f_t{-src.dx(), -src.dy()}) * .5f;
+    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{ src.dx(), -src.dy()}) * .5f;
+    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{-src.dx(),  src.dy()}) * .5f;
+    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{ src.dx(),  src.dy()}) * .5f;
     // rotated sprites aabb
     const rectf_t rect = {
-        dst.x - mx, dst.y - my,
-        dst.x + mx, dst.y + my
+        min4(p1.x, p2.x, p3.x, p4.x),
+        min4(p1.y, p2.y, p3.y, p4.y),
+        max4(p1.x, p2.x, p3.x, p4.x),
+        max4(p1.y, p2.y, p3.y, p4.y)
     };
-    // top left source pos (using transpose)
-    float rx = sx - (mx * mat[0] + my * mat[2]);
-    float ry = sy - (mx * mat[1] + my * mat[3]);
+    // top left source pos
+    const float mx = rect.x0 - dst.x;
+    const float my = rect.y0 - dst.y;
+    float rx = sx + (mx * mat[0] + my * mat[2]);
+    float ry = sy + (mx * mat[1] + my * mat[3]);
     // y axis iteration
     for (int32_t y = rect.y0; y <= rect.y1; ++y) {
         float tx = rx;
         float ty = ry;
         // x axis iteration
         for (int32_t x = rect.x0; x <= rect.x1; ++x) {
-            // if the
-            if (src.contains(vec2i_t{int32_t(tx),
-                                     int32_t(ty)})) {
+            // if we are inside the source rect
+            if (src.contains(vec2i_t{int32_t(tx), int32_t(ty)})) {
                 colour_ = 0xff00ff;
             }
             else {

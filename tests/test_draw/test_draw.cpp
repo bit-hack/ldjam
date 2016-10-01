@@ -122,13 +122,13 @@ void test_rotosprite() {
     draw_.key_ = 0x0;
     blit_info_ex_t info;
     {
-        info.dst_pos_ = vec2i_t {320 / 2, 240 / 2};
+        info.dst_pos_ = vec2f_t {320 / 2, 240 / 2};
         info.src_rect_ = recti_t {0, 0, 16, 31};
         info.type_ = e_blit_key;
-        const float s = sinf(time_);
-        const float c = cosf(time_);
+        const float s = sinf(time_) * 1.f;
+        const float c = cosf(time_) * 1.f;
         info.matrix_[0] = c; info.matrix_[1] =-s;
-        info.matrix_[2] = s; info.matrix_[3] = c;
+        info.matrix_[2] = s * 2.f; info.matrix_[3] = c * 2.f;
     }
     draw_.colour_ = 0xff00ff;
     draw_.blit(info);

@@ -29,7 +29,7 @@ struct blit_info_t {
 
 struct blit_info_ex_t {
     const struct bitmap_t * bitmap_;
-    vec2i_t dst_pos_;
+    vec2f_t dst_pos_;
     recti_t src_rect_;
     blit_type_t type_;
     std::array<float, 4> matrix_;

@@ -38,29 +38,45 @@ constexpr type_t absv(const type_t v) {
 }
 
 template <typename type_t>
-constexpr type_t min2(const type_t a,
-            const type_t b) {
+constexpr type_t min2(type_t a,
+                      type_t b) {
     return (a<b) ? a : b;
 }
 
 template <typename type_t>
-constexpr type_t min3(const type_t a,
-            const type_t b,
-            const type_t c) {
+constexpr type_t min3(type_t a,
+                      type_t b,
+                      type_t c) {
     return min2(min2(a, b), c);
 }
 
 template <typename type_t>
-constexpr type_t max2(const type_t a,
-            const type_t b) {
+constexpr type_t max2(type_t a,
+                      type_t b) {
     return (a>b) ? a : b;
 }
 
 template <typename type_t>
-constexpr type_t max3(const type_t a,
-            const type_t b,
-            const type_t c) {
+constexpr type_t max3(type_t a,
+                      type_t b,
+                      type_t c) {
     return max2(max2(a, b), c);
+}
+
+template <typename type_t>
+constexpr type_t min4(type_t a,
+                      type_t b,
+                      type_t c,
+                      type_t d) {
+    return min2(min2(a, b), min2(c, d));
+}
+
+template <typename type_t>
+constexpr type_t max4(type_t a,
+                      type_t b,
+                      type_t c,
+                      type_t d) {
+    return max2(max2(a, b), max2(c, d));
 }
 
 template <typename type_t>
