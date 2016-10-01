@@ -111,26 +111,40 @@ struct rect_t {
     /* projected size on x axis
      */
     type_t dx() const {
-        return (x1+1) - x0;
+        return x1 - x0;
     }
 
     /* projected size on y axis
      */
     type_t dy() const {
-        return (y1+1) - y0;
+        return y1 - y0;
     }
 
     /* size of this rect as a vector
      */
     template <typename vec_t>
     vec_t size() const {
-        return vec_t{dx(), dy()};
+        return vec_t{width(), height()};
+    }
+
+    /*
+     */
+    type_t width() const {
+        // +1 because x1 is inclusive
+        return (max2(x1, x0)+1) - min2(x1, x0);
+    }
+
+    /*
+     */
+    type_t height() const {
+        // +1 because y1 is inclusive
+        return (max2(y1, y0)+1) - min2(y1, y0);
     }
 
     /* return the area of this rect
      */
     type_t area() const {
-        return (x1-x0) * (y1-y0);
+        return width() * height();
     }
 
     /* scale this rect

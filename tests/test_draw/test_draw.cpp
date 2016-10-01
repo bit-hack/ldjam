@@ -96,12 +96,12 @@ void test_plot() {
 }
 
 void test_blit() {
-    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!sprite_.valid()) {
         if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
             return;
         }
     }
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     draw_.key_ = 0x0;
     for (int i=0; i<100; ++i) {
         blit_info_t info;
@@ -118,17 +118,27 @@ void test_blit() {
 }
 
 void test_rotosprite() {
+    if (!sprite_.valid()) {
+        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+            return;
+        }
+    }
     draw_.viewport(recti_t{32, 32, 320-32, 240-32});
     draw_.key_ = 0x0;
     blit_info_ex_t info;
     {
+        info.bitmap_ = &sprite_;
         info.dst_pos_ = vec2f_t {320 / 2, 240 / 2};
         info.src_rect_ = recti_t {0, 0, 16, 31};
         info.type_ = e_blit_key;
-        const float s = sinf(time_) * 1.f;
-        const float c = cosf(time_) * 1.f;
-        info.matrix_[0] = c; info.matrix_[1] =-s;
-        info.matrix_[2] = s * 2.f; info.matrix_[3] = c * 2.f;
+        const float s = sinf(time_) * .4f;
+        const float c = cosf(time_) * .4f;
+
+        const float st = .5f + .2f*sinf(time_ * 3.f);
+        const float ct = .5f + .2f*cosf(time_ * 2.f);
+
+        info.matrix_[0] = c * ct; info.matrix_[1] =-s * ct;
+        info.matrix_[2] = s * st; info.matrix_[3] = c * st;
     }
     draw_.colour_ = 0xff00ff;
     draw_.blit(info);
@@ -211,8 +221,8 @@ void test_tilemap() {
     static const int _WIDTH = 34;
     static const int _HEIGHT = 16;
 
-    int32_t ox = 16+cosf(scroll_)*16;
-    int32_t oy = 16-sinf(scroll_)*16;
+    int32_t ox = int32_t(16.f+cosf(scroll_)*16.f);
+    int32_t oy = int32_t(16.f-sinf(scroll_)*16.f);
 
     draw_.viewport(recti_t {ox, oy, ox+320-32, oy+240-32});
     draw_.colour_ = 0x224477;

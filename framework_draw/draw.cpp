@@ -50,7 +50,7 @@ typedef uint32_t pixel_func_t(const uint32_t src,
                               const uint32_t key,
                               const uint32_t order);
 
-template <pixel_func_t mode_t, bool hflip = false>
+template <bool hflip, pixel_func_t mode_t>
 void _draw_t_blit_2(bitmap_t & target,
                     const recti_t & viewport,
                     const blit_info_t & info,
@@ -108,6 +108,99 @@ void _draw_t_blit_2(bitmap_t & target,
         }
         dst += dst_pitch;
         src += src_pitch;
+    }
+}
+
+vec2f_t _rotate(const std::array<float, 4> & mat,
+                const vec2f_t & in) {
+    return vec2f_t {
+            in.x * mat[0] + in.y * mat[2],
+            in.x * mat[1] + in.y * mat[3]
+    };
+}
+
+template <pixel_func_t func>
+void _draw_t_blit_2(bitmap_t & target,
+                   const recti_t & viewport,
+                   const blit_info_ex_t & info,
+                   const uint32_t colour,
+                   const uint32_t key) {
+    // alias
+    const auto & src = info.src_rect_;
+    const auto & dst = info.dst_pos_;
+    const auto & mat = info.matrix_;
+    // invert 2D matrix
+    const float det = 1.f / (mat[0]*mat[3]-mat[1]*mat[2]);
+    const std::array<float, 4> imat = {
+            det * mat[3], -det * mat[1],
+            -det * mat[2],  det * mat[0]
+    };
+    // source pos at mid point
+    const float sx = float(src.x0 + src.x1) * .5f;
+    const float sy = float(src.y0 + src.y1) * .5f;
+    // sprite size
+    const vec2f_t size = vec2f_t{
+            float(src.dx()) * .5f,
+            float(src.dy()) * .5f
+    };
+    // find edge points
+    const vec2f_t p1 = dst+_rotate(imat, vec2f_t{-src.width(), -src.height()}) * .5f;
+    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{ src.width(), -src.height()}) * .5f;
+    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{-src.width(),  src.height()}) * .5f;
+    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{ src.width(),  src.height()}) * .5f;
+    // rotated sprites aabb
+    const rectf_t dst_rect = rectf_t::intersect(
+            rectf_t(viewport),
+            rectf_t{
+                    min4(p1.x, p2.x, p3.x, p4.x),
+                    min4(p1.y, p2.y, p3.y, p4.y),
+                    max4(p1.x, p2.x, p3.x, p4.x),
+                    max4(p1.y, p2.y, p3.y, p4.y)
+            });
+    // top left source pos
+    const float mx = dst_rect.x0 - dst.x;
+    const float my = dst_rect.y0 - dst.y;
+    float rx = sx + (mx * mat[0] + my * mat[2]);
+    float ry = sy + (mx * mat[1] + my * mat[3]);
+    // src buffer setup
+    const int32_t src_pitch = info.bitmap_->width();
+    const uint32_t * src_pix = info.bitmap_->data();
+    // destination buffer setup
+    const int32_t dst_pitch = target.width();
+    uint32_t * dst_pix = target.data() +
+                         int32_t(dst_rect.y0) * dst_pitch;
+    // dither nudge
+    const int32_t xn = int32_t(dst_rect.x0) & 1;
+    const int32_t yn = int32_t(dst_rect.y0) & 1;
+    // y axis iteration
+    for (int32_t y = dst_rect.y0; y <= dst_rect.y1; ++y) {
+        float tx = rx;
+        float ty = ry;
+        // x axis iteration
+        for (int32_t x = dst_rect.x0; x <= dst_rect.x1; ++x) {
+            // if we are inside the source rect
+            if (src.contains(vec2i_t{int32_t(tx), int32_t(ty)})) {
+                // source pixel
+                const uint32_t sc = src_pix[int32_t(tx) +
+                                            int32_t(ty) * src_pitch];
+                // dither order
+                const uint32_t dither = ((x^xn)&0x7) + ((y^yn)<<3);
+                // plot pixel
+                dst_pix[x] = func(sc,
+                                  dst_pix[x],
+                                  colour,
+                                  key,
+                                  dither);
+            }
+            // step x
+            tx += mat[0];
+            ty += mat[1];
+        }
+        // step y
+        rx += mat[2];
+        ry += mat[3];
+        //
+        dst_pix += dst_pitch;
     }
 }
 
@@ -181,15 +274,15 @@ void _draw_t_blit_1(bitmap_t & target,
     // blend mode table
     // must be kept in order of blit_type_t
     static const std::array<blit_func_t, 9> func = {{
-        _draw_t_blit_2<mode_opaque, hflip>,
-        _draw_t_blit_2<mode_key, hflip>,
-        _draw_t_blit_2<mode_gliss, hflip>,
-        _draw_t_blit_2<mode_mask, hflip>,
-        _draw_t_blit_2<mode_dither<0>, hflip>,
-        _draw_t_blit_2<mode_dither<1>, hflip>,
-        _draw_t_blit_2<mode_dither<2>, hflip>,
-        _draw_t_blit_2<mode_dither<3>, hflip>,
-        _draw_t_blit_2<mode_dither<4>, hflip>
+        _draw_t_blit_2<hflip, mode_opaque>,
+        _draw_t_blit_2<hflip, mode_key>,
+        _draw_t_blit_2<hflip, mode_gliss>,
+        _draw_t_blit_2<hflip, mode_mask>,
+        _draw_t_blit_2<hflip, mode_dither<0>>,
+        _draw_t_blit_2<hflip, mode_dither<1>>,
+        _draw_t_blit_2<hflip, mode_dither<2>>,
+        _draw_t_blit_2<hflip, mode_dither<3>>,
+        _draw_t_blit_2<hflip, mode_dither<4>>
     }};
     // dispatch to blit function
     assert(info.type_ < func.size());
@@ -410,6 +503,28 @@ recti_t draw_t::_target_size() const {
     };
 }
 
+// render at 1:1 scale
+void draw_t::render_1x(void * mem, const uint32_t pitch) {
+    assert(mem);
+    // data access
+    uint32_t * dst = reinterpret_cast<uint32_t*>(mem);
+    const uint32_t * src = target_->data();
+    const uint32_t src_pitch = target_->width();
+    // height iterator
+    for (int32_t y=0; y<target_->height(); ++y) {
+        // scan lines
+        uint32_t * x0 = dst;
+        // draw spans
+        for (uint32_t i = 0; i < src_pitch; ++i) {
+            x0[i] = src[i];
+        }
+        // advance scan lines
+        dst += pitch;
+        src += target_->width();
+    }
+}
+
+// render at 1:2 scale
 void draw_t::render_2x(void * mem, const uint32_t pitch) {
     assert(mem);
     // data access
@@ -433,6 +548,7 @@ void draw_t::render_2x(void * mem, const uint32_t pitch) {
     }
 }
 
+// render at 1:3 scale
 void draw_t::render_3x(void * mem, const uint32_t pitch) {
     assert(mem);
     // data access
@@ -454,26 +570,6 @@ void draw_t::render_3x(void * mem, const uint32_t pitch) {
         }
         // advance scan lines
         dst += pitch * 3;
-        src += target_->width();
-    }
-}
-
-void draw_t::render_1x(void * mem, const uint32_t pitch) {
-    assert(mem);
-    // data access
-    uint32_t * dst = reinterpret_cast<uint32_t*>(mem);
-    const uint32_t * src = target_->data();
-    const uint32_t src_pitch = target_->width();
-    // height iterator
-    for (int32_t y=0; y<target_->height(); ++y) {
-        // scan lines
-        uint32_t * x0 = dst;
-        // draw spans
-        for (uint32_t i = 0; i < src_pitch; ++i) {
-            x0[i] = src[i];
-        }
-        // advance scan lines
-        dst += pitch;
         src += target_->width();
     }
 }
@@ -561,73 +657,27 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
     }
 }
 
-namespace {
-vec2f_t _rotate(const std::array<float, 4> & mat,
-                const vec2f_t & in) {
-    return vec2f_t {
-        in.x * mat[0] + in.y * mat[2],
-        in.x * mat[1] + in.y * mat[3]
-    };
-}
-} // namespace {}
-
 void draw_t::blit(const blit_info_ex_t & info) {
-    // alias
-    const auto & src = info.src_rect_;
-    const auto & dst = info.dst_pos_;
-    const auto & mat = info.matrix_;
-    // invert 2D matrix
-    const float det = 1.f / (mat[0]*mat[3]-mat[1]*mat[2]);
-    const std::array<float, 4> imat = {
-         det * mat[3], -det * mat[1],
-        -det * mat[2],  det * mat[0]
-    };
-    // source pos at mid point
-    const float sx = float(src.x0 + src.x1) * .5f;
-    const float sy = float(src.y0 + src.y1) * .5f;
-    // sprite size
-    const vec2f_t size = vec2f_t{
-        float(src.dx()) * .5f,
-        float(src.dy()) * .5f
-    };
-    // find edge points
-    const vec2f_t p1 = dst+_rotate(imat, vec2f_t{-src.dx(), -src.dy()}) * .5f;
-    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{ src.dx(), -src.dy()}) * .5f;
-    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{-src.dx(),  src.dy()}) * .5f;
-    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{ src.dx(),  src.dy()}) * .5f;
-    // rotated sprites aabb
-    const rectf_t rect = {
-        min4(p1.x, p2.x, p3.x, p4.x),
-        min4(p1.y, p2.y, p3.y, p4.y),
-        max4(p1.x, p2.x, p3.x, p4.x),
-        max4(p1.y, p2.y, p3.y, p4.y)
-    };
-    // top left source pos
-    const float mx = rect.x0 - dst.x;
-    const float my = rect.y0 - dst.y;
-    float rx = sx + (mx * mat[0] + my * mat[2]);
-    float ry = sy + (mx * mat[1] + my * mat[3]);
-    // y axis iteration
-    for (int32_t y = rect.y0; y <= rect.y1; ++y) {
-        float tx = rx;
-        float ty = ry;
-        // x axis iteration
-        for (int32_t x = rect.x0; x <= rect.x1; ++x) {
-            // if we are inside the source rect
-            if (src.contains(vec2i_t{int32_t(tx), int32_t(ty)})) {
-                colour_ = 0xff00ff;
-            }
-            else {
-                colour_ = 0x00ff00;
-            }
-            // plot pixel
-            plot(vec2i_t{x, y});
-            // step x
-            tx += mat[0];
-            ty += mat[1];
-        }
-        // step y
-        rx += mat[2];
-        ry += mat[3];
-    }
+    // blit function prototype
+    typedef void (*blit_func_t)(bitmap_t & target,
+                                const recti_t & viewport,
+                                const blit_info_ex_t & info,
+                                const uint32_t colour,
+                                const uint32_t key);
+    // blend mode table
+    // must be kept in order of blit_type_t
+    static const std::array<blit_func_t, 9> func = {{
+        _draw_t_blit_2<mode_opaque>,
+        _draw_t_blit_2<mode_key>,
+        _draw_t_blit_2<mode_gliss>,
+        _draw_t_blit_2<mode_mask>,
+        _draw_t_blit_2<mode_dither<0>>,
+        _draw_t_blit_2<mode_dither<1>>,
+        _draw_t_blit_2<mode_dither<2>>,
+        _draw_t_blit_2<mode_dither<3>>,
+        _draw_t_blit_2<mode_dither<4>>
+    }};
+    // dispatch to blit function
+    assert(info.type_ < func.size());
+    func[info.type_](*target_, viewport_, info, colour_, key_);
 }
