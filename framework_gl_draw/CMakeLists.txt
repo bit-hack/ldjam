@@ -9,3 +9,7 @@ set(SOURCE_FILES
     gl_draw.h)
 
 add_library(framework_gl_draw ${SOURCE_FILES})
+
+set_target_properties(framework_gl_draw PROPERTIES
+    FOLDER framework
+)

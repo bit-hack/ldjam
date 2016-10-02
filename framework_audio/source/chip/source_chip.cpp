@@ -14,9 +14,7 @@ constexpr type_t _max(type_t a, type_t b) {
 
 template <typename type_t>
 constexpr type_t _clamp(type_t lo, type_t in, type_t hi) {
-    return (in<lo) ? lo :
-                     ((in>hi) ? hi :
-                                in);
+    return (in<lo) ? lo : ((in>hi) ? hi : in);
 }
 
 /* Return clipped input between [-1,+1] */
@@ -234,11 +232,18 @@ size_t lfsr_t::render(size_t length, sound_t &out) {
     return count;
 }
 
-size_t blit_t::render(size_t samples, sound_t &buffer) {
-    // defined in blip_table.cpp
-    extern const float * g_blip_table;
+void blit_t::render(size_t samples, sound_t &buffer) {
+    // todo
+}
 
-    const uint32_t c_ring_size  = c_ring_size;
+// defined in blip_table.cpp
+extern "C" {
+    extern const float g_blip_table[];
+} // extern "C"
+
+size_t blit_t::_render(size_t samples, sound_t &buffer) {
+
+    const uint32_t c_ring_size  = blit_t::c_ring_size;
     const float    c_leak       = 0.999f;
     const uint32_t c_blip_count = 16;
     const uint32_t c_blip_size  = 32;

@@ -17,3 +17,7 @@ set(LIBRARIES
 
 add_executable(test_tiles ${SOURCE_FILES})
 target_link_libraries(test_tiles PUBLIC ${LIBRARIES})
+
+set_target_properties(test_tiles PROPERTIES
+    FOLDER tests
+)

@@ -9,3 +9,7 @@ set(SOURCE_FILES
 
 add_executable(test_stb_vorbis ${SOURCE_FILES})
 target_link_libraries(test_stb_vorbis framework_core framework_audio SDL)
+
+set_target_properties(test_stb_vorbis PROPERTIES
+    FOLDER tests
+)

@@ -23,3 +23,7 @@ set(LIBRARIES
 
 add_executable(example_platformer ${SOURCE_FILES})
 target_link_libraries(example_platformer ${LIBRARIES})
+
+set_target_properties (example_platformer PROPERTIES
+    FOLDER examples
+)

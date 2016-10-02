@@ -14,3 +14,7 @@ set(${LIBS}
 
 add_library(framework_spatial ${SOURCE_FILES})
 target_link_libraries(framework_spatial ${LIBS})
+
+set_target_properties(framework_spatial PROPERTIES
+    FOLDER framework
+)

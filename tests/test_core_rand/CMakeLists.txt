@@ -9,3 +9,7 @@ set(SOURCE_FILES
 
 add_executable(test_core_rand ${SOURCE_FILES})
 target_link_libraries(test_core_rand PUBLIC framework_core)
+
+set_target_properties(test_core_rand PROPERTIES
+    FOLDER tests
+)
