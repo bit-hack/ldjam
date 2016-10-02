@@ -9,3 +9,7 @@ set(SOURCE_FILES
 
 add_executable(test_audio_unit ${SOURCE_FILES})
 target_link_libraries(test_audio_unit PUBLIC framework_core framework_audio SDL)
+
+set_target_properties(test_audio_unit PROPERTIES
+    FOLDER tests
+)

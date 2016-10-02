@@ -24,3 +24,7 @@ set(SOURCE_FILES
     mat2.h)
 
 add_library(framework_core ${SOURCE_FILES})
+
+set_target_properties (framework_core PROPERTIES
+    FOLDER framework
+)

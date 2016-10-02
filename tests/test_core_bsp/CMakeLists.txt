@@ -14,3 +14,7 @@ set(LIBRARIES
 
 add_executable(test_core_bsp ${SOURCE_FILES})
 target_link_libraries(test_core_bsp PUBLIC ${LIBRARIES})
+
+set_target_properties(test_core_bsp PROPERTIES
+    FOLDER tests
+)

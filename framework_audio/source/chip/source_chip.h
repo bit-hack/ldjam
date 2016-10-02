@@ -5,8 +5,134 @@
 #include "decimate.h"
 #include "../../audio.h"
 
-/* intermediate sound buffer
- */
+struct env_ad_t {
+    env_ad_t(float sample_rate_=44100)
+        : ms_conv_(sample_rate_/1000.f)
+        , attack_(1.f)
+        , decay_(1.f)
+        , env_(0.f)
+        , one_shot_(false)
+    {}
+
+    void set_attack(float ms) {
+        attack_ = 1.f/max_(1.f, ms * ms_conv_);
+    }
+
+    void set_decay(float ms) {
+        decay_ = 1.f/max_(1.f, ms * ms_conv_);
+    }
+
+    void kill() {
+        stage_ = e_end;
+        env_ = 0.f;
+    }
+
+    void note_on(bool retrigger) {
+        stage_ = e_attack;
+        if (retrigger) {
+            env_ = 0.f;
+        }
+    }
+
+    void note_off() {
+        if (stage_<e_decay) {
+            stage_ = e_decay;
+        }
+    }
+
+    float next() {
+        switch (stage_) {
+        case (e_attack) :
+            if ((env_ += attack_) > 1.f) {
+                env_ = 1.f;
+                stage_ = one_shot_ ? e_decay : e_hold;
+            }
+            return env_;
+        case (e_hold) :
+            return 1.f;
+        case (e_decay) :
+            if ((env_ -= decay_) < 0.f) {
+                env_ = 0.f;
+                stage_ = e_end;
+            }
+            return env_;
+        case (e_end) :
+        default:
+            return 0.f;
+        }
+    }
+
+    float get_lin() const {
+        return env_;
+    }
+
+    float get_exp() const {
+        switch (stage_) {
+        case (e_attack) :
+            return 1-(env_-1)*(env_-1);
+        default:
+            return 0+(env_-1)*(env_-1);
+        }
+    }
+
+protected:
+    enum {
+        e_attack = 0,
+        e_hold,
+        e_decay,
+        e_end,
+    } stage_;
+    float attack_, decay_;
+    float env_;
+    bool one_shot_;
+    const float ms_conv_;
+
+    static constexpr float max_(float a, float b) {
+        return (a>b) ? a : b;
+    }
+
+    static constexpr float clamp_(float lo, float in, float hi) {
+        return (in<lo) ? lo : ((in>hi) ? hi : in);
+    }
+};
+
+struct lfo_sin_t {
+    float a_;
+    float s_[2];
+
+    lfo_sin_t() {
+        init(5.f, 44100.f);
+    }
+
+    void init(float freq, float sample_rate=44100) {
+        const bool stable = true;
+        a_ = (stable) ? (2.f*C_PI*freq/sample_rate) :   // stable at very low freq.
+                        (sinf(C_PI*freq/sample_rate));  // better for higher freq.
+        s_[0] = 1.f;
+        s_[1] = 0.f;
+    }
+
+    float tick() {
+        s_[0] -= a_*s_[1];
+        s_[1] += a_*s_[0];
+    }
+
+    float sin_part() const {
+        return s_[0];
+    }
+
+    float cos_part() const {
+        return s_[1];
+    }
+
+    void normalize() {
+        const float mag = (s_[1]*s_[1] + s_[0]*s_[0]);
+        const float nrm = (3.f-mag)*.5f; // approximation of 1/sqrt(x)
+        s_[0] *= nrm;
+        s_[1] *= nrm;
+    }
+};
+
 struct sound_t {
     static const size_t _SIZE = 1024;
 
@@ -57,7 +183,7 @@ struct event_t {
         e_note_off, // chan note
         e_cc,       // chan cc val
     };
-    uint8_t data_[4];
+    uint8_t data_[3];
 };
 
 struct pulse_t {
@@ -93,8 +219,6 @@ struct pulse_t {
     // <--- todo envelope
 
     // <--- todo add glide
-
-    void on_event(const event_t & event);
 
 protected:
     float freq_;
@@ -136,8 +260,7 @@ struct lfsr_t {
         : lfsr_(1)
         , period_(100)
         , counter_(100)
-        , volume_(0.f)
-    {
+        , volume_(0.f) {
     }
 
     void set_volume(float volume) {
@@ -196,15 +319,19 @@ struct blit_t {
         volume_ = volume;
     }
 
-    size_t render(size_t samples, sound_t & out);
+    void render(size_t samples, sound_t & out);
+
+    // <--- set event stream and wrap render to poll it
+
+    // even popping events that are not for us shows us how many samples we can render if they are in order
+    void set_event_stream(const std::vector<event_t> &, uint8_t channel);
 
 protected:
+    size_t _render(size_t samples, sound_t & out);
+
     static const size_t c_ring_size = 32;
-    float period_;
-    float duty_;
-    float volume_;
-    float accum_;
-    float out_;
+    float period_, duty_, accum_;
+    float volume_, out_;
     int32_t edge_;
     float hcycle_[2];
     uint32_t index_;

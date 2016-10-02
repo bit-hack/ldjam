@@ -17,3 +17,7 @@ set(LIBRARIES
     
 add_executable(test_gl_draw ${SOURCE_FILES})
 target_link_libraries(test_gl_draw PUBLIC ${LIBRARIES})
+
+set_target_properties(test_gl_draw PROPERTIES
+    FOLDER tests
+)

@@ -15,3 +15,7 @@ set(LIBS
 
 add_executable(test_spatial ${SOURCE_FILES})
 target_link_libraries(test_spatial PUBLIC ${LIBS})
+
+set_target_properties(test_spatial PROPERTIES
+    FOLDER tests
+)

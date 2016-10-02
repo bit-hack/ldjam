@@ -11,18 +11,17 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
     }
 
     draw_ex_t & draw_;
-    bitmap_t sprite_1_;
-    bitmap_t sprite_2_;
+    bitmap_t sprite_;
     vec2f_t pos_;
 
     float rot_;
 
-    void draw_car(bitmap_t & sprite, const vec2f_t & pos) {
-        assert(sprite.valid());
+    void draw_car(uint32_t car, const vec2f_t & pos) {
+        assert(sprite_.valid());
         blit_info_ex_t info;
-        info.bitmap_ = &sprite;
+        info.bitmap_ = &sprite_;
         info.dst_pos_ = pos;
-        info.src_rect_ = recti_t{0, 0, 15, 15};
+        info.src_rect_ = recti_t(0, car * 16, 15, 15, recti_t::e_relative);
         info.type_ = e_blit_key;
         float scale = 0.8f;
         auto & m = info.matrix_;
@@ -39,16 +38,15 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
     }
 
     virtual void tick() override {
-        draw_car(sprite_1_, vec2f_t{ 50, 60});
-        draw_car(sprite_2_, vec2f_t{110, 60});
+        draw_car(0, vec2f_t{ 50, 60});
+        draw_car(1, vec2f_t{110, 60});
         // advance the rotation
         rot_ += 0.1f;
         if (rot_>C_2PI) rot_ -= C_2PI;
     }
 
     void init(int dummy) {
-        bitmap_t::load("assets/car1.bmp", sprite_1_);
-        bitmap_t::load("assets/car2.bmp", sprite_2_);
+        bitmap_t::load("assets/car.bmp", sprite_);
     }
 };
 
@@ -81,8 +79,7 @@ struct app_t {
             return false;
         }
 
-        const int32_t C_WIDTH = 160;
-        const int32_t C_HEIGHT = 120;
+        const int32_t C_WIDTH = 160, C_HEIGHT = 120;
 
         const bool fullscreen = false;
         screen_ = SDL_SetVideoMode(

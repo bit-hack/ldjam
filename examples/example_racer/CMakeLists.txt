@@ -17,3 +17,7 @@ set(LIBRARIES
 
 add_executable(example_racer ${SOURCE_FILES})
 target_link_libraries(example_racer ${LIBRARIES})
+
+set_target_properties (example_racer PROPERTIES
+    FOLDER examples
+)

@@ -11,3 +11,7 @@ set(SOURCE_FILES
     bitmap.h)
 
 add_library(framework_draw ${SOURCE_FILES})
+
+set_target_properties(framework_draw PROPERTIES
+    FOLDER framework
+)

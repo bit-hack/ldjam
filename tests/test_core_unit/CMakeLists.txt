@@ -17,3 +17,7 @@ set(SOURCE_FILES
 
 add_executable(test_core_unit ${SOURCE_FILES})
 target_link_libraries(test_core_unit PUBLIC framework_core SDL)
+
+set_target_properties(test_core_unit PROPERTIES
+    FOLDER tests
+)

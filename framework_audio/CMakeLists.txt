@@ -31,3 +31,7 @@ add_library(
     ${SOURCE_FILES}
     ${SOURCE_FILES_FMT}
     ${SOURCE_FILES_SRC})
+
+set_target_properties (framework_audio PROPERTIES
+    FOLDER framework
+)

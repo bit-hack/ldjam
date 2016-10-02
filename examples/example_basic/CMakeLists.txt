@@ -14,3 +14,7 @@ set(LIBRARIES
 
 add_executable(example_basic ${SOURCE_FILES})
 target_link_libraries(example_basic ${LIBRARIES})
+
+set_target_properties (example_basic PROPERTIES
+    FOLDER examples
+)

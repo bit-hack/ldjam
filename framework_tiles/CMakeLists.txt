@@ -13,3 +13,7 @@ set(${LIBS}
 
 add_library(framework_tiles ${SOURCE_FILES})
 target_link_libraries(framework_tiles ${LIBS})
+
+set_target_properties(framework_tiles PROPERTIES
+    FOLDER framework
+)
