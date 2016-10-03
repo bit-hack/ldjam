@@ -1,7 +1,14 @@
+#include <cmath>
 #include <cassert>
 #include "source_chip.h"
 
 namespace {
+inline float note_to_freq(int32_t note) {
+    float x = float(note-69)/12.f;
+    float y = powf(2.f, x);
+    return 440.f * y;
+}
+
 template <typename type_t>
 constexpr type_t _min(type_t a, type_t b) {
     return (a<b) ? a : b;
@@ -51,6 +58,7 @@ float _dither(uint64_t & x) {
 }
 } // namespace {}
 
+namespace source_chip {
 size_t sound_t::render(
     int32_t * l,
     int32_t * r,
@@ -66,19 +74,19 @@ size_t sound_t::render(
     float dc = dc_;
     // mix down buffer to output region
     float * src = &data_[0];
-    for (size_t i=0; i<count; ++i) {
+    for (size_t i = 0; i<count; ++i) {
         // decimate
         const float s0 = dec(src[0], src[1]);
         src += 2;
         // remove dc
-        const float s1 = s0 - dc;
+        const float s1 = s0-dc;
         dc = _lerp(dc, s1, 0.0001f);
         // clip
         const float s2 = _clip(s1);
         // apply makeup gain
         const float s3 = s2 * c_gain;
         // dither
-        const float s4 = s3 + _dither(dither);
+        const float s4 = s3+_dither(dither);
         // write to output buffer
         l[i] = int16_t(s4);
         r[i] = int16_t(s4);
@@ -90,38 +98,57 @@ size_t sound_t::render(
     return count;
 }
 
+void audio_source_chip_t::init() {
+    source_pulse_.push_back(new pulse_t(event_[0], 
+                                        44100.f * 2.f));
+}
+
 void audio_source_chip_t::render(const mix_out_t & mix) {
+    // scatter pending events to channel pidgeon holes
+    {
+        event_t event;
+        while (input_.pop(event)) {
+            event_[event.data_[0]].push(event);
+        }
+    }
     // loop until all samples are emitted
     size_t remaining = mix.count_;
     while (remaining) {
         // wipe the buffer
         buffer_.clear();
         // find samples remaining
-        size_t count = _min(remaining * 2, buffer_.size());
+        size_t count = _min(remaining*2, buffer_.size());
 
-        // <-- todo factor in midi events
+        // todo: <-------- pop events from event file
 
         // render from all audio sources
         {
-            for (auto *src: source_blit_) {
+            for (auto *src:source_pulse_) {
                 src->render(count, buffer_);
             }
-            for (auto *src: source_lfsr_) {
+#if 0
+            for (auto *src:source_blit_) {
                 src->render(count, buffer_);
             }
-            for (auto *src: source_pulse_) {
+            for (auto *src:source_lfsr_) {
                 src->render(count, buffer_);
             }
-            for (auto *src: source_nestri_) {
+            for (auto *src:source_nestri_) {
                 src->render(count, buffer_);
             }
+#endif
         }
         // render out the samples in our buffer
-        remaining -= buffer_.render(mix.left_, mix.right_, count / 2);
+        remaining -= buffer_.render(mix.left_, mix.right_, count/2);
     }
 }
 
-size_t pulse_t::render(
+void audio_source_chip_t::render(float * out,
+                                 size_t samples) {
+
+}
+
+size_t pulse_t::_render(
     size_t length,
     sound_t &out)
 {
@@ -133,20 +160,23 @@ size_t pulse_t::render(
     float * dst = out.data().data();
     // do not render if over nyquist
     if (period<=2.f) {
+        assert(!"HELP!");
         return 0;
     }
     // while there are samples to render
-    for (size_t i=0; i<count; ++i) {
+    for (size_t i = 0; i<count; ++i) {
+        // vib contribution
+        const float v = lfo_.tick() * vibrato_;
         // tick the square wave counter
-        if ((accum -= 1.f)<0.f) {
+        if ((accum -= (1.f + v)) < 0.f) {
             accum += period;
         }
         // apply duty offset
         float a = accum-offset;
         // turn into pulse wave
-        float b = a > 0.f ? 1.f : -1.f;
+        float b = (a > 0.f) ? 1.f : -1.f;
         // apply volume attenuation
-        float c = b * volume;
+        float c = b * volume * env_.next();
         // move into output buffer
         dst[i] += c;
     }
@@ -155,6 +185,63 @@ size_t pulse_t::render(
     return count;
 }
 
+void pulse_t::on_note_on(const event_t & event) {
+    env_.note_on(true);
+    const uint8_t note = event.data_[1];
+    const uint8_t velo = event.data_[2];
+    set_freq(note_to_freq(note), sample_rate_);
+    volume_ = (1.f/256.f) * (float)velo;
+}
+
+void pulse_t::on_note_off(const event_t & event) {
+    env_.note_off();
+}
+
+void pulse_t::on_cc(const event_t & event) {
+    const uint8_t value = event.data_[2];
+    switch (event.data_[1]) {
+    case (e_attack):
+        env_.set_attack(value*4.f);
+        break;
+    case (e_decay):
+        env_.set_decay(value*4.f);
+        break;
+    case (e_duty):
+        set_duty((1.f/256.f) * value);
+        break;
+    case (e_vibrato):
+        vibrato_ = (1.f/256.f) * value;
+        break;
+    }
+}
+
+void pulse_t::render(
+    size_t length,
+    sound_t & out) 
+{
+    // dispatch any pending events
+    while (!queue_.empty()) {
+        event_t & e = queue_.front();
+        switch (e.type_) {
+        case (event_t::e_note_on):
+            on_note_on(e);
+            break;
+        case (event_t::e_note_off):
+            on_note_on(e);
+            break;
+        case (event_t::e_cc):
+            on_note_on(e);
+            break;
+        }
+        queue_.pop();
+    }
+    // render out the buffer
+    while (length) {
+        
+    }
+}
+
+#if 0
 size_t nestri_t::render(size_t length, sound_t &out) {
 #define A(X) ((X)/7.5f-1.f)
     static const std::array<float, 32> tri_table = {
@@ -170,7 +257,7 @@ size_t nestri_t::render(size_t length, sound_t &out) {
     const size_t count = _min(length, out.data().size());
     float * dst = out.data().data();
     // while there are samples to render
-    for (size_t i=0; i<count; ++i) {
+    for (size_t i = 0; i<count; ++i) {
         // tick the counter
         if ((accum -= delta)<0.f) {
             accum += 32.f;
@@ -193,6 +280,7 @@ size_t nestri_t::render(size_t length, sound_t &out) {
     accum_ = accum;
     return count;
 }
+#endif
 
 size_t lfsr_t::render(size_t length, sound_t &out) {
     const float volume = volume_;
@@ -205,7 +293,7 @@ size_t lfsr_t::render(size_t length, sound_t &out) {
     uint32_t counter = counter_;
     float * dst = out.data().data();
     // while there are samples to render
-    for (size_t i=0; i<count; ++i) {
+    for (size_t i = 0; i<count; ++i) {
         // get current noise state
         float value = (reg&1) ? 1.f : -1.f;
         // apply attenuation
@@ -232,21 +320,20 @@ size_t lfsr_t::render(size_t length, sound_t &out) {
     return count;
 }
 
+#if 0
 void blit_t::render(size_t samples, sound_t &buffer) {
     // todo
 }
 
 // defined in blip_table.cpp
-extern "C" {
-    extern const float g_blip_table[];
-} // extern "C"
+extern const std::array<float, 512> g_blip_table;
 
 size_t blit_t::_render(size_t samples, sound_t &buffer) {
 
-    const uint32_t c_ring_size  = blit_t::c_ring_size;
-    const float    c_leak       = 0.999f;
+    const uint32_t c_ring_size = blit_t::c_ring_size;
+    const float    c_leak = 0.999f;
     const uint32_t c_blip_count = 16;
-    const uint32_t c_blip_size  = 32;
+    const uint32_t c_blip_size = 32;
 
     assert(c_blip_size==c_ring_size);
 
@@ -262,15 +349,15 @@ size_t blit_t::_render(size_t samples, sound_t &buffer) {
         return 0;
     }
 
-    assert(hcycle_[0] > 0.f);
-    assert(hcycle_[1] > 0.f);
+    assert(hcycle_[0]>0.f);
+    assert(hcycle_[1]>0.f);
 
     const int32_t length = int32_t(_min(samples, buffer.data().size()));
     float * dst = buffer.data().data();
     // while there are samples left to render
-    for (int32_t i=length; i>0;) {
+    for (int32_t i = length; i>0;) {
         // do we need to output a blip
-        while (accum < 0.f) {
+        while (accum<0.f) {
             // scale factor for this edge and volume
             const float scale = (edge&1) ? volume : -volume;
             // flip pulse edge
@@ -296,7 +383,7 @@ size_t blit_t::_render(size_t samples, sound_t &buffer) {
         // number of samples before next blip or end
         uint32_t interval = uint32_t(accum+1.f);
         uint32_t count = _min<uint32_t>(i, interval);
-        assert(count > 0);
+        assert(count>0);
         i -= count;
         // advance the period by the amount we will render
         accum -= float(count);
@@ -305,17 +392,19 @@ size_t blit_t::_render(size_t samples, sound_t &buffer) {
             // get this ring buffer slot
             float & slot = ring[(index++)%c_ring_size];
             // integrate using blip ring buffer
-            out  += slot;
-            out  *= c_leak;
+            out += slot;
+            out *= c_leak;
             *dst += out;
             // clear ring buffer slot
-            slot  = 0.f;
+            slot = 0.f;
         }
     }
     // pack blip state back into struct
-    out_   = out;
+    out_ = out;
     accum_ = accum;
     index_ = index;
-    edge_  = edge;
+    edge_ = edge;
     return length;
 }
+#endif
+} // namespace source_chip

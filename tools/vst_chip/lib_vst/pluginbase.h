@@ -60,10 +60,10 @@ public:
     }
 
     virtual void on_reset() {}
-    virtual void event_note_on(uint8_t note, uint8_t velocity) {}
-    virtual void event_note_off(uint8_t note, uint8_t velocity) {}
-    virtual void event_pitch_bend(int32_t pitch) {}
-    virtual void event_control_change(uint8_t control, uint8_t value) {}
+    virtual void event_note_on(uint8_t channel, uint8_t note, uint8_t velocity) {}
+    virtual void event_note_off(uint8_t channel, uint8_t note, uint8_t velocity) {}
+    virtual void event_pitch_bend(uint8_t channel, int32_t pitch) {}
+    virtual void event_control_change(uint8_t channel, uint8_t control, uint8_t value) {}
 
     virtual VstIntPtr dispatcher(VstInt32 opcode,
                                  VstInt32 index,
@@ -143,21 +143,18 @@ public:
 
         switch (message) {
         case(c_note_on) :
-            event_note_on(data[1], data[2]);
+            event_note_on(channel, data[1] /*note*/, data[2] /*vel*/);
             break;
-
         case(c_note_off) :
-            event_note_off(data[1], data[2]);
+            event_note_off(channel, data[1] /*note*/, data[2] /*vel*/);
             break;
-
         case(c_pitch_bend) : {
-            int32_t pitch = int32_t((data[2]<<7)|data[1])-0x2000;
-            event_pitch_bend(pitch);
+            const int32_t pitch = int32_t((data[2]<<7)|data[1])-0x2000;
+            event_pitch_bend(channel, pitch);
             }
             break;
-
         case (c_control_change) :
-            event_control_change(data[1], data[2]);
+            event_control_change(channel, data[1] /*control*/, data[2] /*value*/);
             break;
         }
     }

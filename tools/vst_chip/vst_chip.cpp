@@ -35,7 +35,7 @@ plugin_base_t::config_t g_config = {
 class vst_chip_t: public plugin_base_t {
 public:
 
-    audio_source_chip_t source_chip_;
+    source_chip::audio_source_chip_t source_chip_;
 
     std::array<float, e_param_count__> params_;
     programs_t progs_;
@@ -61,12 +61,41 @@ public:
     virtual void processReplacing(float** inputs, 
                                   float** outputs, 
                                   VstInt32 samples) override {
+        float * left = outputs[0];
+        source_chip_.render(left, samples);
     }
 
-    virtual void event_note_on(uint8_t note, uint8_t velocity) override {
+    virtual void event_note_on(uint8_t channel,
+                               uint8_t note,
+                               uint8_t velocity) override {
+        source_chip::event_t event;
+        event.type_ = event.e_note_on;
+        event.data_[0] = channel;
+        event.data_[1] = note;
+        event.data_[2] = velocity;
+        source_chip_.push(event);
     }
 
-    virtual void event_note_off(uint8_t note, uint8_t velocity) override {
+    virtual void event_note_off(uint8_t channel,
+                                uint8_t note,
+                                uint8_t velocity) override {
+        source_chip::event_t event;
+        event.type_ = event.e_note_off;
+        event.data_[0] = channel;
+        event.data_[1] = note;
+        event.data_[2] = velocity;
+        source_chip_.push(event);
+    }
+
+    virtual void event_control_change(uint8_t channel,
+                                      uint8_t control,
+                                      uint8_t value) override {
+        source_chip::event_t event;
+        event.type_ = event.e_cc;
+        event.data_[0] = channel;
+        event.data_[1] = control;
+        event.data_[2] = value;
+        source_chip_.push(event);
     }
 };
 

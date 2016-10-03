@@ -1,9 +1,14 @@
-#include <stdint.h>
+#include <array>
+#include <cstdint>
+
+namespace source_chip {
+
+// this is being exported
+extern const std::array<float, 512> g_blip_table;
 
 // steps    = 16
 // blipsize = 32e
-extern "C"
-const float g_blip_table[] = {
+const std::array<float, 512> g_blip_table = {
      8.862753399e-03f, -1.472941879e-02f,  2.039214224e-02f, -2.579168603e-02f,
      3.086865880e-02f, -3.556310013e-02f,  3.981333598e-02f, -4.355351999e-02f,
      4.670867324e-02f, -4.918423295e-02f,  5.084267259e-02f, -5.144487694e-02f,
@@ -164,3 +169,4 @@ const float g_blip_table[] = {
     -4.355351999e-02f,  3.981333598e-02f, -3.556310013e-02f,  3.086865880e-02f,
     -2.579168603e-02f,  2.039214224e-02f, -1.472941879e-02f,  8.862753399e-03f,
 }; // g_blip_table
+} // namespace source_chip
