@@ -105,7 +105,7 @@ size_t sound_t::render(float *out, size_t num_samples) {
     float dc = dc_;
     for (int i=0; i<count; ++i) {
         // decimate sample in buffer
-        const float s0 = dec(src[0], src[1]);
+        const float s0 = dec(src[i+0], src[i+1]);
         // remove dc
         const float s1 = s0-dc;
         dc = _lerp(dc, s1, 0.0001f);
@@ -125,7 +125,8 @@ void audio_source_chip_t::_scatter_events() {
     // scatter pending events to channel pigeon holes
     event_t event;
     while (input_.pop(event)) {
-        event_[event.data_[0]].push(event);
+        const uint8_t slot = event.data_[0];
+        event_[slot].push(event);
     }
 }
 
@@ -177,7 +178,9 @@ void audio_source_chip_t::render(float * out,
         size_t rendered = _fill_buffer(count);
         assert(rendered > 0);
         // render out the samples in our buffer
-        remaining -= buffer_.render(out, rendered / 2);
+        size_t written = buffer_.render(out, rendered / 2);
+        remaining -= written;
+        out += written;
     }
 }
 
@@ -253,7 +256,7 @@ void pulse_t::render(
     sound_t & out) 
 {
     // can only render up to buffer size
-    assert(length < out.size());
+    assert(length <= out.size());
     // dispatch any pending events
     while (!queue_.empty()) {
         event_t & e = queue_.front();
