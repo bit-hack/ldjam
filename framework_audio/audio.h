@@ -31,7 +31,7 @@ protected:
     // clip sample to signed 16bit integer range
     static constexpr int16_t clip(int32_t x) {
         return int16_t(x >  0x7fff ?  0x7fff :
-                       (x < -0x7fff ? -0x7fff : x));
+                      (x < -0x7fff ? -0x7fff : x));
     }
 
     void _mixdown(int16_t * out, const uint32_t count);
