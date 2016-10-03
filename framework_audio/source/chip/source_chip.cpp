@@ -265,10 +265,10 @@ void pulse_t::render(
             on_note_on(e);
             break;
         case (event_t::e_note_off):
-            on_note_on(e);
+            on_note_off(e);
             break;
         case (event_t::e_cc):
-            on_note_on(e);
+            on_cc(e);
             break;
         default:
             assert(!"unknown message type");
