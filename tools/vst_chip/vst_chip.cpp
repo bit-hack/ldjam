@@ -56,6 +56,7 @@ public:
                         audioMaster)
     {
         on_reset();
+        source_chip_.init();
     }
 
     virtual void processReplacing(float** inputs, 
