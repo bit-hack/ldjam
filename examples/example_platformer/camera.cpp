@@ -55,8 +55,8 @@ void camera_t::tick() {
     // draw position and target
 #if 0
     service_.draw_.colour_ = 0x509030;
-    service_.draw_.plot<true>(vec2i_t(pos_));
-    service_.draw_.plot<true>(vec2i_t(target_));
+    service_.draw_.circle<true>(vec2i_t(pos_), 2);
+    service_.draw_.circle<true>(vec2i_t(target_), 2);
 #endif
 #if 0
     // draw screen frame
@@ -68,7 +68,6 @@ void camera_t::tick() {
 #endif
     {
         shake_.mag_ *= 0.8f;
-
 
         // update camera shake
         if (shake_.counter_.frame()) {

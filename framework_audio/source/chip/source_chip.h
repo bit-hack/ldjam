@@ -191,6 +191,7 @@ struct event_t {
         e_note_off, // chan note
         e_cc,       // chan cc val
     };
+    uint32_t delta_;
     uint8_t type_;
     uint8_t data_[3];
 };
@@ -221,7 +222,6 @@ struct pulse_t {
     }
 
     void set_freq(float freq, float sample_rate) {
-        freq_ = freq;
         period_ = sample_rate/freq;
         offset_ = period_ * duty_;
     }
@@ -252,7 +252,7 @@ protected:
     event_queue_t & queue_;
     env_ad_t env_;
     lfo_sin_t lfo_;
-    float freq_, duty_, period_, offset_, accum_, volume_, vibrato_;
+    float duty_, period_, offset_, accum_, volume_, vibrato_;
     // stereo
     float lvol_, rvol_;
 };
@@ -288,12 +288,14 @@ protected:
 
 struct lfsr_t {
 
-    lfsr_t(event_queue_t & stream)
+    lfsr_t(event_queue_t & stream, float sample_rate = 44100.f * 2.f)
         : queue_(stream)
         , lfsr_(1)
         , period_(100)
         , counter_(100)
-        , volume_(0.f) {
+        , volume_(0.f)
+        , env_(sample_rate)
+    {
     }
 
     void set_volume(float volume) {
@@ -307,11 +309,19 @@ struct lfsr_t {
     size_t render(size_t samples, sound_t & out);
 
 protected:
+    // event message handlers
+    void on_note_on(const event_t & event);
+    void on_note_off(const event_t & event) {
+        env_.note_off();
+    }
+    void on_cc(const event_t & event) {
+
+    }
+
     event_queue_t & queue_;
     env_ad_t env_;
     uint32_t lfsr_;
-    uint32_t period_;
-    uint32_t counter_;
+    uint32_t period_, counter_;
     float volume_;
 };
 
@@ -413,6 +423,9 @@ struct audio_source_chip_t:
     }
 
 protected:
+    void _scatter_events();
+    size_t _fill_buffer(size_t samples);
+
     // thread safe input queue
     queue_t<event_t> input_;
     // mix buffer

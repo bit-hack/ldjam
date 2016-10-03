@@ -98,54 +98,87 @@ size_t sound_t::render(
     return count;
 }
 
+size_t sound_t::render(float *out, size_t num_samples) {
+    const size_t count = min2(num_samples, data_.size() / 2);
+    const float * src = data_.data();
+    decimate_9_t & dec = decimate_;
+    float dc = dc_;
+    for (int i=0; i<count; ++i) {
+        // decimate sample in buffer
+        const float s0 = dec(src[0], src[1]);
+        // remove dc
+        const float s1 = s0-dc;
+        dc = _lerp(dc, s1, 0.0001f);
+        // write output sample
+        out[i] = s1;
+    }
+    dc_ = dc;
+    return count;
+}
+
 void audio_source_chip_t::init() {
     source_pulse_.push_back(new pulse_t(event_[0], 
                                         44100.f * 2.f));
 }
 
-void audio_source_chip_t::render(const mix_out_t & mix) {
-    // scatter pending events to channel pidgeon holes
-    {
-        event_t event;
-        while (input_.pop(event)) {
-            event_[event.data_[0]].push(event);
-        }
+void audio_source_chip_t::_scatter_events() {
+    // scatter pending events to channel pigeon holes
+    event_t event;
+    while (input_.pop(event)) {
+        event_[event.data_[0]].push(event);
     }
+}
+
+size_t audio_source_chip_t::_fill_buffer(size_t samples) {
+    // find samples remaining
+    size_t count = _min(samples, buffer_.size());
+    // render from all sources
+    for (auto *src:source_pulse_) {
+        src->render(count, buffer_);
+    }
+    // return number of samples written
+    return count;
+}
+
+void audio_source_chip_t::render(const mix_out_t & mix) {
+    _scatter_events();
     // loop until all samples are emitted
     size_t remaining = mix.count_;
     while (remaining) {
         // wipe the buffer
         buffer_.clear();
         // find samples remaining
-        size_t count = _min(remaining*2, buffer_.size());
+        size_t count = _min(remaining * 2, buffer_.size());
 
         // todo: <-------- pop events from event file
 
         // render from all audio sources
-        {
-            for (auto *src:source_pulse_) {
-                src->render(count, buffer_);
-            }
-#if 0
-            for (auto *src:source_blit_) {
-                src->render(count, buffer_);
-            }
-            for (auto *src:source_lfsr_) {
-                src->render(count, buffer_);
-            }
-            for (auto *src:source_nestri_) {
-                src->render(count, buffer_);
-            }
-#endif
-        }
+        size_t rendered = _fill_buffer(count);
+        assert(rendered > 0);
         // render out the samples in our buffer
-        remaining -= buffer_.render(mix.left_, mix.right_, count/2);
+        remaining -= buffer_.render(mix.left_, mix.right_, rendered / 2);
     }
 }
 
 void audio_source_chip_t::render(float * out,
                                  size_t samples) {
+    _scatter_events();
+    // loop until all samples are emitted
+    size_t remaining = samples;
+    while (remaining) {
+        // wipe the buffer
+        buffer_.clear();
+        // find samples remaining
+        size_t count = _min(remaining * 2, buffer_.size());
 
+        // todo: <-------- pop events from event file
+
+        // render from all audio sources
+        size_t rendered = _fill_buffer(count);
+        assert(rendered > 0);
+        // render out the samples in our buffer
+        remaining -= buffer_.render(out, rendered / 2);
+    }
 }
 
 size_t pulse_t::_render(
@@ -219,6 +252,8 @@ void pulse_t::render(
     size_t length,
     sound_t & out) 
 {
+    // can only render up to buffer size
+    assert(length < out.size());
     // dispatch any pending events
     while (!queue_.empty()) {
         event_t & e = queue_.front();
@@ -232,12 +267,14 @@ void pulse_t::render(
         case (event_t::e_cc):
             on_note_on(e);
             break;
+        default:
+            assert(!"unknown message type");
         }
         queue_.pop();
     }
-    // render out the buffer
+    // render out the requested number of samples
     while (length) {
-        
+        length -= _render(length, out);
     }
 }
 
@@ -282,6 +319,12 @@ size_t nestri_t::render(size_t length, sound_t &out) {
 }
 #endif
 
+void lfsr_t::on_note_on(const event_t & event) {
+    const uint8_t note = event.data_[1];
+    set_period(note_to_freq(note));
+    env_.note_on(true);
+}
+
 size_t lfsr_t::render(size_t length, sound_t &out) {
     const float volume = volume_;
     // zero volume skip
@@ -297,7 +340,7 @@ size_t lfsr_t::render(size_t length, sound_t &out) {
         // get current noise state
         float value = (reg&1) ? 1.f : -1.f;
         // apply attenuation
-        dst[i] += value * volume;
+        dst[i] += value * volume * env_.next();
         // if the shift register should be clocked
         if (counter==0) {
             // calculate new bit (taps{6,0})
