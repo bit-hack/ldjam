@@ -103,15 +103,21 @@ protected:
 struct lfo_sin_t {
     float a_;
     float s_[2];
+    const float sample_rate_;
 
-    lfo_sin_t() {
-        init(5.f, 44100.f);
+    lfo_sin_t(const float sample_rate)
+        : sample_rate_(sample_rate)
+    {
+        init(5.f);
     }
 
-    void init(float freq, float sample_rate = 44100.f) {
+    void init(float freq) {
+
+        extern float sinf(float);
+
         const bool stable = true;
-        a_ = (stable) ? (2.f*C_PI*freq/sample_rate) :   // stable at very low freq.
-                        (sinf(C_PI*freq/sample_rate));  // better for higher freq.
+        a_ = (stable) ? (2.f*C_PI*freq/sample_rate_) :   // stable at very low freq.
+                        (sinf(C_PI*freq/sample_rate_));  // better for higher freq.
         s_[0] = 1.f;
         s_[1] = 0.f;
     }
@@ -198,20 +204,70 @@ struct event_t {
 
 typedef std::queue<event_t> event_queue_t;
 
-struct pulse_t {
+template <typename derived_t>
+struct source_t {
+
+/*
+ *   derived_t {
+ *       size_t _render(size_t samples, sound_t &out);
+ *       void on_note_on(const event_t &event);
+ *       void on_note_off(const event_t &event);
+ *       void on_cc(const event_t &event);
+ *   };
+ */
+
+    source_t(event_queue_t &stream, float sample_rate)
+        : queue_(stream)
+        , sample_rate_(sample_rate) {
+    }
+
+    void render(size_t length, sound_t &out) {
+        derived_t & derived = *static_cast<derived_t*>(this);
+        // can only render up to buffer size
+        assert(length <= out.size());
+        // dispatch any pending events
+        while (!queue_.empty()) {
+            event_t & e = queue_.front();
+            switch (e.type_) {
+            case (event_t::e_note_on):
+                derived.on_note_on(e);
+                break;
+            case (event_t::e_note_off):
+                derived.on_note_off(e);
+                break;
+            case (event_t::e_cc):
+                derived.on_cc(e);
+                break;
+            default:
+                assert(!"unknown message type");
+            }
+            queue_.pop();
+        }
+        // render out the requested number of samples
+        size_t done = derived._render(length, out);
+        assert(done==length);
+    }
+
+protected:
+    event_queue_t & queue_;
+    const float sample_rate_;
+};
+
+struct pulse_t : public source_t<pulse_t> {
+    friend struct source_t<pulse_t>;
 
     pulse_t(event_queue_t & stream, float sample_rate = 44100.f * 2.f)
-        : sample_rate_(sample_rate)
-        , queue_(stream)
+        : source_t<pulse_t>(stream, sample_rate)
         , duty_(.5f)
         , volume_(.0f)
         , accum_(.0f)
         , period_(100.f)
         , vibrato_(0.f)
         , env_(sample_rate_)
+        , lfo_(sample_rate_)
     {
-        set_freq(100.f, sample_rate_);
-        lfo_.init(5.f, sample_rate_);
+        set_freq(100.f);
+        lfo_.init(5.f);
         env_.set_attack(1.f);
         env_.set_decay(1.f);
     }
@@ -221,14 +277,10 @@ struct pulse_t {
         offset_ = period_ * duty_;
     }
 
-    void set_freq(float freq, float sample_rate) {
-        period_ = sample_rate/freq;
+    void set_freq(float freq) {
+        period_ = sample_rate_/freq;
         offset_ = period_ * duty_;
     }
-
-    void render(size_t samples, sound_t & out);
-
-    // <--- todo glide (legato)
 
 protected:
     // internal render function
@@ -247,9 +299,6 @@ protected:
     void on_note_off(const event_t & event);
     void on_cc(const event_t & event);
 
-    const float sample_rate_;
-
-    event_queue_t & queue_;
     env_ad_t env_;
     lfo_sin_t lfo_;
     float duty_, period_, offset_, accum_, volume_, vibrato_;
@@ -257,39 +306,39 @@ protected:
     float lvol_, rvol_;
 };
 
-#if 0
-struct nestri_t {
+struct nestr_t : public source_t<nestr_t> {
+    friend struct source_t<nestr_t>;
 
-    nestri_t(event_queue_t & stream)
-        : queue_(stream)
+    nestr_t(event_queue_t & stream, float sample_rate)
+        : source_t<nestr_t>(stream, sample_rate)
         , volume_(0.f)
         , accum_(0.f)
+        , env_(sample_rate)
     {
-        set_freq(100.f, 44100.f);
+        set_freq(100.f);
     }
 
-    void set_volume(float volume) {
-        volume_ = volume;
+    void set_freq(float freq) {
+        delta_ = (32.f/sample_rate_) * freq;
     }
-
-    void set_freq(float freq, float sample_rate) {
-        delta_ = (32.f/sample_rate) * freq;
-    }
-
-    size_t render(size_t samples, sound_t & out);
 
 protected:
-    event_queue_t & queue_;
-    float accum_;
-    float delta_;
-    float volume_;
+    size_t _render(size_t samples, sound_t & out);
+
+    // event message handlers
+    void on_note_on(const event_t & event);
+    void on_note_off(const event_t & event);
+    void on_cc(const event_t & event);
+
+    env_ad_t env_;
+    float accum_, delta_, volume_;
 };
-#endif
 
-struct lfsr_t {
+struct noise_t : public source_t<noise_t> {
+    friend struct source_t<noise_t>;
 
-    lfsr_t(event_queue_t & stream, float sample_rate = 44100.f * 2.f)
-        : queue_(stream)
+    noise_t(event_queue_t & stream, float sample_rate = 44100.f * 2.f)
+        : source_t<noise_t>(stream, sample_rate)
         , lfsr_(1)
         , period_(100)
         , counter_(100)
@@ -306,81 +355,18 @@ struct lfsr_t {
         period_ = period;
     }
 
-    size_t render(size_t samples, sound_t & out);
-
-protected:
-    // event message handlers
-    void on_note_on(const event_t & event);
-    void on_note_off(const event_t & event) {
-        env_.note_off();
-    }
-    void on_cc(const event_t & event) {
-
-    }
-
-    event_queue_t & queue_;
-    env_ad_t env_;
-    uint32_t lfsr_;
-    uint32_t period_, counter_;
-    float volume_;
-};
-
-#if 0
-struct blit_t {
-
-    blit_t(std::queue<event_t> & stream)
-        : queue_(stream)
-        , duty_(.5f)
-        , out_(0.f)
-        , edge_(0)
-        , index_(0)
-        , volume_(0.f)
-        , accum_(0.f)
-        , period_(1.f)
-    {
-        for (uint32_t i = 0; i<ring_.size(); ++i) {
-            ring_[i] = 0.f;
-        }
-        hcycle_[0] = 1.f;
-        hcycle_[1] = 1.f;
-    }
-
-    void set_duty(float duty) {
-        duty_ = duty;
-        hcycle_[0] = period_ * duty_;
-        hcycle_[1] = period_-hcycle_[0];
-    }
-
-    void set_freq(float freq, float sample_rate) {
-        if (freq>0.f) {
-            period_ = sample_rate/freq;
-        }
-        else {
-            period_ = 1.f;
-        }
-        hcycle_[0] = period_ * duty_;
-        hcycle_[1] = period_-hcycle_[0];
-    }
-
-    void set_volume(float volume) {
-        volume_ = volume;
-    }
-
-    void render(size_t samples, sound_t & out);
-
 protected:
     size_t _render(size_t samples, sound_t & out);
-    
-    event_queue_t & queue_;
-    static const size_t c_ring_size = 32;
-    float period_, duty_, accum_;
-    float volume_, out_;
-    int32_t edge_;
-    float hcycle_[2];
-    uint32_t index_;
-    std::array<float, c_ring_size> ring_;
+
+    // event message handlers
+    void on_note_on(const event_t & event);
+    void on_note_off(const event_t & event);
+    void on_cc(const event_t & event);
+
+    env_ad_t env_;
+    uint32_t lfsr_, period_, counter_;
+    float volume_;
 };
-#endif
 
 template <typename type_t>
 struct queue_t {
@@ -407,10 +393,39 @@ protected:
     std::mutex mutex_;
 };
 
+struct config_t {
+
+    enum type_t {
+        e_pulse,
+        e_noise,
+        e_nestr,
+    };
+
+    struct entry_t {
+        type_t type_;
+        uint32_t channel_;
+    };
+
+    void clear() {
+        channels_.clear();
+    }
+
+    void operator += (const entry_t & e) {
+        channels_.push_back(e);
+    }
+
+    const std::vector<entry_t> & channels() const {
+        return channels_;
+    }
+
+protected:
+    std::vector<entry_t> channels_;
+};
+
 struct audio_source_chip_t:
     public audio_source_t {
 
-    void init();
+    void init(const config_t & config);
 
     virtual void render(const mix_out_t &) override;
 
@@ -434,5 +449,7 @@ protected:
     std::array<std::queue<event_t>, 16> event_;
     // individual sound source
     std::vector<pulse_t*> source_pulse_;
+    std::vector<noise_t*> source_noise_;
+    std::vector<nestr_t*> source_nestr_;
 };
 } // namespace source_chip
