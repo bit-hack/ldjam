@@ -95,7 +95,7 @@ public:
         event.type_ = event.e_cc;
         event.data_[0] = channel;
         event.data_[1] = control;
-        event.data_[2] = value;
+        event.data_[2] = value * 2 /* orig. range: 127 */;
         source_chip_.push(event);
     }
 };
