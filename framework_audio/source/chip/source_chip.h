@@ -100,6 +100,8 @@ protected:
     }
 };
 
+/* low frequency sinwave oscillator
+ */
 struct lfo_sin_t {
     float a_;
     float s_[2];
@@ -113,11 +115,9 @@ struct lfo_sin_t {
 
     void init(float freq) {
 
-        extern float sinf(float);
-
         const bool stable = true;
-        a_ = (stable) ? (2.f*C_PI*freq/sample_rate_) :   // stable at very low freq.
-                        (sinf(C_PI*freq/sample_rate_));  // better for higher freq.
+        a_ = 2.f*C_PI*freq/sample_rate_;    // stable at very low freq.
+//      a_ = sinf(C_PI*freq/sample_rate_);  // better for higher freq.
         s_[0] = 1.f;
         s_[1] = 0.f;
     }
@@ -144,6 +144,8 @@ struct lfo_sin_t {
     }
 };
 
+/* mono floating point sound buffer
+ */
 struct sound_t {
     static const size_t _SIZE = 1024;
 
@@ -191,6 +193,12 @@ protected:
     std::array<float, _SIZE> data_;
 };
 
+
+/* midi event
+ *
+ * this is essential a wrapper for a midi event.
+**/
+
 struct event_t {
     enum : uint8_t {
         e_note_on,  // chan note vel
@@ -201,20 +209,28 @@ struct event_t {
     uint8_t type_;
     uint8_t data_[3];
 };
-
 typedef std::queue<event_t> event_queue_t;
 
+
+/* sound source base class helper
+ *
+ * use the CRTP here ot abstract some of the compexity of creating a sound
+ * source and handling the main processing loop.
+**/
 template <typename derived_t>
 struct source_t {
 
-/*
+/* contract:
+ *
  *   derived_t {
  *       size_t _render(size_t samples, sound_t &out);
- *       void on_note_on(const event_t &event);
+ *       void on_note_on(const event_t &event, bool retrigger);
  *       void on_note_off(const event_t &event);
  *       void on_cc(const event_t &event);
  *   };
  */
+
+    // <--- todo handle note stack
 
     source_t(event_queue_t &stream, float sample_rate)
         : queue_(stream)
@@ -230,7 +246,7 @@ struct source_t {
             event_t & e = queue_.front();
             switch (e.type_) {
             case (event_t::e_note_on):
-                derived.on_note_on(e);
+                derived.on_note_on(e, true);
                 break;
             case (event_t::e_note_off):
                 derived.on_note_off(e);
@@ -253,6 +269,8 @@ protected:
     const float sample_rate_;
 };
 
+/* pulse wave sound source
+ */
 struct pulse_t : public source_t<pulse_t> {
     friend struct source_t<pulse_t>;
 
@@ -295,7 +313,7 @@ protected:
     };
 
     // event message handlers
-    void on_note_on(const event_t & event);
+    void on_note_on(const event_t & event, bool retrigger);
     void on_note_off(const event_t & event);
     void on_cc(const event_t & event);
 
@@ -306,6 +324,8 @@ protected:
     float lvol_, rvol_;
 };
 
+/* nintendo entertainment system triangle wave
+ */
 struct nestr_t : public source_t<nestr_t> {
     friend struct source_t<nestr_t>;
 
@@ -315,7 +335,10 @@ struct nestr_t : public source_t<nestr_t> {
         , accum_(0.f)
         , env_(sample_rate)
     {
+        volume_ = 1.f;
         set_freq(100.f);
+        env_.set_attack(1.f);
+        env_.set_decay(1.f);
     }
 
     void set_freq(float freq) {
@@ -325,8 +348,14 @@ struct nestr_t : public source_t<nestr_t> {
 protected:
     size_t _render(size_t samples, sound_t & out);
 
+    // cc values
+    enum : uint8_t {
+        e_attack = 0,
+        e_decay,
+    };
+
     // event message handlers
-    void on_note_on(const event_t & event);
+    void on_note_on(const event_t & event, bool retrigger);
     void on_note_off(const event_t & event);
     void on_cc(const event_t & event);
 
@@ -345,6 +374,9 @@ struct noise_t : public source_t<noise_t> {
         , volume_(0.f)
         , env_(sample_rate)
     {
+        volume_ = 1.f;
+        env_.set_attack(1.f);
+        env_.set_decay(1.f);
     }
 
     void set_volume(float volume) {
@@ -358,8 +390,15 @@ struct noise_t : public source_t<noise_t> {
 protected:
     size_t _render(size_t samples, sound_t & out);
 
+    // cc values
+    enum : uint8_t {
+        e_attack = 0,
+        e_decay,
+        e_period
+    };
+
     // event message handlers
-    void on_note_on(const event_t & event);
+    void on_note_on(const event_t & event, bool retrigger);
     void on_note_off(const event_t & event);
     void on_cc(const event_t & event);
 
