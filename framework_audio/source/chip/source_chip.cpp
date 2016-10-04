@@ -138,9 +138,12 @@ size_t audio_source_chip_t::_fill_buffer(size_t samples) {
     // find samples remaining
     size_t count = min2(samples, buffer_.size());
     // render from all sources
-    for (auto *src:source_pulse_) {
+    for (auto *src:source_pulse_)
         src->render(count, buffer_);
-    }
+    for (auto *src:source_noise_)
+        src->render(count, buffer_);
+    for (auto *src:source_nestr_)
+        src->render(count, buffer_);
     // return number of samples written
     return count;
 }
@@ -188,6 +191,39 @@ void audio_source_chip_t::render(float * out,
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- PULSE
 
+void pulse_t::on_note_on(const event_t & event, bool retrigger) {
+    env_.note_on(retrigger);
+    const uint8_t note = event.data_[1];
+    const uint8_t velo = event.data_[2];
+    set_freq(note_to_freq(note));
+    volume_ = (1.f/256.f) * (float)velo;
+}
+
+void pulse_t::on_note_off(const event_t & event) {
+    env_.note_off();
+}
+
+void pulse_t::on_cc(const event_t & event) {
+    const uint8_t offset = 14;
+    const uint8_t value = event.data_[2];
+    switch (event.data_[1] - offset) {
+    case (e_attack):
+        env_.set_attack(value*4.f);
+        break;
+    case (e_decay):
+        env_.set_decay(value*4.f);
+        break;
+    case (e_duty):
+        set_duty((1.f/256.f) * value);
+        break;
+    case (e_vibrato):
+        vibrato_ = (1.f/256.f) * value;
+        break;
+    default:
+        break;
+    }
+}
+
 size_t pulse_t::_render(
     size_t length,
     sound_t &out)
@@ -227,19 +263,21 @@ size_t pulse_t::_render(
     return count;
 }
 
-void pulse_t::on_note_on(const event_t & event) {
-    env_.note_on(true);
+// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- NESTRI
+
+void nestr_t::on_note_on(const event_t &event, bool retrigger) {
+    env_.note_on(retrigger);
     const uint8_t note = event.data_[1];
     const uint8_t velo = event.data_[2];
     set_freq(note_to_freq(note));
     volume_ = (1.f/256.f) * (float)velo;
 }
 
-void pulse_t::on_note_off(const event_t & event) {
+void nestr_t::on_note_off(const event_t &event) {
     env_.note_off();
 }
 
-void pulse_t::on_cc(const event_t & event) {
+void nestr_t::on_cc(const event_t &event) {
     const uint8_t offset = 14;
     const uint8_t value = event.data_[2];
     switch (event.data_[1] - offset) {
@@ -249,28 +287,9 @@ void pulse_t::on_cc(const event_t & event) {
     case (e_decay):
         env_.set_decay(value*4.f);
         break;
-    case (e_duty):
-        set_duty((1.f/256.f) * value);
-        break;
-    case (e_vibrato):
-        vibrato_ = (1.f/256.f) * value;
-        break;
     default:
         break;
     }
-}
-
-// ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- NESTRI
-
-void nestr_t::on_note_on(const event_t &event) {
-    env_.note_on(true);
-}
-
-void nestr_t::on_note_off(const event_t &event) {
-    env_.note_off();
-}
-
-void nestr_t::on_cc(const event_t &event) {
 }
 
 size_t nestr_t::_render(size_t length, sound_t &out) {
@@ -314,10 +333,11 @@ size_t nestr_t::_render(size_t length, sound_t &out) {
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- NOISE
 
-void noise_t::on_note_on(const event_t & event) {
+void noise_t::on_note_on(const event_t & event, bool retrigger) {
+    env_.note_on(retrigger);
     const uint8_t note = event.data_[1];
-    set_period(note_to_freq(note));
-    env_.note_on(true);
+    const uint8_t velo = event.data_[2];
+    volume_ = (1.f/256.f) * (float)velo;
 }
 
 void noise_t::on_note_off(const event_t &event) {
@@ -325,6 +345,20 @@ void noise_t::on_note_off(const event_t &event) {
 }
 
 void noise_t::on_cc(const event_t &event) {
+    const uint8_t offset = 14;
+    const uint8_t value = event.data_[2];
+    switch (event.data_[1] - offset) {
+    case (e_attack):
+        env_.set_attack(value*4.f);
+        break;
+    case (e_decay):
+        env_.set_decay(value*4.f);
+        break;
+    case (e_period):
+        period_ = clampv<uint32_t>(1, value, 255);
+    default:
+        break;
+    }
 }
 
 size_t noise_t::_render(size_t length, sound_t &out) {

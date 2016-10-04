@@ -56,7 +56,13 @@ public:
                         audioMaster)
     {
         on_reset();
-        source_chip_.init();
+        source_chip::config_t config;
+        config += source_chip::config_t::entry_t
+        {
+            source_chip::config_t::e_noise,
+            0
+        };
+        source_chip_.init(config);
     }
 
     virtual void processReplacing(float** inputs, 

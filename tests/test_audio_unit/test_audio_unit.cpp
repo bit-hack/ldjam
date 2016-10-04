@@ -25,7 +25,7 @@ struct test_source_chip_t : public test_t {
     virtual bool run() override {
         using namespace source_chip;
         config_t config;
-        config += config_t::entry_t{config_t::e_pulse, 0};
+        config += config_t::entry_t{config_t::e_nestr, 0};
         audio_source_chip_t chip;
         chip.init(config);
         chip.push(event_t{0, event_t::e_note_on, {0, 64, 128}});
