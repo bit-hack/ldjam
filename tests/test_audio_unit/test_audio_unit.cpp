@@ -26,7 +26,7 @@ struct test_source_chip_t : public test_t {
         using namespace source_chip;
         audio_source_chip_t chip;
         chip.init();
-        chip.push(event_t{0, event_t::e_note_on, {0, 64, 255}});
+        chip.push(event_t{0, event_t::e_note_on, {0, 64, 128}});
         chip.render(out_.data(), out_.size());
         return pass_;
     }

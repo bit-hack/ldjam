@@ -76,10 +76,10 @@ size_t sound_t::render(
     float * src = &data_[0];
     for (size_t i = 0; i<count; ++i) {
         // decimate
-        const float s0 = dec(src[0], src[1]);
+        const float s0 = dec(src[i*2+0], src[i*2+1]);
         src += 2;
         // remove dc
-        const float s1 = s0-dc;
+        const float s1 = s0 - dc;
         dc = _lerp(dc, s1, 0.0001f);
         // clip
         const float s2 = _clip(s1);
@@ -105,9 +105,9 @@ size_t sound_t::render(float *out, size_t num_samples) {
     float dc = dc_;
     for (int i=0; i<count; ++i) {
         // decimate sample in buffer
-        const float s0 = dec(src[i+0], src[i+1]);
+        const float s0 = dec(src[i*2+0], src[i*2+1]);
         // remove dc
-        const float s1 = s0-dc;
+        const float s1 = s0 - dc;
         dc = _lerp(dc, s1, 0.0001f);
         // write output sample
         out[i] = s1;
@@ -131,6 +131,8 @@ void audio_source_chip_t::_scatter_events() {
 }
 
 size_t audio_source_chip_t::_fill_buffer(size_t samples) {
+    // wipe the buffer before we accumulate into it
+    buffer_.clear();
     // find samples remaining
     size_t count = _min(samples, buffer_.size());
     // render from all sources
@@ -146,8 +148,6 @@ void audio_source_chip_t::render(const mix_out_t & mix) {
     // loop until all samples are emitted
     size_t remaining = mix.count_;
     while (remaining) {
-        // wipe the buffer
-        buffer_.clear();
         // find samples remaining
         size_t count = _min(remaining * 2, buffer_.size());
 
@@ -163,22 +163,22 @@ void audio_source_chip_t::render(const mix_out_t & mix) {
 
 void audio_source_chip_t::render(float * out,
                                  size_t samples) {
+    // dispatch pending events
     _scatter_events();
     // loop until all samples are emitted
     size_t remaining = samples;
     while (remaining) {
-        // wipe the buffer
-        buffer_.clear();
         // find samples remaining
-        size_t count = _min(remaining * 2, buffer_.size());
+        const size_t count = _min(remaining * 2, buffer_.size());
 
         // todo: <-------- pop events from event file
 
         // render from all audio sources
-        size_t rendered = _fill_buffer(count);
-        assert(rendered > 0);
+        const size_t filled = _fill_buffer(count);
+        assert(filled > 0);
         // render out the samples in our buffer
-        size_t written = buffer_.render(out, rendered / 2);
+        size_t written = buffer_.render(out, filled / 2);
+        // advance the stream
         remaining -= written;
         out += written;
     }
@@ -208,7 +208,7 @@ size_t pulse_t::_render(
             accum += period;
         }
         // apply duty offset
-        float a = accum-offset;
+        float a = accum - offset;
         // turn into pulse wave
         float b = (a > 0.f) ? 1.f : -1.f;
         // apply volume attenuation
@@ -234,8 +234,9 @@ void pulse_t::on_note_off(const event_t & event) {
 }
 
 void pulse_t::on_cc(const event_t & event) {
+    const uint8_t offset = 14;
     const uint8_t value = event.data_[2];
-    switch (event.data_[1]) {
+    switch (event.data_[1] - offset) {
     case (e_attack):
         env_.set_attack(value*4.f);
         break;
@@ -247,6 +248,8 @@ void pulse_t::on_cc(const event_t & event) {
         break;
     case (e_vibrato):
         vibrato_ = (1.f/256.f) * value;
+        break;
+    default:
         break;
     }
 }
@@ -276,9 +279,8 @@ void pulse_t::render(
         queue_.pop();
     }
     // render out the requested number of samples
-    while (length) {
-        length -= _render(length, out);
-    }
+    size_t done = _render(length, out);
+    assert(done==length);
 }
 
 #if 0

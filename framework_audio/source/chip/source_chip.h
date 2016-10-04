@@ -105,7 +105,7 @@ struct lfo_sin_t {
     float s_[2];
 
     lfo_sin_t() {
-        init(3.f, 44100.f);
+        init(5.f, 44100.f);
     }
 
     void init(float freq, float sample_rate = 44100.f) {
@@ -211,7 +211,7 @@ struct pulse_t {
         , env_(sample_rate_)
     {
         set_freq(100.f, sample_rate_);
-        lfo_.init(3.f, sample_rate_);
+        lfo_.init(5.f, sample_rate_);
         env_.set_attack(1.f);
         env_.set_decay(1.f);
     }
