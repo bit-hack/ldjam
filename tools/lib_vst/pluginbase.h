@@ -114,6 +114,15 @@ public:
         return vst_config_.midi_outputs_;
     }
 
+    void sendMidiEvent(uint8_t * msg) {
+        if (!getNumMidiInputChannels()) {
+            return;
+        }
+        VstEvents event;
+        assert(!"todo");
+        sendVstEventsToHost(&event);
+    }
+
     virtual VstInt32 canDo(char* text) final override {
         if (!strcmp(text, "receiveVstEvents"))
             return 1;
@@ -131,22 +140,26 @@ public:
             if ((ev->events[i])->type==kVstMidiType) {
                 const VstMidiEvent * event = (VstMidiEvent*)ev->events[i];
                 assert(event);
-                onEvent(event->midiData);
+                onMidiEvent(event->midiData);
             }
         }
         return 1;
     }
 
-    void onEvent(const char * data) {
+    void onMidiEvent(const char * data) {
         const uint8_t  channel = data[0]&0x0f;
         const VstInt32 message = data[0]&0xf0;
 
         switch (message) {
         case(c_note_on) :
-            event_note_on(channel, data[1] /*note*/, data[2] /*vel*/);
+            event_note_on(channel,
+                          data[1] /*note*/,
+                          data[2] /*vel*/);
             break;
         case(c_note_off) :
-            event_note_off(channel, data[1] /*note*/, data[2] /*vel*/);
+            event_note_off(channel,
+                           data[1] /*note*/,
+                           data[2] /*vel*/);
             break;
         case(c_pitch_bend) : {
             const int32_t pitch = int32_t((data[2]<<7)|data[1])-0x2000;
@@ -154,7 +167,9 @@ public:
             }
             break;
         case (c_control_change) :
-            event_control_change(channel, data[1] /*control*/, data[2] /*value*/);
+            event_control_change(channel,
+                                 data[1] /*control*/,
+                                 data[2] /*value*/);
             break;
         }
     }

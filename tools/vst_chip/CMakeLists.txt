@@ -1,5 +1,3 @@
-add_subdirectory(lib_vst)
-
 file(GLOB H_FILES *.h)
 file(GLOB CPP_FILES *.cpp)
 

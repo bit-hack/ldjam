@@ -1,3 +1,5 @@
 if (MSVC)
+  add_subdirectory(lib_vst)
   add_subdirectory(vst_chip)
+  add_subdirectory(vst_channel)
 endif()

@@ -28,7 +28,12 @@ struct test_source_chip_t : public test_t {
         config += config_t::entry_t{config_t::e_nestr, 0};
         audio_source_chip_t chip;
         chip.init(config);
-        chip.push(event_t{0, event_t::e_note_on, {0, 64, 128}});
+
+        chip.push(event_t{0, event_t::e_note_on,  {0, 64, 128}});
+        chip.push(event_t{0, event_t::e_note_on,  {0, 65, 128}});
+        chip.push(event_t{0, event_t::e_note_off, {0, 65, 128}});
+        chip.push(event_t{0, event_t::e_note_off, {0, 64, 128}});
+
         chip.render(out_.data(), out_.size());
         return pass_;
     }
