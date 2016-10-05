@@ -39,7 +39,7 @@ struct small_stack_t {
 
     const type_t & top() const {
         assert(size());
-        bin_[head_-1];
+        return bin_[head_-1];
     }
 
     void clear() {
@@ -69,9 +69,7 @@ struct small_stack_t {
         for (size_t i=0; i<head_; ++i) {
             if (bin_[i] == v)
                 continue;
-            if (j != i) {
-                bin_[j++] = bin_[i];
-            }
+            bin_[j++] = bin_[i];
         }
         head_ = j;
     }
@@ -80,6 +78,7 @@ protected:
     std::array<type_t, SIZE> bin_;
     size_t head_;
 };
+
 
 /* attack decay envelope */
 struct env_ad_t {
@@ -165,6 +164,7 @@ protected:
     const float ms_conv_;
 };
 
+
 /* low frequency sinwave oscillator
  */
 struct lfo_sin_t {
@@ -207,6 +207,7 @@ struct lfo_sin_t {
         s_[1] *= nrm;
     }
 };
+
 
 /* mono floating point sound buffer
  */
@@ -270,10 +271,7 @@ struct event_t {
     };
 
     bool operator == (const event_t & e) const {
-        return type_ == e.type_ &&
-               data_[0] == e.data_[0] &&
-               data_[1] == e.data_[1] &&
-               data_[2] == e.data_[2];
+        return data_[1] == e.data_[1];
     }
 
     uint32_t delta_;
@@ -300,8 +298,6 @@ struct source_t {
      *       void on_cc(const event_t &event);
      *   };
      */
-
-    // <--- todo handle note stack
 
     source_t(event_queue_t &stream, float sample_rate)
         : queue_(stream)
@@ -350,6 +346,7 @@ protected:
     event_queue_t & queue_;
     const float sample_rate_;
 };
+
 
 /* pulse wave sound source
  */
@@ -406,6 +403,7 @@ protected:
     float lvol_, rvol_;
 };
 
+
 /* nintendo entertainment system triangle wave
  */
 struct nestr_t : public source_t<nestr_t> {
@@ -445,6 +443,9 @@ protected:
     float accum_, delta_, volume_;
 };
 
+
+/* retro LFSR noise source
+ */
 struct noise_t : public source_t<noise_t> {
     friend struct source_t<noise_t>;
 
@@ -489,7 +490,8 @@ protected:
     float volume_;
 };
 
-/* thread safe queue
+
+/* simple thread safe queue
  */
 template <typename type_t>
 struct queue_t {
@@ -515,6 +517,7 @@ protected:
     std::queue<event_t> q_;
     std::mutex mutex_;
 };
+
 
 /* sound chip channel config
  */
@@ -547,6 +550,7 @@ protected:
     std::vector<entry_t> channels_;
 };
 
+
 struct audio_source_chip_t:
     public audio_source_t {
 
@@ -573,8 +577,11 @@ protected:
     // event buffer per channel
     std::array<std::queue<event_t>, 16> event_;
     // individual sound source
-    std::vector<pulse_t*> source_pulse_;
-    std::vector<noise_t*> source_noise_;
-    std::vector<nestr_t*> source_nestr_;
+    std::vector<std::unique_ptr<pulse_t>> source_pulse_;
+    std::vector<std::unique_ptr<noise_t>> source_noise_;
+    std::vector<std::unique_ptr<nestr_t>> source_nestr_;
+
+public:
+    ~audio_source_chip_t() = default;
 };
 } // namespace source_chip
