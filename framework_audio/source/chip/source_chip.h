@@ -7,8 +7,81 @@
 #include "decimate.h"
 #include "../../audio.h"
 
+/* todo:
+ *  add lerp glide to sources
+ */
+
 namespace source_chip {
 
+/* simple fixed size stack */
+template <typename type_t, size_t SIZE>
+struct small_stack_t {
+
+    small_stack_t()
+        : head_(0)
+    {}
+
+    bool push(const type_t & in) {
+        if (!full()) {
+            bin_[head_++] = in;
+            return true;
+        }
+        return false;
+    }
+
+    bool pop(type_t & out) {
+        if (!empty()) {
+            out = bin_[--head_];
+            return true;
+        }
+        return false;
+    }
+
+    const type_t & top() const {
+        assert(size());
+        bin_[head_-1];
+    }
+
+    void clear() {
+        head_ = 0;
+    }
+
+    void discard() {
+        if (!empty()) {
+            --head_;
+        }
+    }
+
+    bool empty() const {
+        return head_ <= 0;
+    }
+
+    bool full() const {
+        return head_ >= SIZE-1;
+    }
+
+    size_t size() const {
+        return head_;
+    }
+
+    void remove(const type_t & v) {
+        size_t j = 0;
+        for (size_t i=0; i<head_; ++i) {
+            if (bin_[i] == v)
+                continue;
+            if (j != i) {
+                bin_[j++] = bin_[i];
+            }
+        }
+        head_ = j;
+    }
+
+protected:
+    std::array<type_t, SIZE> bin_;
+    size_t head_;
+};
+
+/* attack decay envelope */
 struct env_ad_t {
     env_ad_t(float sample_rate_ = 44100.f)
         : ms_conv_(sample_rate_/1000.f)
@@ -19,11 +92,11 @@ struct env_ad_t {
     {}
 
     void set_attack(float ms) {
-        attack_ = 1.f/max_(1.f, ms * ms_conv_);
+        attack_ = 1.f/max2(1.f, ms * ms_conv_);
     }
 
     void set_decay(float ms) {
-        decay_ = 1.f/max_(1.f, ms * ms_conv_);
+        decay_ = 1.f/max2(1.f, ms * ms_conv_);
     }
 
     void kill() {
@@ -90,14 +163,6 @@ protected:
     float env_;
     bool one_shot_;
     const float ms_conv_;
-
-    static constexpr float max_(float a, float b) {
-        return (a>b) ? a : b;
-    }
-
-    static constexpr float clamp_(float lo, float in, float hi) {
-        return (in<lo) ? lo : ((in>hi) ? hi : in);
-    }
 };
 
 /* low frequency sinwave oscillator
@@ -114,7 +179,6 @@ struct lfo_sin_t {
     }
 
     void init(float freq) {
-
         const bool stable = true;
         a_ = 2.f*C_PI*freq/sample_rate_;    // stable at very low freq.
 //      a_ = sinf(C_PI*freq/sample_rate_);  // better for higher freq.
@@ -196,15 +260,22 @@ protected:
 
 /* midi event
  *
- * this is essential a wrapper for a midi event.
+ * this is essentially a wrapper for a midi event.
 **/
-
 struct event_t {
     enum : uint8_t {
         e_note_on,  // chan note vel
         e_note_off, // chan note
         e_cc,       // chan cc val
     };
+
+    bool operator == (const event_t & e) const {
+        return type_ == e.type_ &&
+               data_[0] == e.data_[0] &&
+               data_[1] == e.data_[1] &&
+               data_[2] == e.data_[2];
+    }
+
     uint32_t delta_;
     uint8_t type_;
     uint8_t data_[3];
@@ -214,21 +285,21 @@ typedef std::queue<event_t> event_queue_t;
 
 /* sound source base class helper
  *
- * use the CRTP here ot abstract some of the compexity of creating a sound
+ * use the CRTP here ot abstract some of the complexityy of creating a sound
  * source and handling the main processing loop.
 **/
 template <typename derived_t>
 struct source_t {
 
-/* contract:
- *
- *   derived_t {
- *       size_t _render(size_t samples, sound_t &out);
- *       void on_note_on(const event_t &event, bool retrigger);
- *       void on_note_off(const event_t &event);
- *       void on_cc(const event_t &event);
- *   };
- */
+    /* contract:
+     *
+     *   derived_t {
+     *       size_t _render(size_t samples, sound_t &out);
+     *       void on_note_on(const event_t &event, bool retrigger);
+     *       void on_note_off(const event_t &event);
+     *       void on_cc(const event_t &event);
+     *   };
+     */
 
     // <--- todo handle note stack
 
@@ -246,14 +317,24 @@ struct source_t {
             event_t & e = queue_.front();
             switch (e.type_) {
             case (event_t::e_note_on):
-                derived.on_note_on(e, true);
+                derived.on_note_on(e, note_.empty());
+                note_.push(e);
                 break;
+
             case (event_t::e_note_off):
-                derived.on_note_off(e);
+                note_.remove(e);
+                if (note_.empty()) {
+                    derived.on_note_off(event_t{});
+                }
+                else {
+                    derived.on_note_on(note_.top(), false);
+                }
                 break;
+
             case (event_t::e_cc):
                 derived.on_cc(e);
                 break;
+
             default:
                 assert(!"unknown message type");
             }
@@ -265,6 +346,7 @@ struct source_t {
     }
 
 protected:
+    small_stack_t<event_t, 32> note_;
     event_queue_t & queue_;
     const float sample_rate_;
 };
@@ -407,6 +489,8 @@ protected:
     float volume_;
 };
 
+/* thread safe queue
+ */
 template <typename type_t>
 struct queue_t {
 
@@ -432,6 +516,8 @@ protected:
     std::mutex mutex_;
 };
 
+/* sound chip channel config
+ */
 struct config_t {
 
     enum type_t {
