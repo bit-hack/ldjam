@@ -4,8 +4,8 @@
 #include <assert.h>
 #include <math.h>
 
-#include "lib_vst/pluginbase.h"
-#include "lib_vst/utility.h"
+#include "../lib_vst/pluginbase.h"
+#include "../lib_vst/utility.h"
 
 namespace {
 enum {
@@ -34,8 +34,6 @@ plugin_base_t::config_t g_config = {
 class vst_channel_t: public plugin_base_t {
 public:
 
-    source_chip::audio_source_chip_t source_chip_;
-
     std::array<float, e_param_count__> params_;
     programs_t progs_;
 
@@ -46,7 +44,7 @@ public:
         }
     }
 
-    vst_chip_t(audioMasterCallback audioMaster)
+    vst_channel_t(audioMasterCallback audioMaster)
         : plugin_base_t(g_config,
                         plugin_base_t::params_t{e_param_count__, 
                                                 &params_[0],
@@ -57,7 +55,7 @@ public:
         on_reset();
     }
 
-    uint8_t getOuputChannel() const {
+    uint8_t getOutputChannel() const {
         return uint8_t(params_[e_channel] * 16) & 0xf;
     }
 

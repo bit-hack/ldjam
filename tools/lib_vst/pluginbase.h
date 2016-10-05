@@ -50,11 +50,17 @@ public:
         , AudioEffectX(master, progs.count_, params.count_)
     {
         on_reset();
-        setNumInputs(config.audio_inputs_);
-        setNumOutputs(config.audio_outputs_);
+        if (config.audio_inputs_) {
+            setNumInputs(config.audio_inputs_);
+        }
+        if (config.audio_outputs_) {
+            setNumOutputs(config.audio_outputs_);
+        }
         setUniqueID(config.uuid_);
-        canProcessReplacing();
-        if (config.is_synth_) {
+        if (config.audio_inputs_ && config.audio_outputs_) {
+            canProcessReplacing();
+        }
+        if (config.is_synth_ && config.midi_inputs_) {
             isSynth();
         }
     }
@@ -73,10 +79,13 @@ public:
         return AudioEffectX::dispatcher(opcode, index, value, ptr, opt);
     }
 
+    virtual void onParamChange(VstInt32 index) {};
+
     virtual void setParameter(VstInt32 index,
                               float value) final override {
         assert(uint32_t(index)<vst_param_.count_);
         vst_param_.value_[index] = value;
+        onParamChange(index);
     }
 
     virtual float getParameter(VstInt32 index) final override {
@@ -127,7 +136,10 @@ public:
         if (!strcmp(text, "receiveVstEvents"))
             return 1;
         if (!strcmp(text, "receiveVstMidiEvent"))
-            return 1;
+            return getNumMidiInputChannels() ? 1 : -1;
+        if (!strcmp(text, "sendVstMidiEvent")) {
+            return getNumMidiOutputChannels() ? 1 : -1;
+        }
         return -1;
     }
 
@@ -146,20 +158,30 @@ public:
         return 1;
     }
 
+    virtual void AudioEffect::processReplacing(float **, float **, VstInt32) override {
+    }
+
     void onMidiEvent(const char * data) {
         const uint8_t  channel = data[0]&0x0f;
-        const VstInt32 message = data[0]&0xf0;
+        VstInt32 message = data[0]&0xf0;
+
+        // zero velocity is a note off
+        if (message==c_note_on && data[2]==0) {
+            message = c_note_off;
+        }
 
         switch (message) {
         case(c_note_on) :
-            event_note_on(channel,
-                          data[1] /*note*/,
-                          data[2] /*vel*/);
+            event_note_on(
+                channel,
+                data[1] /*note*/,
+                data[2] /*vel*/);
             break;
         case(c_note_off) :
-            event_note_off(channel,
-                           data[1] /*note*/,
-                           data[2] /*vel*/);
+            event_note_off(
+                channel,
+                data[1] /*note*/,
+                data[2] /*vel*/);
             break;
         case(c_pitch_bend) : {
             const int32_t pitch = int32_t((data[2]<<7)|data[1])-0x2000;
@@ -167,9 +189,10 @@ public:
             }
             break;
         case (c_control_change) :
-            event_control_change(channel,
-                                 data[1] /*control*/,
-                                 data[2] /*value*/);
+            event_control_change(
+                channel,
+                data[1] /*control*/,
+                data[2] /*value*/);
             break;
         }
     }

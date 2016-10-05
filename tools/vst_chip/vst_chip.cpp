@@ -4,22 +4,25 @@
 #include <assert.h>
 #include <math.h>
 
-#include "lib_vst/pluginbase.h"
-#include "lib_vst/utility.h"
+#include "../lib_vst/pluginbase.h"
+#include "../lib_vst/utility.h"
 #include "../../framework_audio/source/chip/source_chip.h"
 
 namespace {
 enum {
     e_gain,
+    e_source,
     e_param_count__
 };
 
 const std::array<const char *, e_param_count__> g_param_names = {
     "gain",
+    "source"
 };
 
 const std::array<float, e_param_count__> g_default = {
     0.5f,
+    0.f,
 };
 
 plugin_base_t::config_t g_config = {
@@ -56,14 +59,31 @@ public:
                         audioMaster)
     {
         on_reset();
-        source_chip::config_t config;
-        config += source_chip::config_t::entry_t
-        {
-            source_chip::config_t::e_noise,
-            0
-        };
-        source_chip_.init(config);
+        onParamChange(e_source);
     }
+
+    virtual void onParamChange(VstInt32 index) override {
+        if (index==e_source) {
+            source_chip::config_t config;
+            source_chip::config_t::entry_t entry {
+                source_chip::config_t::e_pulse, 0
+            };
+            const uint32_t source = clampv(0u, uint32_t(params_[e_source]*3), 2u);
+            switch (source) {
+            case (0):
+                entry.type_ = source_chip::config_t::e_pulse;
+                break;
+            case (1):
+                entry.type_ = source_chip::config_t::e_nestr;
+                break;
+            case (2):
+                entry.type_ = source_chip::config_t::e_noise;
+                break;
+            }
+            config += entry;
+            source_chip_.init(config);
+        }
+    };
 
     virtual void processReplacing(float** inputs, 
                                   float** outputs, 

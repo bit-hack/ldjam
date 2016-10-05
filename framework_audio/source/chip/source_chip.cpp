@@ -102,6 +102,10 @@ void audio_source_chip_t::init(const config_t & config) {
 
     const float sample_rate = 44100.f * 2;
 
+    source_pulse_.clear();
+    source_noise_.clear();
+    source_nestr_.clear();
+
     for (const config_t::entry_t & e : config.channels()) {
 
         const uint32_t channel = e.channel_;
@@ -111,13 +115,13 @@ void audio_source_chip_t::init(const config_t & config) {
 
         switch (e.type_) {
         case (config_t::e_pulse):
-            source_pulse_.push_back(new pulse_t(stream, sample_rate));
+            source_pulse_.push_back(std::make_unique<pulse_t>(stream, sample_rate));
             break;
         case (config_t::e_noise):
-            source_noise_.push_back(new noise_t(stream, sample_rate));
+            source_noise_.push_back(std::make_unique<noise_t>(stream, sample_rate));
             break;
         case (config_t::e_nestr):
-            source_nestr_.push_back(new nestr_t(stream, sample_rate));
+            source_nestr_.push_back(std::make_unique<nestr_t>(stream, sample_rate));
             break;
         }
     }
@@ -138,11 +142,11 @@ size_t audio_source_chip_t::_fill_buffer(size_t samples) {
     // find samples remaining
     size_t count = min2(samples, buffer_.size());
     // render from all sources
-    for (auto *src:source_pulse_)
+    for (auto & src:source_pulse_)
         src->render(count, buffer_);
-    for (auto *src:source_noise_)
+    for (auto & src:source_noise_)
         src->render(count, buffer_);
-    for (auto *src:source_nestr_)
+    for (auto & src:source_nestr_)
         src->render(count, buffer_);
     // return number of samples written
     return count;
@@ -312,11 +316,12 @@ size_t nestr_t::_render(size_t length, sound_t &out) {
         if ((accum -= delta)<0.f) {
             accum += float(tri_table.size());
         }
-#if 0
+#define _SMOOTH 0
+#if _SMOOTH
         size_t a = (size_t(accum)+0)&0x1f;
         size_t b = (size_t(accum)+1)&0x1f;
-        float  i = accum-float(int(accum));
-        float  v = _lerp(tri_table[a], tri_table[b], i);
+        float  f = accum-float(int(accum));
+        float  v = lerp<float>(tri_table[a], tri_table[b], f);
 #else
         // index into lookup table
         float  v = tri_table[size_t(accum)&0x1f];
