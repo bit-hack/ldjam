@@ -33,6 +33,16 @@ float _dither(uint64_t & x) {
     float out = (u.f+v.f-3.f);
     return out;
 }
+
+#if !defined(_MSC_VER)
+// note: this implementation does not disable this overload for array types
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args)
+{
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+#endif
+
 } // namespace {}
 
 namespace source_chip {
@@ -99,6 +109,8 @@ size_t sound_t::render(float *out, size_t num_samples) {
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- AUDIO SOURCE CHIP
 
 void audio_source_chip_t::init(const config_t & config) {
+    // for std::make_unique
+    using namespace std;
 
     const float sample_rate = 44100.f * 2;
 
@@ -115,13 +127,13 @@ void audio_source_chip_t::init(const config_t & config) {
 
         switch (e.type_) {
         case (config_t::e_pulse):
-            source_pulse_.push_back(std::make_unique<pulse_t>(stream, sample_rate));
+            source_pulse_.push_back(make_unique<pulse_t>(stream, sample_rate));
             break;
         case (config_t::e_noise):
-            source_noise_.push_back(std::make_unique<noise_t>(stream, sample_rate));
+            source_noise_.push_back(make_unique<noise_t>(stream, sample_rate));
             break;
         case (config_t::e_nestr):
-            source_nestr_.push_back(std::make_unique<nestr_t>(stream, sample_rate));
+            source_nestr_.push_back(make_unique<nestr_t>(stream, sample_rate));
             break;
         }
     }
