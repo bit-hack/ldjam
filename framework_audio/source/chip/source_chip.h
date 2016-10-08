@@ -9,6 +9,11 @@
 
 /* todo:
  *  add lerp glide to sources
+ *  add lfo to nes triangle
+ *  convert all to stereo + pan
+ *  add limiter
+ *  add reverb send
+ *  finish drum source
  */
 
 namespace tengu {
@@ -261,7 +266,7 @@ protected:
 
 /* midi event
  *
- * this is essentially a wrapper for a midi event.
+ * this is basic a wrapper for a midi event.
 **/
 struct event_t {
     enum: uint8_t {
@@ -519,6 +524,28 @@ protected:
     env_ad_t env_;
     uint32_t lfsr_, period_, counter_;
     float volume_;
+};
+
+
+/* drum and sfx channel
+ */
+struct sfx_t : public source_t<sfx_t> {
+    friend struct source_t<sfx_t>;
+
+    sfx_t(event_queue_t & queue, float sample_rate)
+        : source_t<sfx_t>(queue, sample_rate)
+    {}
+
+    struct builder_t {
+        builder_t & op_tri();
+        builder_t & op_pulse();
+        builder_t & op_noise();
+        builder_t & op_freq(float start, float end);
+        builder_t & op_amp(float start, float end);
+        builder_t & op_dity(float start, float end);
+        builder_t & op_vib(float start, float end);
+        builder_t & op_emit(int32_t ms);
+    };
 };
 
 

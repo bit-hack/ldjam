@@ -15,5 +15,6 @@ add_subdirectory(framework_tiles)
 add_subdirectory(framework_spatial)
 
 add_subdirectory(examples)
+add_subdirectory(games)
 add_subdirectory(tests)
 add_subdirectory(tools)

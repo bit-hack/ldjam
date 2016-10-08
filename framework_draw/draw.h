@@ -42,6 +42,7 @@ struct font_t {
     int32_t spacing_;
 };
 
+// <---- ---- ---- ---- todo: add foreground and background colour masking
 struct tilemap_t {
     vec2i_t map_size_;
     vec2i_t cell_size_;
