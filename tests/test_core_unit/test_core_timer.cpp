@@ -88,7 +88,7 @@ struct test_timer_2_t: public test_t {
     }
 };
 
-static std::array<register_t*, 2> reg_test = {
-    register_t::test<test_timer_1_t>(),
-    register_t::test<test_timer_2_t>(),
+static std::array<test_lib::register_t*, 2> reg_test = {
+    test_lib::register_t::test<test_timer_1_t>(),
+    test_lib::register_t::test<test_timer_2_t>()
 };

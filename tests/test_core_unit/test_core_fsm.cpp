@@ -84,6 +84,6 @@ struct test_fsm_1_t: public test_t {
     }
 };
 
-static std::array<register_t*, 1> reg_test = {
-    register_t::test<test_fsm_1_t>(),
+static std::array<test_lib::register_t*, 1> reg_test = {
+    test_lib::register_t::test<test_fsm_1_t>()
 };
