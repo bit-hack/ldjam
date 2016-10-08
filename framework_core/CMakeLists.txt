@@ -5,23 +5,27 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
+    atomic.h
     astar.h
     anim.h
+    buffer.h
     common.h
+    event.h
     file.h
     fsm.h
+    geometry.h
+    mat2.h
     objects.cpp
     objects.h
-    random.h
-    timer.h
-    vec2.h
-    vec3.h
-    rect.h
-    event.h
-    buffer.h
-    geometry.h
     particle.h
-    mat2.h)
+    random.h
+    rect.h
+	registry.h
+    timer.h
+    thread.h
+    thread.cpp
+    vec2.h
+    vec3.h)
 
 add_library(framework_core ${SOURCE_FILES})
 

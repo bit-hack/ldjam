@@ -5,16 +5,18 @@
 #include "../framework_core/vec2.h"
 #include "../framework_core/rect.h"
 
+namespace tengu {
+
 /* solid tiles denote which resolution vectors are available
  * non solid tiles denote which movement vectors are valid
  */
 
 enum {
-    e_tile_solid         = 1,
-    e_tile_push_up       = 2,
-    e_tile_push_down     = 4,
-    e_tile_push_left     = 8,
-    e_tile_push_right    = 16
+    e_tile_solid = 1,
+    e_tile_push_up = 2,
+    e_tile_push_down = 4,
+    e_tile_push_left = 8,
+    e_tile_push_right = 16
 };
 
 struct collision_map_t {
@@ -22,7 +24,7 @@ struct collision_map_t {
     collision_map_t(const vec2i_t & size, const vec2i_t & cell_size)
         : size_(size)
         , cell_size_(cell_size)
-        , map_(new uint8_t[ size.x * size.y ])
+        , map_(new uint8_t[size.x * size.y])
     {
     }
 
@@ -47,9 +49,9 @@ struct collision_map_t {
 
     // cast a ray directional ray and return intersection point
     bool raycast(
-            const vec2f_t & p0,
-            const vec2f_t & p1,
-            vec2f_t & hit);
+        const vec2f_t & p0,
+        const vec2f_t & p1,
+        vec2f_t & hit);
 
     // check for line of sight between two points
     bool line_of_sight(const vec2f_t &a, const vec2f_t &b);
@@ -59,8 +61,8 @@ struct collision_map_t {
 
     bool is_solid(const vec2i_t & p) const {
         assert(map_.get());
-        if (p.x >= 0 && p.x < size_.x && p.y >= 0 && p.y < size_.y) {
-            return (get(p) & e_tile_solid) != 0;
+        if (p.x>=0&&p.x<size_.x && p.y>=0&&p.y<size_.y) {
+            return (get(p) & e_tile_solid)!=0;
         }
         else {
             // off the map is unconditional solid
@@ -78,24 +80,24 @@ struct collision_map_t {
     }
 
     uint8_t & get(const vec2i_t & p) {
-        assert(p.x >= 0 && p.x < size_.x);
-        assert(p.y >= 0 && p.y < size_.y);
+        assert(p.x>=0&&p.x<size_.x);
+        assert(p.y>=0&&p.y<size_.y);
         assert(map_.get());
-        return map_.get()[p.x + p.y * size_.x];
+        return map_.get()[p.x+p.y * size_.x];
     }
 
     const uint8_t & get(const vec2i_t & p) const {
-        assert(p.x >= 0 && p.x < size_.x);
-        assert(p.y >= 0 && p.y < size_.y);
+        assert(p.x>=0&&p.x<size_.x);
+        assert(p.y>=0&&p.y<size_.y);
         assert(map_.get());
-        return map_.get()[p.x + p.y * size_.x];
+        return map_.get()[p.x+p.y * size_.x];
     }
 
     void clear(const uint8_t value) {
         assert(map_.get());
         const uint32_t count = size_.x * size_.y;
         uint8_t * tile = map_.get();
-        for (uint32_t i=0; i<count; ++i) {
+        for (uint32_t i = 0; i<count; ++i) {
             *(tile++) = value;
         }
     }
@@ -110,3 +112,4 @@ protected:
     const vec2i_t cell_size_;
     std::unique_ptr<uint8_t[]> map_;
 };
+} // namespace tengu

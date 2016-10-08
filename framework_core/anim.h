@@ -9,6 +9,7 @@
 #include "random.h"
 #include "rect.h"
 
+namespace tengu {
 namespace anim {
 struct sequence_t {
 
@@ -24,61 +25,51 @@ struct sequence_t {
     {
     }
 
-    sequence_t& op_interval(int32_t speed)
-    {
-        opcodes_.push_back(opcode_t{ e_op_interval, speed, 0 });
+    sequence_t& op_interval(int32_t speed) {
+        opcodes_.push_back(opcode_t{e_op_interval, speed, 0});
         return *this;
     }
 
-    sequence_t& op_frame(int32_t frame)
-    {
-        opcodes_.push_back(opcode_t{ e_op_frame, frame, 0 });
+    sequence_t& op_frame(int32_t frame) {
+        opcodes_.push_back(opcode_t{e_op_frame, frame, 0});
         return *this;
     }
 
-    sequence_t& op_delay(int32_t ms)
-    {
-        opcodes_.push_back(opcode_t{ e_op_delay, ms, 0 });
+    sequence_t& op_delay(int32_t ms) {
+        opcodes_.push_back(opcode_t{e_op_delay, ms, 0});
         return *this;
     }
 
-    sequence_t& op_event(int32_t id)
-    {
-        opcodes_.push_back(opcode_t{ e_op_event, id, 0 });
+    sequence_t& op_event(int32_t id) {
+        opcodes_.push_back(opcode_t{e_op_event, id, 0});
         return *this;
     }
 
-    sequence_t& op_jmp(int32_t opcode)
-    {
-        opcodes_.push_back(opcode_t{ e_op_jmp, opcode, 0 });
+    sequence_t& op_jmp(int32_t opcode) {
+        opcodes_.push_back(opcode_t{e_op_jmp, opcode, 0});
         return *this;
     }
 
-    sequence_t& op_rand_frame(int32_t min, int32_t max)
-    {
-        opcodes_.push_back(opcode_t{ e_op_rand_frame, min, max });
+    sequence_t& op_rand_frame(int32_t min, int32_t max) {
+        opcodes_.push_back(opcode_t{e_op_rand_frame, min, max});
         return *this;
     }
 
-    sequence_t& op_hotspot(int32_t x, int32_t y)
-    {
-        opcodes_.push_back(opcode_t{ e_op_hotspot, x, y });
+    sequence_t& op_hotspot(int32_t x, int32_t y) {
+        opcodes_.push_back(opcode_t{e_op_hotspot, x, y});
         return *this;
     }
 
-    sequence_t& op_offset(int32_t x, int32_t y)
-    {
-        opcodes_.push_back(opcode_t{ e_op_offset, x, y });
+    sequence_t& op_offset(int32_t x, int32_t y) {
+        opcodes_.push_back(opcode_t{e_op_offset, x, y});
         return *this;
     }
 
-    void clear()
-    {
+    void clear() {
         opcodes_.clear();
     }
 
-    int32_t size() const
-    {
+    int32_t size() const {
         return int32_t(opcodes_.size());
     }
 
@@ -99,9 +90,8 @@ struct sequence_t {
         int32_t y_;
     };
 
-    const opcode_t& get_opcode(size_t index) const
-    {
-        assert(index < opcodes_.size());
+    const opcode_t& get_opcode(size_t index) const {
+        assert(index<opcodes_.size());
         return opcodes_.at(index);
     }
 
@@ -120,18 +110,17 @@ struct sheet_t {
     {
     }
 
-    void add_frame(const recti_t& frame)
-    {
+    void add_frame(const recti_t& frame) {
         frame_.push_back(frame);
     }
 
     void add_grid(const int32_t cell_width,
                   const int32_t cell_height) {
 
-        for (int32_t y = 0; y < height_; y += cell_height) {
-            for (int32_t x = 0; x < width_; x += cell_width) {
+        for (int32_t y = 0; y<height_; y += cell_height) {
+            for (int32_t x = 0; x<width_; x += cell_width) {
                 frame_.push_back(
-                    recti_t( x, y, cell_width, cell_height, recti_t::e_relative));
+                    recti_t(x, y, cell_width, cell_height, recti_t::e_relative));
             }
         }
     }
@@ -141,7 +130,7 @@ struct sheet_t {
     }
 
     const recti_t& get_frame(size_t index) const {
-        assert((index < frame_.size()) && "no frame at this index");
+        assert((index<frame_.size())&&"no frame at this index");
         return frame_.at(index);
     }
 
@@ -151,9 +140,9 @@ protected:
     std::vector<recti_t> frame_;
 };
 
-struct anim_controller_t {
+struct controller_t {
 
-    anim_controller_t()
+    controller_t()
         : sheet_(nullptr)
         , prng_(0xcafebabe)
     {
@@ -187,12 +176,12 @@ struct anim_controller_t {
             delta = 0;
 
             // if we are to soon for our next frame
-            if (state.delay_ >= 0) {
+            if (state.delay_>=0) {
                 break;
             }
 
             // if we have reached the end of a sequence
-            if (state.pc_ >= seq.size()) {
+            if (state.pc_>=seq.size()) {
                 switch (seq.end_type_) {
                 case (sequence_t::e_end_hold):
                     return true;
@@ -223,7 +212,7 @@ struct anim_controller_t {
                 event_.push(op.x_);
                 break;
             case (sequence_t::e_op_jmp):
-                assert(op.x_ >= 0 && op.x_ < seq.size());
+                assert(op.x_>=0&&op.x_<seq.size());
                 state.pc_ = op.x_;
                 break;
             case (sequence_t::e_op_rand_frame):
@@ -232,7 +221,7 @@ struct anim_controller_t {
                 state.rect_ = sheet_->get_frame(frame);
                 state.delay_ += state.interval_;
             }
-                break;
+            break;
             case (sequence_t::e_op_hotspot):
                 state.hotspot_x_ = op.x_;
                 state.hotspot_y_ = op.y_;
@@ -246,7 +235,7 @@ struct anim_controller_t {
             }
 
             // if the pc has not changed do normal increment
-            if (old_pc == state.pc_) {
+            if (old_pc==state.pc_) {
                 ++state.pc_;
             }
         }
@@ -255,7 +244,7 @@ struct anim_controller_t {
     }
 
     bool retrigger() {
-        if (state_.size() == 0) {
+        if (state_.size()==0) {
             return false;
         }
         state_t& state = state_.back();
@@ -272,7 +261,7 @@ struct anim_controller_t {
     }
 
     bool get_frame(recti_t& out) const {
-        if (state_.size() == 0) {
+        if (state_.size()==0) {
             return false;
         }
         const state_t& state = state_.back();
@@ -313,7 +302,7 @@ struct anim_controller_t {
 
     bool is_playing(const sequence_t* seq) const {
         if (state_.size())
-            return (state_.back().sequence_ == seq);
+            return (state_.back().sequence_==seq);
         else
             return false;
     }
@@ -323,7 +312,7 @@ protected:
 
         state_t(const sequence_t* seq)
             : sequence_(seq)
-            , rect_{ 0, 0, 0, 0 }
+            , rect_{0, 0, 0, 0}
             , interval_(1)
             , pc_(0)
             , delay_(0)
@@ -351,4 +340,5 @@ protected:
     std::queue<uint32_t> event_;
 };
 
-} // namespace draw
+} // namespace anim
+} // namespace tengu

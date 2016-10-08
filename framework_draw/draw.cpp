@@ -5,6 +5,7 @@
 #include "draw.h"
 #include "../framework_core/common.h"
 
+namespace tengu {
 namespace {
 const std::array<uint32_t, 5> _dither = {
      0x44001100u, // dither 1
@@ -18,7 +19,7 @@ template <typename typea_t, typename typeb_t>
 float _orient2d(const vec2_t<typea_t> & a,
                 const vec2_t<typea_t> & b,
                 const vec2_t<typeb_t> & c) {
-    return (b.x-a.x)*(c.y-a.y) - (b.y-a.y)*(c.x-a.x);
+    return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
 }
 
 void _draw_t_clip(const recti_t & viewport,
@@ -26,16 +27,16 @@ void _draw_t_clip(const recti_t & viewport,
                   recti_t &dst) {
     const recti_t & vp = viewport;
     // top left clip amount
-    const int32_t lx = max2(vp.x0-dst.x0, 0);
-    const int32_t ly = max2(vp.y0-dst.y0, 0);
+    const int32_t lx = maxv(vp.x0-dst.x0, 0);
+    const int32_t ly = maxv(vp.y0-dst.y0, 0);
     // adjust source and destination
     src.x0 += lx;
     src.y0 += ly;
     dst.x0 += lx;
     dst.y0 += ly;
     // clip lower right
-    dst.x1 = min2(vp.x1, dst.x1);
-    dst.y1 = min2(vp.y1, dst.y1);
+    dst.x1 = minv(vp.x1, dst.x1);
+    dst.y1 = minv(vp.y1, dst.y1);
 }
 
 // pixel blending function type
@@ -54,47 +55,47 @@ void _draw_t_blit_2(bitmap_t & target,
                     const uint32_t key) {
     // calculate dest rect
     recti_t dst_rect(
-            info.dst_pos_.x,
-            info.dst_pos_.y,
-            info.src_rect_.dx(),
-            info.src_rect_.dy(),
-            recti_t::e_relative);
+        info.dst_pos_.x,
+        info.dst_pos_.y,
+        info.src_rect_.dx(),
+        info.src_rect_.dy(),
+        recti_t::e_relative);
     // quickly classify sprite on viewport
     recti_t::classify_t c = viewport.classify(dst_rect);
-    if (c == recti_t::e_rect_outside) {
+    if (c==recti_t::e_rect_outside) {
         return;
     }
     // clip src rect to the source bitmap
     recti_t src_rect = recti_t::intersect(info.src_rect_, info.bitmap_->rect());
     // clip to the viewport
-    if (c == recti_t::e_rect_overlap) {
+    if (c==recti_t::e_rect_overlap) {
         _draw_t_clip(viewport, src_rect, dst_rect);
     }
     // if we are horozontal flipping
     if (hflip) {
-        const int32_t xshift = src_rect.x0 - info.src_rect_.x0;
+        const int32_t xshift = src_rect.x0-info.src_rect_.x0;
         src_rect.x1 -= xshift;
     }
     // destination buffer setup
     const int32_t dst_pitch = target.width();
     uint32_t * dst =
-            target.data() +
-            dst_rect.x0 +
-            dst_rect.y0 * dst_pitch;
+        target.data()+
+        dst_rect.x0+
+        dst_rect.y0 * dst_pitch;
     // src buffer setup
     const int32_t src_pitch = info.bitmap_->width();
     const uint32_t * src =
-            info.bitmap_->data() +
-            src_rect.x0 +
-            src_rect.y0 * src_pitch;
+        info.bitmap_->data()+
+        src_rect.x0+
+        src_rect.y0 * src_pitch;
     // dither nudge
-    const int32_t xn = dst_rect.x0 & 1;
-    const int32_t yn = dst_rect.y0 & 1;
+    const int32_t xn = dst_rect.x0&1;
+    const int32_t yn = dst_rect.y0&1;
     // main blitter loop
-    for (int32_t y = 0; y <= dst_rect.dy(); y++) {
-        for (int32_t x = 0; x <= dst_rect.dx(); x++) {
+    for (int32_t y = 0; y<=dst_rect.dy(); y++) {
+        for (int32_t x = 0; x<=dst_rect.dx(); x++) {
             // dither order
-            const uint32_t dither = ((x^xn)&0x7) + ((y^yn)<<3);
+            const uint32_t dither = ((x^xn)&0x7)+((y^yn)<<3);
             const uint32_t sc = src[hflip ? src_rect.dx()-x : x];
             // invoke blend function
             dst[x] = mode_t(sc,        /* source */
@@ -110,32 +111,32 @@ void _draw_t_blit_2(bitmap_t & target,
 
 vec2f_t _rotate(const std::array<float, 4> & mat,
                 const vec2f_t & in) {
-    return vec2f_t {
-            in.x * mat[0] + in.y * mat[2],
-            in.x * mat[1] + in.y * mat[3]
+    return vec2f_t{
+            in.x * mat[0]+in.y * mat[2],
+            in.x * mat[1]+in.y * mat[3]
     };
 }
 
 // rotospite blit function
 template <pixel_func_t func>
 void _draw_t_blit_2(bitmap_t & target,
-                   const recti_t & viewport,
-                   const blit_info_ex_t & info,
-                   const uint32_t colour,
-                   const uint32_t key) {
+                    const recti_t & viewport,
+                    const blit_info_ex_t & info,
+                    const uint32_t colour,
+                    const uint32_t key) {
     // alias
     const auto & src = info.src_rect_;
     const auto & dst = info.dst_pos_;
     const auto & mat = info.matrix_;
     // invert 2D matrix
-    const float det = 1.f / (mat[0]*mat[3]-mat[1]*mat[2]);
+    const float det = 1.f/(mat[0]*mat[3]-mat[1]*mat[2]);
     const std::array<float, 4> imat = {
          det * mat[3], -det * mat[1],
         -det * mat[2],  det * mat[0]
     };
     // source pos at mid point
-    const float sx = float(src.x0 + src.x1) * .5f;
-    const float sy = float(src.y0 + src.y1) * .5f;
+    const float sx = float(src.x0+src.x1) * .5f;
+    const float sy = float(src.y0+src.y1) * .5f;
     // sprite size
     const vec2f_t size = vec2f_t{
             float(src.dx()) * .5f,
@@ -143,43 +144,43 @@ void _draw_t_blit_2(bitmap_t & target,
     };
     // find edge points
     const vec2f_t p1 = dst+_rotate(imat, vec2f_t{float(-src.width()), float(-src.height())}) * .5f;
-    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{float( src.width()), float(-src.height())}) * .5f;
-    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{float(-src.width()), float( src.height())}) * .5f;
-    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{float( src.width()), float( src.height())}) * .5f;
+    const vec2f_t p2 = dst+_rotate(imat, vec2f_t{float(src.width()), float(-src.height())}) * .5f;
+    const vec2f_t p3 = dst+_rotate(imat, vec2f_t{float(-src.width()), float(src.height())}) * .5f;
+    const vec2f_t p4 = dst+_rotate(imat, vec2f_t{float(src.width()), float(src.height())}) * .5f;
     // rotated sprites aabb
     const recti_t dst_rect = recti_t::intersect(
         viewport,
-        recti_t{int32_t(min4(p1.x, p2.x, p3.x, p4.x)),
-                int32_t(min4(p1.y, p2.y, p3.y, p4.y)),
-                int32_t(max4(p1.x, p2.x, p3.x, p4.x)+1),
-                int32_t(max4(p1.y, p2.y, p3.y, p4.y)+1)});
+        recti_t{int32_t(minv(p1.x, p2.x, p3.x, p4.x)),
+                int32_t(minv(p1.y, p2.y, p3.y, p4.y)),
+                int32_t(maxv(p1.x, p2.x, p3.x, p4.x)+1),
+                int32_t(maxv(p1.y, p2.y, p3.y, p4.y)+1)});
     // top left source pos
-    const float mx = float(dst_rect.x0) - dst.x;
-    const float my = float(dst_rect.y0) - dst.y;
-    float rx = sx + (mx * mat[0] + my * mat[2]);
-    float ry = sy + (mx * mat[1] + my * mat[3]);
+    const float mx = float(dst_rect.x0)-dst.x;
+    const float my = float(dst_rect.y0)-dst.y;
+    float rx = sx+(mx * mat[0]+my * mat[2]);
+    float ry = sy+(mx * mat[1]+my * mat[3]);
     // src buffer setup
     const int32_t src_pitch = info.bitmap_->width();
     const uint32_t * src_pix = info.bitmap_->data();
     // destination buffer setup
     const int32_t dst_pitch = target.width();
-    uint32_t * dst_pix = target.data() + dst_rect.y0 * dst_pitch;
+    uint32_t * dst_pix = target.data()+dst_rect.y0 * dst_pitch;
     // dither nudge
-    const int32_t xn = dst_rect.x0 & 1;
-    const int32_t yn = dst_rect.y0 & 1;
+    const int32_t xn = dst_rect.x0&1;
+    const int32_t yn = dst_rect.y0&1;
     // y axis iteration
-    for (int32_t y = dst_rect.y0; y <= dst_rect.y1; ++y) {
+    for (int32_t y = dst_rect.y0; y<=dst_rect.y1; ++y) {
         float tx = rx;
         float ty = ry;
         // x axis iteration
-        for (int32_t x = dst_rect.x0; x <= dst_rect.x1; ++x) {
+        for (int32_t x = dst_rect.x0; x<=dst_rect.x1; ++x) {
             // if we are inside the source rect
             if (src.contains(vec2i_t{int32_t(tx), int32_t(ty)})) {
                 // source pixel
-                const uint32_t sc = src_pix[int32_t(tx) +
-                                            int32_t(ty) * src_pitch];
+                const uint32_t sc = src_pix[int32_t(tx)+
+                    int32_t(ty) * src_pitch];
                 // dither order
-                const uint32_t dither = ((x^xn)&0x7) + ((y^yn)<<3);
+                const uint32_t dither = ((x^xn)&0x7)+((y^yn)<<3);
                 // plot pixel
                 dst_pix[x] = func(sc,           /* source */
                                   dst_pix[x],   /* dest */
@@ -214,20 +215,20 @@ constexpr uint32_t _blend_key(const uint32_t src,
                               const uint32_t,
                               const uint32_t key,
                               const uint32_t) {
-    return (src == key) ?
-           dst :
-           src;
+    return (src==key) ?
+        dst :
+        src;
 }
 
 // 50% transparency
 constexpr uint32_t _blend_gliss(const uint32_t src,
-                               const uint32_t dst,
-                               const uint32_t,
-                               const uint32_t key,
-                               const uint32_t) {
-    return (src == key) ?
-           (dst) :
-           ((src>>1)&0x7f7f7f) + ((dst>>1)&0x7f7f7f);
+                                const uint32_t dst,
+                                const uint32_t,
+                                const uint32_t key,
+                                const uint32_t) {
+    return (src==key) ?
+        (dst) :
+        ((src>>1)&0x7f7f7f)+((dst>>1)&0x7f7f7f);
 }
 
 // colour keyed overlay
@@ -236,9 +237,9 @@ constexpr uint32_t _blend_mask(const uint32_t src,
                                const uint32_t colour,
                                const uint32_t key,
                                const uint32_t) {
-    return (src == key) ?
-           (dst) :
-           (colour);
+    return (src==key) ?
+        (dst) :
+        (colour);
 }
 
 // ordered dither
@@ -249,9 +250,9 @@ constexpr uint32_t _blend_dither(const uint32_t src,
                                  const uint32_t key,
                                  const uint32_t order) {
     // ordered dither
-    return (src == key || (_dither[_ORDER]&(1 << order)) == 0) ?
-           (dst) :
-           (src);
+    return (src==key||(_dither[_ORDER]&(1<<order))==0) ?
+        (dst) :
+        (src);
 }
 
 // 1:1 sprite blit (blend dispatch)
@@ -262,11 +263,11 @@ void _draw_t_blit_1(bitmap_t & target,
                     const uint32_t colour,
                     const uint32_t key) {
     // blit function prototype
-    typedef void (*blit_func_t)(bitmap_t & target,
-                                const recti_t & viewport,
-                                const blit_info_t & info,
-                                const uint32_t colour,
-                                const uint32_t key);
+    typedef void(*blit_func_t)(bitmap_t & target,
+                               const recti_t & viewport,
+                               const blit_info_t & info,
+                               const uint32_t colour,
+                               const uint32_t key);
     // blend mode table
     // note: must be kept in order of blit_type_t
     static const std::array<blit_func_t, 9> func = {{
@@ -281,7 +282,7 @@ void _draw_t_blit_1(bitmap_t & target,
         _draw_t_blit_2<hflip, _blend_dither<4>>
     }};
     // dispatch to blit function
-    assert(info.type_ < func.size());
+    assert(info.type_<func.size());
     func[info.type_](target, viewport, info, colour, key);
 };
 } // namespace {}
@@ -291,8 +292,8 @@ void draw_t::clear() {
     const uint32_t pitch = target_->width();
     const uint32_t colour = colour_;
     recti_t viewport = viewport_;
-    uint32_t * pix = target_->data() + viewport.y0 * pitch;
-    for (int y=viewport.y0; y<=viewport.y1; ++y) {
+    uint32_t * pix = target_->data()+viewport.y0 * pitch;
+    for (int y = viewport.y0; y<=viewport.y1; ++y) {
         _span(viewport.x0, viewport.x1, y);
         pix += pitch;
     }
@@ -304,20 +305,20 @@ void draw_t::circle(
     assert(target_);
 
     int32_t xC = center.x, yC = center.y;
-    int32_t p = 1 - radius, x = 0, y = radius;
-    _span(xC - y, xC + y, yC);
-    while (x++ <= y) {
+    int32_t p = 1-radius, x = 0, y = radius;
+    _span(xC-y, xC+y, yC);
+    while (x++<=y) {
         if (p<0) {
-            p += 2 * x + 1;
+            p += 2*x+1;
         }
         else {
-            p += 2 * (x - y) + 1;
+            p += 2*(x-y)+1;
             y--;
         }
-        _span(xC - x, xC + x, yC + y);
-        _span(xC - x, xC + x, yC - y);
-        _span(xC - y, xC + y, yC + x);
-        _span(xC - y, xC + y, yC - x);
+        _span(xC-x, xC+x, yC+y);
+        _span(xC-x, xC+x, yC-y);
+        _span(xC-y, xC+y, yC+x);
+        _span(xC-y, xC+y, yC-x);
     }
 }
 
@@ -326,9 +327,9 @@ void draw_t::rect(const recti_t p) {
     const recti_t rect = recti_t::intersect(viewport_+recti_t{0, 0, 1, 1}, p);
     const uint32_t pitch = target_->width();
     const uint32_t colour = colour_;
-    uint32_t * pix = target_->data() + rect.y0 * pitch;
-    for (int y=rect.y0; y<rect.y1; ++y) {
-        for (int x=rect.x0; x<rect.x1; ++x) {
+    uint32_t * pix = target_->data()+rect.y0 * pitch;
+    for (int y = rect.y0; y<rect.y1; ++y) {
+        for (int x = rect.x0; x<rect.x1; ++x) {
             pix[x] = colour;
         }
         pix += pitch;
@@ -340,35 +341,35 @@ void draw_t::triangle(
     const vec2f_t & v1,
     const vec2f_t & v2) {
     // triangle bounds
-    int32_t minx = int32_t(min3(v0.x, v1.x, v2.x));
-    int32_t maxx = int32_t(max3(v0.x, v1.x, v2.x));
-    int32_t miny = int32_t(min3(v0.y, v1.y, v2.y));
-    int32_t maxy = int32_t(max3(v0.y, v1.y, v2.y));
+    int32_t minx = int32_t(minv(v0.x, v1.x, v2.x));
+    int32_t maxx = int32_t(maxv(v0.x, v1.x, v2.x));
+    int32_t miny = int32_t(minv(v0.y, v1.y, v2.y));
+    int32_t maxy = int32_t(maxv(v0.y, v1.y, v2.y));
     // clip min point to screen
-    minx = max2<int32_t>(minx+0, viewport_.x0);
-    miny = max2<int32_t>(miny+0, viewport_.y0);
-    maxx = min2<int32_t>(maxx+1, viewport_.x1);
-    maxy = min2<int32_t>(maxy+1, viewport_.y1);
+    minx = maxv<int32_t>(minx+0, viewport_.x0);
+    miny = maxv<int32_t>(miny+0, viewport_.y0);
+    maxx = minv<int32_t>(maxx+1, viewport_.x1);
+    maxy = minv<int32_t>(maxy+1, viewport_.y1);
     // the signed triangle area
-    const float area = 1.f / ((v1.x - v0.x)*(v2.y - v0.y)-
-                              (v2.x - v0.x)*(v1.y - v0.y));
+    const float area = 1.f/((v1.x-v0.x)*(v2.y-v0.y)-
+        (v2.x-v0.x)*(v1.y-v0.y));
     // reject back faces
-    if (area <= 0.f)
+    if (area<=0.f)
         return;
     // barycentric x step
     const vec3f_t sx = {
-        (v0.y - v1.y) * area, // A01
-        (v1.y - v2.y) * area, // A12
-        (v2.y - v0.y) * area  // A20
+        (v0.y-v1.y) * area, // A01
+        (v1.y-v2.y) * area, // A12
+        (v2.y-v0.y) * area  // A20
     };
     // barycentric y step
     const vec3f_t sy = {
-        (v1.x - v0.x) * area, // B01
-        (v2.x - v1.x) * area, // B12
-        (v0.x - v2.x) * area  // B20
+        (v1.x-v0.x) * area, // B01
+        (v2.x-v1.x) * area, // B12
+        (v0.x-v2.x) * area  // B20
     };
     // barycentric start point
-    vec2i_t p = { minx, miny };
+    vec2i_t p = {minx, miny};
     // barycentric value at start point
     vec3f_t wy = {
         _orient2d(v0, v1, p) * area, // W2 -> A01, B01
@@ -377,13 +378,13 @@ void draw_t::triangle(
     };
     const uint32_t dst_pitch = target_->width();
     const uint32_t colour = colour_;
-    uint32_t * pix = target_->data() + p.y * dst_pitch;
+    uint32_t * pix = target_->data()+p.y * dst_pitch;
     // rendering loop
-    for (p.y = miny; p.y < maxy; p.y++) {
+    for (p.y = miny; p.y<maxy; p.y++) {
         vec3f_t wx = wy;
-        for (p.x = minx; p.x < maxx; p.x++) {
+        for (p.x = minx; p.x<maxx; p.x++) {
             // If p is on or inside all edges, render pixel.
-            if (wx.x >= 0 && wx.y >= 0 && wx.z >= 0) {
+            if (wx.x>=0&&wx.y>=0&&wx.z>=0) {
                 pix[p.x] = colour;
             }
             // X step
@@ -408,30 +409,30 @@ void draw_t::line(
 
     // <---- ---- ---- ---- ---- ---- ---- ---- todo: clip line to viewport
     bool yLonger = false;
-    int32_t x=p0.x, y=p0.y;
+    int32_t x = p0.x, y = p0.y;
     int32_t incrementVal, endVal;
-    int32_t shortLen = p1.y - p0.y, longLen = p1.x - p0.x;
-    if (abs(shortLen) > abs(longLen)) {
+    int32_t shortLen = p1.y-p0.y, longLen = p1.x-p0.x;
+    if (abs(shortLen)>abs(longLen)) {
         swapv(shortLen, longLen);
         yLonger = true;
     }
     endVal = longLen;
-    if (longLen < 0) {
+    if (longLen<0) {
         incrementVal = -1;
         longLen = -longLen;
     }
     else {
         incrementVal = 1;
     }
-    const int32_t decInc = (longLen == 0) ? 0 : (shortLen << 16) / longLen;
+    const int32_t decInc = (longLen==0) ? 0 : (shortLen<<16)/longLen;
     if (yLonger) {
-        for (int32_t i = 0, j = 0; i != endVal; i += incrementVal, j += decInc) {
-            plot(vec2i_t{x + (j >> 16), y + i});
+        for (int32_t i = 0, j = 0; i!=endVal; i += incrementVal, j += decInc) {
+            plot(vec2i_t{x+(j>>16), y+i});
         }
     }
     else {
-        for (int32_t i = 0, j = 0; i != endVal; i += incrementVal, j += decInc) {
-            plot(vec2i_t{x + i, y + (j >> 16)});
+        for (int32_t i = 0, j = 0; i!=endVal; i += incrementVal, j += decInc) {
+            plot(vec2i_t{x+i, y+(j>>16)});
         }
     }
 }
@@ -440,7 +441,7 @@ void draw_t::plot(const vec2i_t & p) {
     assert(target_);
     if (viewport_.contains(p)) {
         const uint32_t colour = colour_;
-        target_->data()[p.x + p.y * target_->width()] = colour;
+        target_->data()[p.x+p.y * target_->width()] = colour;
     }
 }
 
@@ -477,13 +478,13 @@ void draw_t::copy(
 }
 
 void draw_t::_span(int32_t x0, int32_t x1, int32_t y) {
-    if (y >= viewport_.y0 && y <= viewport_.y1) {
-        x0 = max2(x0, viewport_.x0);
-        x1 = min2(x1, viewport_.x1);
+    if (y>=viewport_.y0 && y<=viewport_.y1) {
+        x0 = maxv(x0, viewport_.x0);
+        x1 = minv(x1, viewport_.x1);
         uint32_t * pix = target_->data();
         pix += y * target_->width();
         const uint32_t colour = colour_;
-        for (int32_t x = x0; x <= x1; ++x) {
+        for (int32_t x = x0; x<=x1; ++x) {
             pix[x] = colour;
         }
     }
@@ -507,11 +508,11 @@ void draw_t::render_1x(void * mem, const uint32_t pitch) {
     const uint32_t * src = target_->data();
     const uint32_t src_pitch = target_->width();
     // height iterator
-    for (int32_t y=0; y<target_->height(); ++y) {
+    for (int32_t y = 0; y<target_->height(); ++y) {
         // scan lines
         uint32_t * x0 = dst;
         // draw spans
-        for (uint32_t i = 0; i < src_pitch; ++i) {
+        for (uint32_t i = 0; i<src_pitch; ++i) {
             x0[i] = src[i];
         }
         // advance scan lines
@@ -528,18 +529,18 @@ void draw_t::render_2x(void * mem, const uint32_t pitch) {
     const uint32_t * src = target_->data();
     const uint32_t src_pitch = target_->width();
     // height iterator
-    for (int32_t y=0; y<target_->height(); ++y) {
+    for (int32_t y = 0; y<target_->height(); ++y) {
         // scan lines
         uint32_t * x0 = dst;
-        uint32_t * x1 = dst + pitch;
+        uint32_t * x1 = dst+pitch;
         // draw spans
-        for (uint32_t i = 0; i < src_pitch; ++i) {
+        for (uint32_t i = 0; i<src_pitch; ++i) {
             const uint32_t rgb = src[i];
-            x0[i * 2 + 0] = rgb; x0[i * 2 + 1] = rgb;
-            x1[i * 2 + 0] = rgb; x1[i * 2 + 1] = rgb;
+            x0[i*2+0] = rgb; x0[i*2+1] = rgb;
+            x1[i*2+0] = rgb; x1[i*2+1] = rgb;
         }
         // advance scan lines
-        dst += pitch * 2;
+        dst += pitch*2;
         src += target_->width();
     }
 }
@@ -552,20 +553,20 @@ void draw_t::render_3x(void * mem, const uint32_t pitch) {
     const uint32_t * src = target_->data();
     const uint32_t src_pitch = target_->width();
     // height iterator
-    for (int32_t y=0; y<target_->height(); ++y) {
+    for (int32_t y = 0; y<target_->height(); ++y) {
         // scan lines
         uint32_t * x0 = dst;
-        uint32_t * x1 = x0 + pitch;
-        uint32_t * x2 = x1 + pitch;
+        uint32_t * x1 = x0+pitch;
+        uint32_t * x2 = x1+pitch;
         // draw spans
-        for (uint32_t i = 0; i < src_pitch; ++i) {
+        for (uint32_t i = 0; i<src_pitch; ++i) {
             const uint32_t rgb = src[i];
-            x0[i * 3 + 0] = rgb; x0[i * 3 + 1] = rgb; x0[i * 3 + 2] = rgb;
-            x1[i * 3 + 0] = rgb; x1[i * 3 + 1] = rgb; x1[i * 3 + 2] = rgb;
-            x2[i * 3 + 0] = rgb; x2[i * 3 + 1] = rgb; x2[i * 3 + 2] = rgb;
+            x0[i*3+0] = rgb; x0[i*3+1] = rgb; x0[i*3+2] = rgb;
+            x1[i*3+0] = rgb; x1[i*3+1] = rgb; x1[i*3+2] = rgb;
+            x2[i*3+0] = rgb; x2[i*3+1] = rgb; x2[i*3+2] = rgb;
         }
         // advance scan lines
-        dst += pitch * 3;
+        dst += pitch*3;
         src += target_->width();
     }
 }
@@ -574,27 +575,27 @@ void draw_t::printf(const font_t & font,
                     const vec2i_t & pos,
                     const char * fmt,
                     ...) {
-    const uint32_t xfit = font.bitmap_->width() / font.cellw_;
+    const uint32_t xfit = font.bitmap_->width()/font.cellw_;
     std::array<char, 1024> temp;
     blit_info_t info;
     info.type_ = e_blit_mask;
     info.bitmap_ = font.bitmap_;
     info.h_flip_ = false;
-    info.dst_pos_ = vec2i_t{ pos.x, pos.y };
+    info.dst_pos_ = vec2i_t{pos.x, pos.y};
     va_list vl;
     va_start(vl, fmt);
-    if (int j=vsnprintf(temp.data(), temp.size(), fmt, vl)) {
-        if (j <= 0) {
+    if (int j = vsnprintf(temp.data(), temp.size(), fmt, vl)) {
+        if (j<=0) {
             return;
         }
-        j = min2<int32_t>(int32_t(temp.size()), j);
-        for (int i=0; i<j; i++) {
+        j = minv<int32_t>(int32_t(temp.size()), j);
+        for (int i = 0; i<j; i++) {
             const uint8_t ch = temp[i];
             info.src_rect_ = recti_t(
                 int32_t((ch % xfit) * font.cellw_),
-                int32_t((ch / xfit) * font.cellh_),
-                (font.cellw_ - 1),
-                (font.cellh_ - 1),
+                int32_t((ch/xfit) * font.cellh_),
+                (font.cellw_-1),
+                (font.cellh_-1),
                 recti_t::e_relative
             );
             blit(info);
@@ -611,7 +612,7 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
     const int32_t cell_h = tiles.cell_size_.y;
     // cells fitting into sprite sheet x axis
     const int32_t cells_w =
-            tiles.bitmap_->width() / tiles.cell_size_.x;
+        tiles.bitmap_->width()/tiles.cell_size_.x;
     // viewport to map space
     int32_t x0 = clampv(0, quantize(viewport_.x0-p.x, cell_w), tiles.map_size_.x-1);
     int32_t y0 = clampv(0, quantize(viewport_.y0-p.y, cell_h), tiles.map_size_.y-1);
@@ -626,22 +627,22 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
         false
     };
     // find first blit point
-    vec2i_t pos{p.x + x0 * cell_w, p.y + y0 * cell_h};
+    vec2i_t pos{p.x+x0 * cell_w, p.y+y0 * cell_h};
     // main blit loop
-    for (int32_t y=y0; y<=y1; ++y) {
+    for (int32_t y = y0; y<=y1; ++y) {
 
         info.dst_pos_ = pos;
 
-        for (int32_t x=x0; x<=x1; ++x) {
+        for (int32_t x = x0; x<=x1; ++x) {
             //
             const uint8_t cell =
-                    tiles.cells_[x + y * tiles.map_size_.x];
+                tiles.cells_[x+y * tiles.map_size_.x];
             // calculate source rectangle
             info.src_rect_ = recti_t(
                 (cell % cells_w) * tiles.cell_size_.x,
-                (cell / cells_w) * tiles.cell_size_.y,
-                cell_w - 1,
-                cell_h - 1,
+                (cell/cells_w) * tiles.cell_size_.y,
+                cell_w-1,
+                cell_h-1,
                 recti_t::e_relative
             );
             // blit this tile
@@ -658,11 +659,11 @@ void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
 void draw_t::blit(const blit_info_ex_t & info) {
     assert(info.bitmap_ && info.bitmap_->valid());
     // blit function prototype
-    typedef void (*blit_func_t)(bitmap_t & target,
-                                const recti_t & viewport,
-                                const blit_info_ex_t & info,
-                                const uint32_t colour,
-                                const uint32_t key);
+    typedef void(*blit_func_t)(bitmap_t & target,
+                               const recti_t & viewport,
+                               const blit_info_ex_t & info,
+                               const uint32_t colour,
+                               const uint32_t key);
     // blend mode table
     // must be kept in order of blit_type_t
     static const std::array<blit_func_t, 9> func = {{
@@ -677,6 +678,7 @@ void draw_t::blit(const blit_info_ex_t & info) {
         _draw_t_blit_2<_blend_dither<4>>
     }};
     // dispatch to blit function
-    assert(info.type_ < func.size());
+    assert(info.type_<func.size());
     func[info.type_](*target_, viewport_, info, colour_, key_);
 }
+} // namespace tengu

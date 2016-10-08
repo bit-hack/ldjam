@@ -8,6 +8,7 @@
 #include "common.h"
 #include "file.h"
 
+namespace tengu {
 struct buffer_t {
 
     buffer_t()
@@ -34,7 +35,7 @@ struct buffer_t {
 
     void resize(size_t size) {
         std::unique_ptr<uint8_t[]> mem(new uint8_t[size]);
-        size_t copy_size = min2(size, size_);
+        size_t copy_size = minv(size, size_);
         memcpy(mem.get(), data_.get(), copy_size);
         size_ = size;
         data_.reset(mem.release());
@@ -54,10 +55,10 @@ struct buffer_t {
         if (!file.size(size)) {
             return false;
         }
-        if (size != size_) {
+        if (size!=size_) {
             resize(size);
         }
-        assert(size == size_);
+        assert(size==size_);
         return file.read(data_.get(), size);
     }
 
@@ -88,25 +89,25 @@ struct buffer_t {
     }
 
     void copy_from(uint8_t * src, size_t dst, size_t size) {
-        assert(dst + size < size_);
+        assert(dst+size<size_);
         memcpy(data_.get()+dst, src, size);
     }
 
     void copy_to(size_t src, uint8_t * dst, size_t size) {
-        assert(src + size < size_);
-        memcpy(dst, data_.get() + src, size);
+        assert(src+size<size_);
+        memcpy(dst, data_.get()+src, size);
     }
 
     template <typename type_t = uint8_t>
     type_t * get(size_t offset = 0) {
-        assert(offset + sizeof(type_t) < size_);
-        return reinterpret_cast<type_t*>(data_.get() + offset);
+        assert(offset+sizeof(type_t)<size_);
+        return reinterpret_cast<type_t*>(data_.get()+offset);
     }
 
     template <typename type_t = uint8_t>
     const type_t * get(size_t offset = 0) const {
-        assert(offset + sizeof(type_t) < size_);
-        return reinterpret_cast<type_t*>(data_.get() + offset);
+        assert(offset+sizeof(type_t)<size_);
+        return reinterpret_cast<type_t*>(data_.get()+offset);
     }
 
     ~buffer_t() = default;
@@ -115,3 +116,4 @@ protected:
     size_t size_;
     std::unique_ptr<uint8_t[]> data_;
 };
+} // namespace tengu

@@ -5,6 +5,8 @@
 #include "../../framework_core/timer.h"
 #include "../../framework_draw/draw.h"
 
+using namespace tengu;
+
 namespace {
 // draw scale
 static const int32_t _SCALE = 3;
@@ -13,6 +15,49 @@ static const int32_t _FPS = 30;
 // effective screen size
 static const int32_t _WIDTH = 160, _HEIGHT = 120;
 }
+
+struct camera_t {
+
+    std::array<float, 6> mat_;
+    vec2f_t scroll_, center_;
+    const uint32_t width_, height_;
+
+    camera_t(uint32_t width, uint32_t height)
+        : width_(width)
+        , height_(height)
+    {
+        init();
+    }
+
+    vec2f_t transform(const vec3f_t & in) const {
+        return vec2f_t {
+            // ---- ---- ---- ---- x
+            in.x * mat_[0] +
+            in.y * mat_[1] +
+            in.z * mat_[2] - scroll_.x + center_.x,
+            // ---- ---- ---- ---- y
+            in.x * mat_[3] +
+            in.y * mat_[4] +
+            in.z * mat_[5] - scroll_.y + center_.y,
+        };
+    }
+
+    void init() {
+        const float RAD = C_2PI / 360.f;
+        const float a = 30.f, b = 30.f;
+        const float sx = 8.f, sy = 8.f, sz = 8.f;
+        mat_[0] = cosf(a*RAD)*sx;
+        mat_[1] =-cosf(b*RAD)*sy;
+        mat_[2] = 0;
+        mat_[3] = sinf(a*RAD)*sx;
+        mat_[4] = sinf(b*RAD)*sy;
+        mat_[5] =-sz;
+        center_.x = float(_WIDTH/2);
+        center_.y = float(_HEIGHT/2);
+        scroll_.x = 0.f;
+        scroll_.y = 0.f;
+    }
+};
 
 namespace {
 bool intersect(float a, float b,
@@ -67,7 +112,7 @@ struct object_simple_t : object_ex_t<e_object_simple, object_simple_t> {
         mx /= _SCALE;
         my /= _SCALE;
         if (b&SDL_BUTTON(SDL_BUTTON_LEFT)) {
-            vec2f_t mp{mx, my};
+            vec2f_t mp{float(mx), float(my)};
             if (select_==nullptr) {
                 select_ = point_.data();
                 for (auto & p : point_) {
@@ -79,7 +124,7 @@ struct object_simple_t : object_ex_t<e_object_simple, object_simple_t> {
             }
             else {
                 if (vec2f_t::distance(mp, *select_) < 32) {
-                    select_->y = clampv<int32_t>(32, mp.y, _HEIGHT-32);
+                    select_->y = float(clampv<int32_t>(32, my, _HEIGHT-32));
                 }
             }
         }
@@ -119,7 +164,7 @@ struct object_simple_t : object_ex_t<e_object_simple, object_simple_t> {
         draw_.colour_ = 0xff0000;
         if (ix.x >= 0.f && ix.x < 1.f)
             draw_.colour_ = 0xffffff;
-        draw_.circle(vec2i_t{lerp(32.f, _WIDTH-32.f, ix.x), ix.y}, 2);
+        draw_.circle(vec2i_t{int32_t(lerp(32.f, _WIDTH-32.f, ix.x)), int32_t(ix.y)}, 2);
     }
 };
 

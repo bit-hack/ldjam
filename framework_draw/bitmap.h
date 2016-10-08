@@ -6,6 +6,7 @@
 #include "../framework_core/buffer.h"
 #include "../framework_core/rect.h"
 
+namespace tengu {
 struct bitmap_t {
 
     static bool create(const uint32_t width,
@@ -38,7 +39,7 @@ struct bitmap_t {
     void colour_key(uint32_t key);
 
     bool valid() const {
-        return pix_.size() && pix_.get() != nullptr;
+        return pix_.size()&&pix_.get()!=nullptr;
     }
 
     recti_t rect() const {
@@ -50,3 +51,4 @@ protected:
     uint32_t width_;
     uint32_t height_;
 };
+} // namespace tengu

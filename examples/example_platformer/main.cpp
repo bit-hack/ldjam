@@ -4,6 +4,8 @@
 #include "particles.h"
 #include "map.h"
 
+using namespace tengu;
+
 struct app_t {
 
     SDL_Surface * screen_;

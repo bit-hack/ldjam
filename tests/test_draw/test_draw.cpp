@@ -6,6 +6,8 @@
 #include "../../framework_core/random.h"
 #include "../../framework_draw/draw.h"
 
+using namespace tengu;
+
 namespace {
 
 uint64_t get_time() {
@@ -160,7 +162,7 @@ void test_rotosprite_2() {
 
     for (int i=0; i<1000; ++i) {
 
-        random_t prng(random_t::hash32(i));
+        random_t prng(hash_t::wang_32(i));
 
         info.dst_pos_ = vec2f_t {float(prng.rand_range(0, 320)),
                                  float(prng.rand_range(0, 240))};
@@ -196,7 +198,7 @@ void test_rotosprite_3() {
 
     for (int i=0; i<1000; ++i) {
 
-        random_t prng(random_t::hash32(i));
+        random_t prng(hash_t::wang_32(i));
 
         info.dst_pos_ = vec2f_t {float(prng.rand_range(0, 320)),
                                  float(prng.rand_range(0, 240))};

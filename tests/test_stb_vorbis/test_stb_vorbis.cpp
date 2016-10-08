@@ -108,6 +108,7 @@ struct vorbis_2_t {
     }
 
     void render(int16_t * stream, int32_t count) {
+        using namespace tengu;
 
         const int _CHANNELS = 2;
 
@@ -134,7 +135,7 @@ struct vorbis_2_t {
                 }
             }
             // find max number of samples we can write
-            int32_t notch = min2(tail_+count, head_);
+            int32_t notch = minv(tail_+count, head_);
             const int32_t c_num = notch-tail_;
             count -= c_num;
             // render out these samples

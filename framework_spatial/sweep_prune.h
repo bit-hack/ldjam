@@ -8,6 +8,7 @@
 #include "../framework_core/objects.h"
 #include "../framework_core/rect.h"
 
+namespace tengu {
 struct sweep_prune_proxy_t {
 
     sweep_prune_proxy_t(object_t * obj, const rectf_t & aabb)
@@ -39,7 +40,7 @@ protected:
 struct sweep_prune_t {
 
     typedef std::pair<const sweep_prune_proxy_t*,
-                      const sweep_prune_proxy_t*> proxy_pair_t;
+        const sweep_prune_proxy_t*> proxy_pair_t;
     typedef std::set<proxy_pair_t> type_pair_set_t;
 
     void insert(sweep_prune_proxy_t & proxy) {
@@ -84,3 +85,4 @@ protected:
     // persistant pair object for better cache and alloc perf.
     proxy_pair_t pairs_;
 };
+} // namespace tengu

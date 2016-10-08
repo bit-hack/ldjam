@@ -11,6 +11,7 @@
  *  add lerp glide to sources
  */
 
+namespace tengu {
 namespace source_chip {
 
 /* simple fixed size stack */
@@ -53,11 +54,11 @@ struct small_stack_t {
     }
 
     bool empty() const {
-        return head_ <= 0;
+        return head_<=0;
     }
 
     bool full() const {
-        return head_ >= SIZE-1;
+        return head_>=SIZE-1;
     }
 
     size_t size() const {
@@ -66,8 +67,8 @@ struct small_stack_t {
 
     void remove(const type_t & v) {
         size_t j = 0;
-        for (size_t i=0; i<head_; ++i) {
-            if (bin_[i] == v)
+        for (size_t i = 0; i<head_; ++i) {
+            if (bin_[i]==v)
                 continue;
             bin_[j++] = bin_[i];
         }
@@ -91,11 +92,11 @@ struct env_ad_t {
     {}
 
     void set_attack(float ms) {
-        attack_ = 1.f/max2(1.f, ms * ms_conv_);
+        attack_ = 1.f/maxv(1.f, ms * ms_conv_);
     }
 
     void set_decay(float ms) {
-        decay_ = 1.f/max2(1.f, ms * ms_conv_);
+        decay_ = 1.f/maxv(1.f, ms * ms_conv_);
     }
 
     void kill() {
@@ -245,11 +246,10 @@ struct sound_t {
     }
 
     size_t render(int32_t * l,
-                  int32_t * r,
-                  size_t num_samples);
+                  const size_t num_samples);
 
     size_t render(float * l,
-                  size_t num_samples);
+                  const size_t num_samples);
 
 protected:
     decimate_9_t decimate_;
@@ -264,14 +264,14 @@ protected:
  * this is essentially a wrapper for a midi event.
 **/
 struct event_t {
-    enum : uint8_t {
+    enum: uint8_t {
         e_note_on,  // chan note vel
         e_note_off, // chan note
         e_cc,       // chan cc val
     };
 
     bool operator == (const event_t & e) const {
-        return data_[1] == e.data_[1];
+        return data_[1]==e.data_[1];
     }
 
     uint32_t delta_;
@@ -301,13 +301,14 @@ struct source_t {
 
     source_t(event_queue_t &stream, float sample_rate)
         : queue_(stream)
-        , sample_rate_(sample_rate) {
+        , sample_rate_(sample_rate)
+    {
     }
 
-    void render(size_t length, sound_t &out) {
+    size_t render(size_t samples, std::array<sound_t, 4> & out) {
         derived_t & derived = *static_cast<derived_t*>(this);
         // can only render up to buffer size
-        assert(length <= out.size());
+        assert(samples<=out[0].size());
         // dispatch any pending events
         while (!queue_.empty()) {
             event_t & e = queue_.front();
@@ -337,8 +338,9 @@ struct source_t {
             queue_.pop();
         }
         // render out the requested number of samples
-        size_t done = derived._render(length, out);
-        assert(done==length);
+        size_t done = derived._render(samples, out);
+        assert(done==samples);
+        return done;
     }
 
 protected:
@@ -347,21 +349,45 @@ protected:
     const float sample_rate_;
 };
 
+/* reverb module (freeverb)
+**/
+struct reverb_t {
+    reverb_t(uint32_t sample_rate);
+    ~reverb_t();
+
+    void process(
+        std::array<sound_t, 4> & buffers,
+        const uint32_t samples);
+
+    void set_width(float);
+    void set_wetdry(float mix);
+    void set_damp(float);
+    void set_room_size(float);
+
+    // call after adjusting parameters
+    void recalc();
+
+protected:
+    struct detail_t;
+    std::unique_ptr<detail_t> d_;
+};
 
 /* pulse wave sound source
  */
-struct pulse_t : public source_t<pulse_t> {
+struct pulse_t: public source_t<pulse_t> {
     friend struct source_t<pulse_t>;
 
     pulse_t(event_queue_t & stream, float sample_rate = 44100.f * 2.f)
         : source_t<pulse_t>(stream, sample_rate)
         , duty_(.5f)
-        , volume_(.0f)
+        , lvol_(.0f)
+        , rvol_(.0f)
         , accum_(.0f)
         , period_(100.f)
         , vibrato_(0.f)
         , env_(sample_rate_)
         , lfo_(sample_rate_)
+        , send_(.5f)
     {
         set_freq(100.f);
         lfo_.init(5.f);
@@ -381,14 +407,15 @@ struct pulse_t : public source_t<pulse_t> {
 
 protected:
     // internal render function
-    size_t _render(size_t samples, sound_t & out);
+    size_t _render(size_t samples, std::array<sound_t, 4> & out);
 
     // cc values
-    enum : uint8_t {
+    enum: uint8_t {
         e_attack = 0,
         e_decay,
         e_duty,
-        e_vibrato
+        e_vibrato,
+        e_send
     };
 
     // event message handlers
@@ -398,15 +425,17 @@ protected:
 
     env_ad_t env_;
     lfo_sin_t lfo_;
-    float duty_, period_, offset_, accum_, volume_, vibrato_;
+    float duty_, period_, offset_, accum_, vibrato_;
     // stereo
     float lvol_, rvol_;
+    // send ammount
+    float send_;
 };
 
 
 /* nintendo entertainment system triangle wave
  */
-struct nestr_t : public source_t<nestr_t> {
+struct nestr_t: public source_t<nestr_t> {
     friend struct source_t<nestr_t>;
 
     nestr_t(event_queue_t & stream, float sample_rate)
@@ -426,10 +455,11 @@ struct nestr_t : public source_t<nestr_t> {
     }
 
 protected:
-    size_t _render(size_t samples, sound_t & out);
+    // internal render function
+    size_t _render(size_t samples, std::array<sound_t, 4> & out);
 
     // cc values
-    enum : uint8_t {
+    enum: uint8_t {
         e_attack = 0,
         e_decay,
     };
@@ -446,7 +476,7 @@ protected:
 
 /* retro LFSR noise source
  */
-struct noise_t : public source_t<noise_t> {
+struct noise_t: public source_t<noise_t> {
     friend struct source_t<noise_t>;
 
     noise_t(event_queue_t & stream, float sample_rate = 44100.f * 2.f)
@@ -471,10 +501,11 @@ struct noise_t : public source_t<noise_t> {
     }
 
 protected:
-    size_t _render(size_t samples, sound_t & out);
+    // internal render function
+    size_t _render(size_t samples, std::array<sound_t, 4> & out);
 
     // cc values
-    enum : uint8_t {
+    enum: uint8_t {
         e_attack = 0,
         e_decay,
         e_period
@@ -554,12 +585,21 @@ protected:
 struct audio_source_chip_t:
     public audio_source_t {
 
+    audio_source_chip_t(uint32_t sample_rate);
+    ~audio_source_chip_t();
+
     void init(const config_t & config);
 
     virtual void render(const mix_out_t &) override;
 
     // render as mono float
     void render(float * out, size_t samples);
+
+    // render as sterio float
+    void render(
+        float * lout,
+        float * rout,
+        const size_t samples);
 
     // push an audio event
     void push(const event_t & event) {
@@ -570,10 +610,12 @@ protected:
     void _scatter_events();
     size_t _fill_buffer(size_t samples);
 
+    reverb_t verb_;
+
     // thread safe input queue
     queue_t<event_t> input_;
-    // mix buffer
-    sound_t buffer_;
+    // mix buffers
+    std::array<sound_t, 4> buffers_;
     // event buffer per channel
     std::array<std::queue<event_t>, 16> event_;
     // individual sound source
@@ -581,7 +623,7 @@ protected:
     std::vector<std::unique_ptr<noise_t>> source_noise_;
     std::vector<std::unique_ptr<nestr_t>> source_nestr_;
 
-public:
-    ~audio_source_chip_t() = default;
+    const uint32_t sample_rate_;
 };
 } // namespace source_chip
+} // namespace tengu

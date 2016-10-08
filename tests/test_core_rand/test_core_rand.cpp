@@ -81,6 +81,8 @@ struct histogram_t {
 };
 
 bool test_randfu() {
+    using namespace tengu;
+
     random_t rand(1234);
     std::unique_ptr<histogram_t> hist(new histogram_t);
     for (int i = 0; i<1024 * 100; ++i) {
@@ -91,6 +93,8 @@ bool test_randfu() {
 }
 
 bool test_randfs() {
+    using namespace tengu;
+
     random_t rand(1234);
     std::unique_ptr<histogram_t> hist(new histogram_t);
     for (int i = 0; i<1024 * 100; ++i) {
@@ -101,6 +105,8 @@ bool test_randfs() {
 }
 
 bool test_gaussian() {
+    using namespace tengu;
+
     random_t rand(1234);
     std::unique_ptr<histogram_t> hist(new histogram_t);
     for (int i = 0; i<1024 * 100; ++i) {
@@ -111,6 +117,8 @@ bool test_gaussian() {
 }
 
 bool test_triangle() {
+    using namespace tengu;
+
     random_t rand(1234);
     std::unique_ptr<histogram_t> hist(new histogram_t);
     for (int i = 0; i<1024 * 100; ++i) {
@@ -121,6 +129,8 @@ bool test_triangle() {
 }
 
 bool test_pinch() {
+    using namespace tengu;
+
     random_t rand(1234);
     std::unique_ptr<histogram_t> hist(new histogram_t);
     for (int i = 0; i<1024 * 100; ++i) {

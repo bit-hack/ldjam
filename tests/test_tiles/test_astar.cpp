@@ -10,6 +10,8 @@
 
 #include "test.h"
 
+using namespace tengu;
+
 static const int32_t C_SIZE = 8;
 
 struct map_waypoint_t {
@@ -64,7 +66,7 @@ struct map_t {
 };
 
 struct pathfind_t final:
-    pathfind::astar_t<map_waypoint_t, 1024, 128, 64*64, pathfind_t> {
+    tengu::pathfind::astar_t<map_waypoint_t, 1024, 128, 64*64, pathfind_t> {
 
     pathfind_t(map_t & map) : map_(map) {}
 
@@ -147,7 +149,7 @@ struct test_astar_t : public test_t {
         // set end point
         map_waypoint_t end{mx, my};
         // create waypoint stack to receive output path
-        pathfind::stack_t<map_waypoint_t> path;
+        tengu::pathfind::stack_t<map_waypoint_t> path;
         // 
         bool path_found = false;
         // perform and A* search

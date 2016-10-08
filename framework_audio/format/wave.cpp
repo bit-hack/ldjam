@@ -10,25 +10,26 @@
 #endif
 
 namespace {
-    constexpr uint32_t fourcc(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
-        return (d<<24)|(c<<16)|(b<<8)|a;
-    }
+constexpr uint32_t fourcc(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+    return (d<<24)|(c<<16)|(b<<8)|a;
+}
 
-    template <typename type_t>
-    type_t endian(type_t in) {
-        uint8_t * p = reinterpret_cast<uint8_t*>(&in);
-        const size_t size = sizeof(type_t);
-        for (int i = 0; i<size/2; ++i) {
-            uint8_t & a = p[i];
-            uint8_t & b = p[(size-1)-i];
-            uint8_t temp = a;
-            a = b;
-            b = temp;
-        }
-        return in;
+template <typename type_t>
+type_t endian(type_t in) {
+    uint8_t * p = reinterpret_cast<uint8_t*>(&in);
+    const size_t size = sizeof(type_t);
+    for (int i = 0; i<size/2; ++i) {
+        uint8_t & a = p[i];
+        uint8_t & b = p[(size-1)-i];
+        uint8_t temp = a;
+        a = b;
+        b = temp;
     }
+    return in;
+}
 } // namespace {}
 
+namespace tengu {
 bool wave_t::load_wav(const char * path, wave_t & out) {
 
     file_reader_t file;
@@ -114,3 +115,4 @@ bool wave_t::load_wav(const char * path, wave_t & out) {
 #if defined(_MSC_VER)
 #pragma pack(pop)
 #endif
+} // namespace tengu

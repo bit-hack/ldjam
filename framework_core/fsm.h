@@ -4,6 +4,7 @@
 #include <vector>
 #include <stdint.h>
 
+namespace tengu {
 template <typename type_t>
 struct fsm_t {
 
@@ -26,8 +27,8 @@ struct fsm_t {
         }
 
         fsm_state_t(fsm_func_t tick,
-            fsm_func_t enter = nullptr,
-            fsm_func_t leave = nullptr)
+                    fsm_func_t enter = nullptr,
+                    fsm_func_t leave = nullptr)
             : on_enter_(enter)
             , on_tick_(tick)
             , on_leave_(leave)
@@ -35,9 +36,9 @@ struct fsm_t {
         }
 
         bool operator == (const fsm_state_t & other) const {
-            return on_enter_ == other.on_enter_ &&
-                   on_tick_ == other.on_tick_ &&
-                   on_leave_ == other.on_leave_;
+            return on_enter_==other.on_enter_ &&
+                on_tick_==other.on_tick_ &&
+                on_leave_==other.on_leave_;
         }
 
         fsm_func_t on_enter_;
@@ -95,3 +96,4 @@ protected:
     std::vector<fsm_state_t> stack_;
     type_t * const self_;
 };
+} // namespace tengu

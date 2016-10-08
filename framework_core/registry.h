@@ -1,6 +1,7 @@
 #include <unordered_map>
 #include <cassert>
 
+namespace tengu {
 template <typename key_t>
 struct registry_t {
 
@@ -11,18 +12,18 @@ struct registry_t {
 
     bool contains(key_t key) const {
         auto itt = map_.find(key);
-        return itt != map_.end();
+        return itt!=map_.end();
     }
 
     template <typename type_t>
     type_t * lookup(key_t key) {
         void * tag = get_tag<type_t>();
         auto itt = map_.find(key);
-        if (itt == map_.end() || itt->second.tag_ != tag) {
+        if (itt==map_.end()||itt->second.tag_!=tag) {
             return nullptr;
         }
         else {
-            assert(itt->first == key);
+            assert(itt->first==key);
             return static_cast<type_t*>(itt->second.value_);
         }
     }
@@ -32,11 +33,11 @@ struct registry_t {
         void * tag = get_tag<type_t>();
         assert(tag);
         auto itt = map_.find(key);
-        if (itt == map_.cend() || itt->second.tag_ != tag) {
+        if (itt==map_.cend()||itt->second.tag_!=tag) {
             return nullptr;
         }
         else {
-            assert(itt->first == key);
+            assert(itt->first==key);
             assert(itt->second.value_);
             return static_cast<const type_t*>(itt->second.value_);
         }
@@ -47,11 +48,11 @@ struct registry_t {
         void * tag = get_tag<type_t>();
         assert(tag);
         auto itt = map_.find(key);
-        if (itt == map_.end() || itt->second.tag_ != tag) {
+        if (itt==map_.end()||itt->second.tag_!=tag) {
             // non existant object
         }
         else {
-            assert(itt->first == key);
+            assert(itt->first==key);
             map_.erase(itt);
         }
     }
@@ -65,8 +66,9 @@ protected:
     template <typename type_t>
     void* get_tag() const {
         static type_t dummy;
-        return (void*) &dummy;
+        return (void*)&dummy;
     }
 
     std::unordered_map<key_t, node_t> map_;
 };
+} // namespace tengu

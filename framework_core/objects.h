@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <cstring>
 
+namespace tengu {
 struct ref_t;
 struct object_t;
 struct object_ref_t;
@@ -18,28 +19,22 @@ typedef uint32_t object_type_t;
 typedef void* object_service_t;
 
 struct ref_t {
-    ref_t()
-        : value_(0)
-    {
+    ref_t() : value_(0) {
     }
 
-    int32_t inc()
-    {
+    int32_t inc() {
         return ++value_;
     }
 
-    int32_t dec()
-    {
+    int32_t dec() {
         return --value_;
     }
 
-    bool disposed() const
-    {
-        return value_ <= 0;
+    bool disposed() const {
+        return value_<=0;
     }
 
-    int32_t count() const
-    {
+    int32_t count() const {
         return value_;
     }
 
@@ -48,77 +43,60 @@ protected:
 };
 
 struct object_ref_t {
-    object_ref_t()
-        : obj_(nullptr)
-    {
+    object_ref_t() : obj_(nullptr) {
     }
 
-    object_ref_t(object_t* obj)
-        : obj_(obj)
-    {
+    object_ref_t(object_t* obj) : obj_(obj) {
         inc();
     }
 
-    object_ref_t(const object_ref_t& copy)
-        : obj_(copy.obj_)
-    {
+    object_ref_t(const object_ref_t& copy) : obj_(copy.obj_) {
         inc();
     }
 
-    object_ref_t(object_ref_t&& copy)
-        : obj_(copy.obj_)
-    {
+    object_ref_t(object_ref_t&& copy) : obj_(copy.obj_) {
         copy.obj_ = nullptr;
     }
 
-    void operator=(const object_ref_t& rhs)
-    {
+    void operator=(const object_ref_t& rhs) {
         dec();
         obj_ = rhs.obj_;
         inc();
     }
 
-    ~object_ref_t()
-    {
+    ~object_ref_t() {
         dec();
     }
 
-    bool valid() const
-    {
-        return obj_ != nullptr;
+    bool valid() const {
+        return obj_!=nullptr;
     }
 
-    object_t& get()
-    {
+    object_t& get() {
         assert(obj_);
         return *obj_;
     }
 
-    const object_t& get() const
-    {
+    const object_t& get() const {
         assert(obj_);
         return *obj_;
     }
 
-    object_t* operator->()
-    {
+    object_t* operator->() {
         assert(obj_);
         return obj_;
     }
 
-    const object_t* operator->() const
-    {
+    const object_t* operator->() const {
         assert(obj_);
         return obj_;
     }
 
-    bool operator==(const object_ref_t& ref) const
-    {
-        return obj_ == ref.obj_;
+    bool operator==(const object_ref_t& ref) const {
+        return obj_==ref.obj_;
     }
 
-    void dispose()
-    {
+    void dispose() {
         if (obj_) {
             dec();
             obj_ = nullptr;
@@ -143,78 +121,66 @@ struct object_t {
         ref_.inc();
     }
 
-    virtual ~object_t()
-    {
+    virtual ~object_t() {
     }
 
     template <typename type_t>
-    type_t& cast()
-    {
+    type_t& cast() {
         assert(is_a<type_t>());
         return *static_cast<type_t*>(this);
     }
 
     template <typename type_t>
-    const type_t& cast() const
-    {
+    const type_t& cast() const {
         assert(is_a<type_t>());
         return *static_cast<const type_t*>(this);
     }
 
     template <typename type_t>
-    type_t* try_cast()
-    {
+    type_t* try_cast() {
         return (is_a<type_t>()) ? *static_cast<type_t*>(this) : nullptr;
     }
 
     template <typename type_t>
-    const type_t* try_cast() const
-    {
+    const type_t* try_cast() const {
         return (is_a<type_t>()) ? *static_cast<const type_t*>(this) : nullptr;
     }
 
-    bool is_a(object_type_t type) const
-    {
-        return type_ == type;
+    bool is_a(object_type_t type) const {
+        return type_==type;
     }
 
     template <typename type_t>
-    bool is_a() const
-    {
-        return type_ == type_t::type();
+    bool is_a() const {
+        return type_==type_t::type();
     }
 
-    bool is_a(const object_t& other) const
-    {
-        return type_ == other.type_;
+    bool is_a(const object_t& other) const {
+        return type_==other.type_;
     }
 
     object_ref_t get_ref();
 
     const object_type_t type_;
 
-    uint32_t ref_count() const
-    {
+    uint32_t ref_count() const {
         return ref_.count();
     }
 
-    bool is_disposed() const
-    {
+    bool is_disposed() const {
         return ref_.disposed();
     }
 
     virtual void tick() {};
 
-    void destroy()
-    {
+    void destroy() {
         if (alive_) {
             ref_.dec();
             alive_ = false;
         }
     }
 
-    bool is_alive() const
-    {
+    bool is_alive() const {
         if (is_disposed()) {
             return false;
         }
@@ -224,7 +190,7 @@ struct object_t {
     // std compare function for ordering
     static bool compare(const object_t * a, const object_t * b) {
         assert(a && b);
-        return a->order_ < b->order_;
+        return a->order_<b->order_;
     }
 
 protected:
@@ -238,7 +204,7 @@ protected:
 struct object_factory_t {
     struct creator_t {
         virtual object_t* create(object_type_t,
-            object_service_t) = 0;
+                                 object_service_t) = 0;
         virtual void destroy(object_t*) = 0;
     };
 
@@ -248,26 +214,23 @@ struct object_factory_t {
     }
 
     template <typename type_t>
-    void add_creator()
-    {
+    void add_creator() {
         add_creator(type_t::type(), type_t::creator());
     }
 
     // creator pointer will transfer ownership
     void add_creator(object_type_t type,
-        creator_t* creator);
+                     creator_t* creator);
 
     template <typename type_t>
-    object_ref_t create()
-    {
+    object_ref_t create() {
         return create(type_t::type());
     }
 
     object_ref_t create(object_type_t type);
 
     template <typename type_t, typename... args_t>
-    object_ref_t create(args_t&&... args)
-    {
+    object_ref_t create(args_t&&... args) {
         object_ref_t ref = create<type_t>();
         ref->cast<type_t>().init(std::forward<args_t>(args)...);
         return ref;
@@ -298,32 +261,26 @@ protected:
 };
 
 template <typename type_t>
-struct object_create_t : public object_factory_t::creator_t {
-    virtual object_t* create(object_type_t, object_service_t service)
-    {
+struct object_create_t: public object_factory_t::creator_t {
+    virtual object_t* create(object_type_t, object_service_t service) {
         return new type_t(service);
     }
 
-    virtual void destroy(object_t* obj)
-    {
+    virtual void destroy(object_t* obj) {
         delete static_cast<type_t*>(obj);
     }
 };
 
 template <object_type_t id_t, typename type_t>
-struct object_ex_t : public object_t {
-    object_ex_t()
-        : object_t(type())
-    {
+struct object_ex_t: public object_t {
+    object_ex_t(): object_t(type()) {
     }
 
-    static object_type_t type()
-    {
+    static object_type_t type() {
         return id_t;
     }
 
-    static object_factory_t::creator_t* creator()
-    {
+    static object_factory_t::creator_t* creator() {
         return new object_create_t<type_t>();
     }
 };
@@ -339,8 +296,8 @@ struct object_map_t {
         }
 
         bool operator == (const const_str_t & rhs) const {
-            if (hash_ == rhs.hash_) {
-                return strcmp(str_, rhs.str_) == 0;
+            if (hash_==rhs.hash_) {
+                return strcmp(str_, rhs.str_)==0;
             }
             return false;
         }
@@ -357,7 +314,7 @@ struct object_map_t {
 
         static uint32_t hash(const char * str) {
             uint32_t hash = 5381, c;
-            for (;c = *str++; hash = hash * 33 + c);
+            for (; c = *str++; hash = hash*33+c);
             return hash;
         }
 
@@ -371,7 +328,7 @@ struct object_map_t {
 
     bool contains(const const_str_t & key) const {
         auto itt = map_.find(key);
-        return itt != map_.end();
+        return itt!=map_.end();
     }
 
     void insert(const const_str_t & key, object_ref_t obj) {
@@ -380,21 +337,22 @@ struct object_map_t {
 
     void remove(const const_str_t & key) {
         auto itt = map_.find(key);
-        if (itt != map_.end()) {
+        if (itt!=map_.end()) {
             map_.erase(itt);
         }
     }
 
     object_ref_t operator [] (const const_str_t & key) {
         typename map_t::iterator itt = map_.find(key);
-        assert(itt != map_.end());
+        assert(itt!=map_.end());
         return itt->second;
     }
 
 protected:
     typedef std::unordered_map<
-            const_str_t,
-            object_ref_t,
-            const_str_t::hash_t> map_t;
+        const_str_t,
+        object_ref_t,
+        const_str_t::hash_t> map_t;
     map_t map_;
 };
+} // namespace tengu

@@ -8,6 +8,8 @@
 #include "../../framework_core/random.h"
 #include "../../framework_spatial/space_hash.h"
 
+using namespace tengu;
+
 struct app_t {
     SDL_Surface* window_;
     int32_t w_, h_;
@@ -64,7 +66,7 @@ struct test_shash_t : test_t {
     random_t rand_;
     spatial_t hash_;
     body_pair_set_t set_;
-    draw_t * draw_;
+    tengu::draw_t * draw_;
 
     test_shash_t()
         : rand_(SDL_GetTicks())

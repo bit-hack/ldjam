@@ -1,5 +1,7 @@
 #include "common.h"
 
+using namespace tengu;
+
 struct object_car_t : object_ex_t<e_object_car, object_car_t> {
 
     object_car_t(object_service_t service)

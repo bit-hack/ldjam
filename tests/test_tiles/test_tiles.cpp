@@ -9,6 +9,8 @@
 
 #include "../../framework_draw/draw.h"
 
+using namespace tengu;
+
 namespace {
     const int32_t _TILE_SIZE = 32;
     const int32_t _MAP_WIDTH = 640 / _TILE_SIZE;
@@ -76,7 +78,7 @@ bool init() {
     if (!screen_) {
         return false;
     }
-    if (!bitmap_t::create(640, 480, target_)) {
+    if (!tengu::bitmap_t::create(640, 480, target_)) {
         return false;
     }
     if (!target_.valid()) {

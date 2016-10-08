@@ -8,14 +8,15 @@
 // todo:
 // - add buffer space for interpolation
 
+namespace tengu {
 struct wave_t {
 
     static bool load_wav(const char * path, wave_t & out);
 
     uint32_t num_frames() const {
-        const uint32_t sample_size = bit_depth_ / 8;
-        const uint32_t num_samples = uint32_t(samples_.size()) / sample_size;
-        const uint32_t num_frames = num_samples / channels_;
+        const uint32_t sample_size = bit_depth_/8;
+        const uint32_t num_samples = uint32_t(samples_.size())/sample_size;
+        const uint32_t num_frames = num_samples/channels_;
         return num_frames;
     }
 
@@ -34,13 +35,13 @@ struct wave_t {
     template <typename type_t>
     type_t * get() {
         return reinterpret_cast<type_t*>(
-                samples_.get());
+            samples_.get());
     }
 
     template <typename type_t>
     const type_t * get() const {
         return reinterpret_cast<const type_t*>(
-                samples_.get());
+            samples_.get());
     }
 
     uint32_t length() const {
@@ -53,3 +54,4 @@ protected:
     uint32_t bit_depth_;
     uint32_t channels_;
 };
+} // namespace tengu

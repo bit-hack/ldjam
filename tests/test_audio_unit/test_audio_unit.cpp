@@ -1,5 +1,7 @@
 #include "../../framework_audio/source/chip/source_chip.h"
 
+using namespace tengu;
+
 struct test_t {
     test_t(const char * name) :
         name_(name),
@@ -26,7 +28,7 @@ struct test_source_chip_t : public test_t {
         using namespace source_chip;
         config_t config;
         config += config_t::entry_t{config_t::e_nestr, 0};
-        audio_source_chip_t chip;
+        audio_source_chip_t chip(44100);
         chip.init(config);
 
         chip.push(event_t{0, event_t::e_note_on,  {0, 64, 128}});

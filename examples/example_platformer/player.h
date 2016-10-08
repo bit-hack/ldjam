@@ -3,18 +3,22 @@
 
 struct player_anim_t {
 
-    anim::sheet_t sheet_;
+    typedef tengu::vec2i_t vec2i_t;
+    typedef tengu::anim::sheet_t ta_sheet_t;
+    typedef tengu::anim::sequence_t ta_sequence_t;
+    typedef tengu::anim::controller_t ta_controller_t;
 
-    anim::sequence_t run_;
-    anim::sequence_t stand_;
-    anim::sequence_t jump_;
-    anim::sequence_t fall_;
-    anim::sequence_t slide_;
-    anim::sequence_t skid_;
+    ta_sheet_t sheet_;
+    ta_sequence_t run_;
+    ta_sequence_t stand_;
+    ta_sequence_t jump_;
+    ta_sequence_t fall_;
+    ta_sequence_t slide_;
+    ta_sequence_t skid_;
 
-    anim::anim_controller_t controller_;
+    ta_controller_t controller_;
 
-    bitmap_t bitmap_;
+    tengu::bitmap_t bitmap_;
 
     bool xflip_;
 
@@ -25,46 +29,48 @@ struct player_anim_t {
 
     player_anim_t();
 
-    void render(const vec2i_t & pos, draw_ex_t & draw_);
+    void render(const vec2i_t & pos, tengu::draw_ex_t & draw_);
 
     void tick(int32_t delta);
 
     void set_x_dir(float dir);
 
-    void play(anim::sequence_t & seq);
+    void play(tengu::anim::sequence_t & seq);
 
     bool event_foot_fall();
     bool event_slide_loop();
 
-    const blit_info_t & blit_info() const {
+    const tengu::blit_info_t & blit_info() const {
         return blit_;
     }
 
 protected:
 
-    blit_info_t blit_;
+    tengu::blit_info_t blit_;
 
     bool foot_fall_;
     bool slide_loop_;
 };
 
-struct player_splash_t : public object_ex_t<e_object_player_splash, player_splash_t> {
+struct player_splash_t : 
+    public tengu::object_ex_t<e_object_player_splash, player_splash_t>
+{
     static const uint32_t _ORDER = e_object_player_splash;
 
-    draw_ex_t & draw_;
-    blit_info_t info_;
+    tengu::draw_ex_t & draw_;
+    tengu::blit_info_t info_;
     int32_t count_;
 
-    player_splash_t(object_service_t svc)
+    player_splash_t(tengu::object_service_t svc)
         : draw_(static_cast<service_t*>(svc)->draw_)
         , count_(5)
     {
         order_ = _ORDER;
     }
 
-    void init(const blit_info_t & info) {
+    void init(const tengu::blit_info_t & info) {
         info_ = info;
-        info_.type_ = e_blit_gliss;
+        info_.type_ = tengu::e_blit_gliss;
     }
 
     virtual void tick() override {
@@ -77,21 +83,27 @@ struct player_splash_t : public object_ex_t<e_object_player_splash, player_splas
     }
 };
 
-struct player_shadow_t : public object_ex_t<e_object_player_shadow, player_shadow_t> {
+struct player_shadow_t : 
+    public tengu::object_ex_t<e_object_player_shadow, player_shadow_t>
+{
     static const uint32_t _ORDER = e_object_player_shadow;
 
     service_t & service_;
-    player_shadow_t(object_service_t service);
+    player_shadow_t(tengu::object_service_t service);
     virtual void tick() override;
 };
 
-struct player_t : public object_ex_t<e_object_player, player_t> {
+struct player_t : 
+    public tengu::object_ex_t<e_object_player, player_t>
+{
     static const uint32_t _ORDER = e_object_player;
 
     const int32_t _WIDTH = 4;
     const int32_t _HEIGHT = 10;
-
-    typedef fsm_t<player_t> player_fsm_t;
+    
+    typedef tengu::vec2f_t vec2f_t;
+    typedef tengu::rectf_t rectf_t;
+    typedef tengu::fsm_t<player_t> player_fsm_t;
     typedef player_fsm_t::fsm_state_t player_state_t;
 
     service_t & service_;
@@ -105,9 +117,9 @@ struct player_t : public object_ex_t<e_object_player, player_t> {
 
     player_anim_t anim_;
 
-    object_ref_t shadow_;
+    tengu::object_ref_t shadow_;
 
-    player_t(object_service_t s);
+    player_t(tengu::object_service_t s);
 
     rectf_t bound() const;
 
