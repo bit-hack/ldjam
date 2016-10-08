@@ -7,6 +7,7 @@
 #include "../framework_core/rect.h"
 #include "bitmap.h"
 
+namespace tengu {
 enum blit_type_t {
     e_blit_opaque,   // no colour key
     e_blit_key,      // colour key
@@ -97,7 +98,7 @@ struct draw_t {
                 const char * fmt, ...);
 
     bitmap_t & get_target() {
-        return * target_;
+        return *target_;
     }
 
     void render_3x(void *dst,
@@ -127,17 +128,17 @@ struct draw_ex_t {
 protected:
     template <bool C_OFFSET, typename vec_t>
     vec_t select(const vec_t & vec) {
-        return C_OFFSET ? vec + vec_t(offset_) : vec;
+        return C_OFFSET ? vec+vec_t(offset_) : vec;
     }
 
     template <bool C_OFFSET, typename type_t>
     type_t select_x(const type_t & val) {
-        return C_OFFSET ? val + offset_.x : val;
+        return C_OFFSET ? val+offset_.x : val;
     }
 
     template <bool C_OFFSET, typename type_t>
     type_t select_y(const type_t & val) {
-        return C_OFFSET ? val + offset_.y : val;
+        return C_OFFSET ? val+offset_.y : val;
     }
 
 public:
@@ -149,7 +150,7 @@ public:
     {
     }
 
-    template <bool C_OFFSET=true>
+    template <bool C_OFFSET = true>
     void rect(const recti_t p) {
         draw_.rect(recti_t{
             select_x<C_OFFSET>(p.x0),
@@ -159,25 +160,25 @@ public:
         });
     }
 
-    template <bool C_OFFSET=true>
+    template <bool C_OFFSET = true>
     void circle(const vec2i_t & p,
                 const int32_t radius) {
         draw_.circle(select<C_OFFSET, vec2i_t>(p), radius);
     }
 
-    template <typename vec_t, bool C_OFFSET=true>
+    template <typename vec_t, bool C_OFFSET = true>
     void line(const vec_t & p0,
               const vec_t & p1) {
         draw_.line(select<C_OFFSET, vec_t>(p0),
                    select<C_OFFSET, vec_t>(p1));
     }
 
-    template <bool C_OFFSET=true>
+    template <bool C_OFFSET = true>
     void plot(const vec2i_t & p) {
         draw_.plot(select<C_OFFSET>(p));
     }
 
-    template <bool C_OFFSET=true>
+    template <bool C_OFFSET = true>
     void triangle(const vec2f_t & a,
                   const vec2f_t & b,
                   const vec2f_t & c) {
@@ -186,14 +187,14 @@ public:
                        select<C_OFFSET>(c));
     }
 
-    template <bool C_OFFSET=true>
+    template <bool C_OFFSET = true>
     void blit(const blit_info_t & info) {
         blit_info_t info_b = info;
         info_b.dst_pos_ = select<C_OFFSET>(info.dst_pos_);
         draw_.blit(info_b);
     }
 
-    template <bool C_OFFSET=true>
+    template <bool C_OFFSET = true>
     void blit(const blit_info_ex_t & info) {
         blit_info_ex_t info_b = info;
         info_b.dst_pos_ = select<C_OFFSET>(info.dst_pos_);
@@ -205,3 +206,4 @@ public:
     uint32_t & key_;
     vec2i_t offset_;
 };
+} // namespace tengu

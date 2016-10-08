@@ -6,6 +6,7 @@
 #include "format/wave.h"
 #include "format/vorbis.h"
 
+namespace tengu {
 struct mix_out_t {
     int32_t * left_;
     int32_t * right_;
@@ -13,12 +14,10 @@ struct mix_out_t {
 };
 
 struct audio_source_t {
-
     virtual void render(const mix_out_t &) = 0;
 };
 
 struct audio_t {
-
     // must be done before we start rendering
     void add(audio_source_t * src) {
         source_.push_back(src);
@@ -30,8 +29,8 @@ protected:
 
     // clip sample to signed 16bit integer range
     static constexpr int16_t clip(int32_t x) {
-        return int16_t(x >  0x7fff ?  0x7fff :
-                      (x < -0x7fff ? -0x7fff : x));
+        return int16_t(x>0x7fff ? 0x7fff :
+            (x<-0x7fff ? -0x7fff : x));
     }
 
     void _mixdown(int16_t * out, const uint32_t count);
@@ -45,3 +44,4 @@ protected:
 
     std::vector<audio_source_t*> source_;
 };
+} // namespace tengu

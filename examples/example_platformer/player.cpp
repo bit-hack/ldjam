@@ -3,14 +3,16 @@
 #include "particles.h"
 #include "map.h"
 
+using namespace tengu;
+
 player_anim_t::player_anim_t()
     : sheet_(108, 24)
-    , run_("run", anim::sequence_t::e_end_loop)
-    , stand_("stand", anim::sequence_t::e_end_hold)
-    , jump_("jump", anim::sequence_t::e_end_hold)
-    , fall_("fall", anim::sequence_t::e_end_hold)
-    , slide_("slide", anim::sequence_t::e_end_loop)
-    , skid_("skid", anim::sequence_t::e_end_hold)
+    , run_("run", ta_sequence_t::e_end_loop)
+    , stand_("stand", ta_sequence_t::e_end_hold)
+    , jump_("jump", ta_sequence_t::e_end_hold)
+    , fall_("fall", ta_sequence_t::e_end_hold)
+    , slide_("slide", ta_sequence_t::e_end_loop)
+    , skid_("skid", ta_sequence_t::e_end_hold)
     , xflip_(false)
 {
     sheet_.add_grid(12, 12);
@@ -78,7 +80,7 @@ void player_anim_t::set_x_dir(float dir) {
     xflip_ = dir<0.f;
 }
 
-void player_anim_t::play(anim::sequence_t & seq) {
+void player_anim_t::play(ta_sequence_t & seq) {
     if (!controller_.is_playing(&seq)) {
         controller_.set_sequence(&seq);
     }
@@ -141,10 +143,10 @@ rectf_t player_t::bound() const {
 rectf_t player_t::swept_bound() const {
     rectf_t fat_bound = bound();
     const vec2f_t vel = pos_[1] - pos_[0];
-    fat_bound.x0 -= max2(vel.x, 0.f);
-    fat_bound.y0 -= max2(vel.y, 0.f);
-    fat_bound.x1 -= min2(vel.x, 0.f);
-    fat_bound.y1 -= min2(vel.y, 0.f);
+    fat_bound.x0 -= maxv(vel.x, 0.f);
+    fat_bound.y0 -= maxv(vel.y, 0.f);
+    fat_bound.x1 -= minv(vel.x, 0.f);
+    fat_bound.y1 -= minv(vel.y, 0.f);
     return fat_bound;
 }
 
@@ -185,7 +187,7 @@ void player_t::tick_run() {
         // apply collision response as impulse
         pos_[1] += res;
         // avoid bounce with certain responses
-        pos_[0].y = min2(pos_[0].y, pos_[1].y);
+        pos_[0].y = minv(pos_[0].y, pos_[1].y);
     }
     else {
         fsm_.state_change(fsm_state_air_);

@@ -3,7 +3,7 @@
 #include "source_chip.h"
 #include "../../../framework_core/common.h"
 
-
+namespace tengu {
 namespace {
 inline float note_to_freq(int32_t note) {
     float x = float(note-69)/12.f;
@@ -51,11 +51,10 @@ namespace source_chip {
 
 size_t sound_t::render(
     int32_t * l,
-    int32_t * r,
-    size_t length)
+    const size_t length)
 {
     // number of samples to output
-    const size_t count = min2(data_.size()/2, length);
+    const size_t count = minv(data_.size()/2, length);
     // makeup gain from float to int16_t
     static const float c_gain = float(0x7000);
     // local copy of dither seed
@@ -69,7 +68,7 @@ size_t sound_t::render(
         const float s0 = dec(src[i*2+0], src[i*2+1]);
         src += 2;
         // remove dc
-        const float s1 = s0 - dc;
+        const float s1 = s0-dc;
         dc = lerp<float>(dc, s1, 0.0001f);
         // clip
         const float s2 = _clip(s1);
@@ -79,7 +78,6 @@ size_t sound_t::render(
         const float s4 = s3+_dither(dither);
         // write to output buffer
         l[i] = int16_t(s4);
-        r[i] = int16_t(s4);
     }
     // save dither seed back out
     dither_ = dither;
@@ -88,16 +86,19 @@ size_t sound_t::render(
     return count;
 }
 
-size_t sound_t::render(float *out, size_t num_samples) {
-    const size_t count = min2(num_samples, data_.size() / 2);
+size_t sound_t::render(
+    float *out,
+    const size_t num_samples)
+{
+    const size_t count = minv(num_samples, data_.size()/2);
     const float * src = data_.data();
     decimate_9_t & dec = decimate_;
     float dc = dc_;
-    for (int i=0; i<count; ++i) {
+    for (int i = 0; i<count; ++i) {
         // decimate sample in buffer
         const float s0 = dec(src[i*2+0], src[i*2+1]);
         // remove dc
-        const float s1 = s0 - dc;
+        const float s1 = s0-dc;
         dc = lerp(dc, s1, 0.0001f);
         // write output sample
         out[i] = s1;
@@ -108,20 +109,29 @@ size_t sound_t::render(float *out, size_t num_samples) {
 
 // ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- ---- AUDIO SOURCE CHIP
 
+audio_source_chip_t::audio_source_chip_t(uint32_t sample_rate)
+    : sample_rate_(sample_rate)
+    , verb_(sample_rate*2)
+{
+}
+
+audio_source_chip_t::~audio_source_chip_t() {
+}
+
 void audio_source_chip_t::init(const config_t & config) {
     // for std::make_unique
     using namespace std;
 
-    const float sample_rate = 44100.f * 2;
+    const float sample_rate = 44100.f*2;
 
     source_pulse_.clear();
     source_noise_.clear();
     source_nestr_.clear();
 
-    for (const config_t::entry_t & e : config.channels()) {
+    for (const config_t::entry_t & e:config.channels()) {
 
         const uint32_t channel = e.channel_;
-        assert(channel < event_.size());
+        assert(channel<event_.size());
 
         event_queue_t & stream = event_[channel];
 
@@ -150,16 +160,22 @@ void audio_source_chip_t::_scatter_events() {
 
 size_t audio_source_chip_t::_fill_buffer(size_t samples) {
     // wipe the buffer before we accumulate into it
-    buffer_.clear();
+    for (auto & b:buffers_)
+        b.clear();
     // find samples remaining
-    size_t count = min2(samples, buffer_.size());
+    size_t count = minv(samples, buffers_.size());
     // render from all sources
-    for (auto & src:source_pulse_)
-        src->render(count, buffer_);
-    for (auto & src:source_noise_)
-        src->render(count, buffer_);
-    for (auto & src:source_nestr_)
-        src->render(count, buffer_);
+    for (auto & src:source_pulse_) {
+        src->render(count, buffers_);
+    }
+    for (auto & src:source_noise_) {
+        src->render(count, buffers_);
+    }
+    for (auto & src:source_nestr_) {
+        src->render(count, buffers_);
+    }
+    // 
+    // verb_.process(buffers_, count);
     // return number of samples written
     return count;
 }
@@ -168,40 +184,84 @@ void audio_source_chip_t::render(const mix_out_t & mix) {
     _scatter_events();
     // loop until all samples are emitted
     size_t remaining = mix.count_;
+    // mix stream
+    int32_t * mix_l = mix.left_;
+    int32_t * mix_r = mix.right_;
+    // while samples remaining
     while (remaining) {
         // find samples remaining
-        size_t count = min2(remaining * 2, buffer_.size());
+        size_t count = minv(remaining*2, buffers_[0].size());
 
         // todo: <-------- pop events from event file
 
         // render from all audio sources
         size_t rendered = _fill_buffer(count);
-        assert(rendered > 0);
+        assert(rendered>0);
         // render out the samples in our buffer
-        remaining -= buffer_.render(mix.left_, mix.right_, rendered / 2);
+        size_t written_l = buffers_[0].render(mix_l, rendered/2);
+        size_t written_r = buffers_[1].render(mix_r, rendered/2);
+        // 
+        assert(written_l==written_r);
+        size_t wrote = minv(written_l, written_r);
+        remaining -= wrote;
+        mix_l += wrote;
+        mix_r += wrote;
     }
 }
 
-void audio_source_chip_t::render(float * out,
-                                 size_t samples) {
+void audio_source_chip_t::render(
+    float * out,
+    size_t samples)
+{
     // dispatch pending events
     _scatter_events();
     // loop until all samples are emitted
     size_t remaining = samples;
     while (remaining) {
         // find samples remaining
-        const size_t count = min2(remaining * 2, buffer_.size());
+        const size_t count = minv(remaining*2, buffers_[0].size());
 
         // todo: <-------- pop events from event file
 
         // render from all audio sources
         const size_t filled = _fill_buffer(count);
-        assert(filled > 0);
+        assert(filled>0);
         // render out the samples in our buffer
-        size_t written = buffer_.render(out, filled / 2);
+        size_t written = buffers_[0].render(out, filled/2);
         // advance the stream
         remaining -= written;
         out += written;
+    }
+}
+
+void audio_source_chip_t::render(
+    float * lout,
+    float * rout,
+    const size_t samples)
+{
+    // dispatch pending events
+    _scatter_events();
+    // loop until all samples are emitted
+    size_t remaining = samples;
+    while (remaining) {
+        // find samples remaining
+        const size_t count = minv(remaining*2, buffers_[0].size());
+
+        // todo: <-------- pop events from event file
+
+        // render from all audio sources
+        const size_t filled = _fill_buffer(count);
+        assert(filled>0);
+        // render out the samples in our buffer
+        size_t written_l = buffers_[0].render(lout, filled/2);
+        size_t written_r = buffers_[1].render(rout, filled/2);
+        // advance the stream
+        assert(written_l==written_r);
+        const size_t wrote = minv(written_l, written_r);
+        // decrement 
+        remaining -= wrote;
+        lout += wrote;
+        rout += wrote;
     }
 }
 
@@ -212,7 +272,7 @@ void pulse_t::on_note_on(const event_t & event, bool retrigger) {
     const uint8_t note = event.data_[1];
     const uint8_t velo = event.data_[2];
     set_freq(note_to_freq(note));
-    volume_ = (1.f/256.f) * (float)velo;
+    lvol_ = rvol_ = (1.f/256.f) * (float)velo;
 }
 
 void pulse_t::on_note_off(const event_t & event) {
@@ -222,7 +282,7 @@ void pulse_t::on_note_off(const event_t & event) {
 void pulse_t::on_cc(const event_t & event) {
     const uint8_t offset = 14;
     const uint8_t value = event.data_[2];
-    switch (event.data_[1] - offset) {
+    switch (event.data_[1]-offset) {
     case (e_attack):
         env_.set_attack(value*4.f);
         break;
@@ -235,6 +295,9 @@ void pulse_t::on_cc(const event_t & event) {
     case (e_vibrato):
         vibrato_ = (1.f/256.f) * value;
         break;
+    case (e_send):
+        send_ = (1.f/256.f) * value;
+        break;
     default:
         break;
     }
@@ -242,16 +305,22 @@ void pulse_t::on_cc(const event_t & event) {
 
 size_t pulse_t::_render(
     size_t length,
-    sound_t &out)
+    std::array<sound_t, 4> & out)
 {
+    // can only render up to buffer size
+    assert(length<=out[0].size());
+    // output streams
+    float * dst_l = out[0].data().data();
+    float * dst_r = out[1].data().data();
+    float * send_l = out[2].data().data();
+    float * send_r = out[3].data().data();
+    // normalize the lfo periodical
     lfo_.normalize();
     //
     const float period = period_;
     const float offset = offset_;
-    const float volume = volume_;
-    const size_t count = min2(length, out.data().size());
+    const size_t count = minv(length, out[0].data().size());
     float accum = accum_;
-    float * dst = out.data().data();
     // do not render if over nyquist
     if (period<=2.f) {
         assert(!"HELP!");
@@ -262,17 +331,20 @@ size_t pulse_t::_render(
         // vib contribution
         const float v = lfo_.tick() * vibrato_;
         // tick the square wave counter
-        if ((accum -= (1.f + v)) < 0.f) {
+        if ((accum -= (1.f+v))<0.f) {
             accum += period;
         }
         // apply duty offset
-        float a = accum - offset;
+        float a = accum-offset;
         // turn into pulse wave
-        float b = (a > 0.f) ? 1.f : -1.f;
+        float b = (a>0.f) ? 1.f : -1.f;
         // apply volume attenuation
-        float c = b * volume * env_.next();
+        float c = b * env_.next();
         // move into output buffer
-        dst[i] += c;
+        dst_l[i] += c * lvol_;
+        dst_r[i] += c * rvol_;
+        send_l[i] += c * lvol_ * send_;
+        send_r[i] += c * rvol_ * send_;
     }
     // copy period back to structure
     accum_ = accum;
@@ -296,7 +368,7 @@ void nestr_t::on_note_off(const event_t &event) {
 void nestr_t::on_cc(const event_t &event) {
     const uint8_t offset = 14;
     const uint8_t value = event.data_[2];
-    switch (event.data_[1] - offset) {
+    switch (event.data_[1]-offset) {
     case (e_attack):
         env_.set_attack(value*4.f);
         break;
@@ -308,7 +380,10 @@ void nestr_t::on_cc(const event_t &event) {
     }
 }
 
-size_t nestr_t::_render(size_t length, sound_t &out) {
+size_t nestr_t::_render(
+    size_t length,
+    std::array<sound_t, 4> & out)
+{
 #define A(X) ((X)/7.5f-1.f)
     static const std::array<float, 32> tri_table = {
         A(15),  A(14),  A(13),  A(12),  A(11), A(10), A(9),  A(8),
@@ -317,11 +392,16 @@ size_t nestr_t::_render(size_t length, sound_t &out) {
         A(8),   A(9),   A(10),  A(11),  A(12), A(13), A(14), A(15),
     };
 #undef A
+    // can only render up to buffer size
+    assert(length<=out[0].size());
+    // output streams
+    float * dst_l = out[0].data().data();
+    float * dst_r = out[1].data().data();
+    //
     float accum = accum_;
     const float delta = delta_;
     const float volume = volume_;
-    const size_t count = min2(length, out.data().size());
-    float * dst = out.data().data();
+    const size_t count = minv(length, out[0].data().size());
     // while there are samples to render
     for (size_t i = 0; i<count; ++i) {
         // tick the counter
@@ -336,12 +416,13 @@ size_t nestr_t::_render(size_t length, sound_t &out) {
         float  v = lerp<float>(tri_table[a], tri_table[b], f);
 #else
         // index into lookup table
-        float  v = tri_table[size_t(accum)&0x1f];
+        const float  v = tri_table[size_t(accum)&0x1f];
 #endif
         // apply volume attenuation
-        float c = v * volume * env_.next();
+        const float c = v * volume * env_.next();
         // move into output buffer
-        dst[i] += c;
+        dst_l[i] += c;
+        dst_r[i] += c;
     }
     // copy period back to structure
     accum_ = accum;
@@ -364,7 +445,7 @@ void noise_t::on_note_off(const event_t &event) {
 void noise_t::on_cc(const event_t &event) {
     const uint8_t offset = 14;
     const uint8_t value = event.data_[2];
-    switch (event.data_[1] - offset) {
+    switch (event.data_[1]-offset) {
     case (e_attack):
         env_.set_attack(value*4.f);
         break;
@@ -378,22 +459,31 @@ void noise_t::on_cc(const event_t &event) {
     }
 }
 
-size_t noise_t::_render(size_t length, sound_t &out) {
+size_t noise_t::_render(
+    size_t length,
+    std::array<sound_t, 4> & out)
+{
+    // can only render up to buffer size
+    assert(length<=out[0].size());
+    // output streams
+    float * dst_l = out[0].data().data();
+    float * dst_r = out[1].data().data();
+    // 
     const float volume = volume_;
     // zero volume skip
     if (volume<=0.f)
         return 0;
     const uint32_t period = period_;
-    const size_t count = min2(length, out.data().size());
+    const size_t count = minv(length, out[0].data().size());
     uint32_t reg = lfsr_;
     uint32_t counter = counter_;
-    float * dst = out.data().data();
     // while there are samples to render
     for (size_t i = 0; i<count; ++i) {
         // get current noise state
-        float value = (reg&1) ? 1.f : -1.f;
+        float value = ((reg&1) ? 1.f : -1.f) * volume * env_.next();
         // apply attenuation
-        dst[i] += value * volume * env_.next();
+        dst_l[i] += value;
+        dst_r[i] += value;
         // if the shift register should be clocked
         if (counter==0) {
             // calculate new bit (taps{6,0})
@@ -416,3 +506,4 @@ size_t noise_t::_render(size_t length, sound_t &out) {
     return count;
 }
 } // namespace source_chip
+} // namespace tengu

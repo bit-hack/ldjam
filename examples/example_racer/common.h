@@ -17,7 +17,7 @@ enum {
 };
 
 struct service_t {
-    draw_ex_t draw_;
-    object_factory_t & factory_;
-    object_map_t objects_;
+    tengu::draw_ex_t draw_;
+    tengu::object_factory_t & factory_;
+    tengu::object_map_t objects_;
 };

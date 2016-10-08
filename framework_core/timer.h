@@ -2,9 +2,10 @@
 #include <cassert>
 #include <cstdint>
 
+namespace tengu {
 template <typename type_t = uint64_t>
 struct timing_t {
-    typedef type_t (*tick_func_t)();
+    typedef type_t(*tick_func_t)();
 
     timing_t(tick_func_t func = nullptr, type_t period = 0)
         : func_(func)
@@ -16,10 +17,10 @@ struct timing_t {
     float deltaf() const
     {
         type_t nval = get_time();
-        if (old_ > nval)
+        if (old_>nval)
             return 0.f;
-        const type_t diff = nval - old_;
-        return float(diff) / float(period_ ? period_ : 1);
+        const type_t diff = nval-old_;
+        return float(diff)/float(period_ ? period_ : 1);
     }
 
     void reset()
@@ -34,21 +35,21 @@ struct timing_t {
 
     bool done() const {
         const type_t nval = get_time();
-        return (nval-old_) > period_;
+        return (nval-old_)>period_;
     }
 
     uint64_t deltai() const
     {
         const type_t nval = get_time();
-        if (old_ > nval)
+        if (old_>nval)
             return 0ull;
-        const type_t diff = nval - old_;
-        return period_ ? (diff / period_) : 0ull;
+        const type_t diff = nval-old_;
+        return period_ ? (diff/period_) : 0ull;
     }
 
     bool frame() {
         float delta = deltaf();
-        if (delta < 1.f) {
+        if (delta<1.f) {
             return false;
         }
         else {
@@ -67,10 +68,10 @@ struct timing_t {
     tick_func_t func_;
 
 protected:
-
     type_t get_time() const {
         return func_ ? func_() : 0;
     }
 
     type_t old_;
 };
+} // namespace tengu

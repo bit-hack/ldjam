@@ -13,6 +13,7 @@
 #pragma once
 #include <array>
 
+namespace tengu {
 namespace source_chip {
 
 // 5 tap decimation
@@ -127,3 +128,4 @@ public:
 };
 
 } // namespace source_chip
+} // namespace tengu

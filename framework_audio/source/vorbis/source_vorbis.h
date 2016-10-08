@@ -3,8 +3,9 @@
 
 #include "../../audio.h"
 
-struct audio_source_vorbis_t :
-        public audio_source_t {
+namespace tengu {
+struct audio_source_vorbis_t:
+    public audio_source_t {
 
     audio_source_vorbis_t();
     ~audio_source_vorbis_t();
@@ -22,7 +23,7 @@ struct audio_source_vorbis_t :
     }
 
     virtual void render(
-            const mix_out_t & mix);
+        const mix_out_t & mix);
 
 protected:
     void _clear_buffer();
@@ -41,3 +42,4 @@ protected:
 
     queue_t<play_vorbis_t> queue_;
 };
+} // namespace tengu

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(ldjam)
+project(tengu)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 

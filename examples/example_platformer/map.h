@@ -1,17 +1,19 @@
 #pragma once
 #include "common.h"
 
-struct obj_map_t : public object_ex_t<e_object_map, obj_map_t> {
+struct obj_map_t : public tengu::object_ex_t<e_object_map, obj_map_t> {
 
     static const int32_t _MAP_WIDTH = 32;
     static const int32_t _MAP_HEIGHT = 32;
     static const int32_t _CELL_WIDTH = 16;
     static const int32_t _CELL_HEIGHT = 16;
 
-    service_t & service_;
-    collision_map_t collide_;
+    typedef tengu::vec2i_t vec2i_t;
 
-    obj_map_t(object_service_t s)
+    service_t & service_;
+    tengu::collision_map_t collide_;
+
+    obj_map_t(tengu::object_service_t s)
         : object_ex_t()
         , service_(*static_cast<service_t*>(s))
         , collide_(vec2i_t{_MAP_WIDTH, _MAP_HEIGHT},
@@ -21,7 +23,9 @@ struct obj_map_t : public object_ex_t<e_object_map, obj_map_t> {
     }
 
     void generate() {
-        collision_map_t & c = collide_;
+        using namespace tengu;
+
+        tengu::collision_map_t & c = collide_;
         random_t random(0x12345);
         const int32_t _CHANCE = 10;
         c.clear(0);
@@ -41,6 +45,8 @@ struct obj_map_t : public object_ex_t<e_object_map, obj_map_t> {
     }
 
     void draw() {
+        using namespace tengu;
+
         collision_map_t & c = collide_;
         draw_ex_t & draw = service_.draw_;
         draw.colour_ = 0x4092c3;

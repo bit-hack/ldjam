@@ -5,10 +5,12 @@
 #include "../../framework_core/common.h"
 #include "../../framework_core/vec2.h"
 
-struct dust_t : public object_ex_t<e_object_particles, dust_t> {
+struct dust_t : public tengu::object_ex_t<e_object_particles, dust_t> {
     static const uint32_t _ORDER = e_object_particles;
 
-    dust_t(object_service_t service)
+    typedef tengu::vec2f_t vec2f_t;
+
+    dust_t(tengu::object_service_t service)
         : service_(*static_cast<service_t*>(service))
         , rand_(SDL_GetTicks())
     {
@@ -22,6 +24,8 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
         const vec2f_t & grav,
         const float spread)
     {
+        using namespace tengu;
+
         count_ = count;
         grav_ = grav;
 
@@ -44,6 +48,7 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
     }
 
     virtual void tick() override {
+        using namespace tengu;
 
         alive_ = false;
         float * age = age_.get();
@@ -70,7 +75,7 @@ struct dust_t : public object_ex_t<e_object_particles, dust_t> {
         }
     }
 
-    random_t rand_;
+    tengu::random_t rand_;
     vec2f_t grav_;
     uint32_t count_;
     service_t & service_;

@@ -25,8 +25,8 @@ enum {
 };
 
 struct service_t {
-    draw_ex_t draw_;
-    object_factory_t & factory_;
+    tengu::draw_ex_t draw_;
+    tengu::object_factory_t & factory_;
     gamepad_t * gamepad_;
-    object_map_t objects_;
+    tengu::object_map_t objects_;
 };

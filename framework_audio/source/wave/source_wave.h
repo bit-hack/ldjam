@@ -3,8 +3,9 @@
 
 #include "../../audio.h"
 
-struct audio_source_wave_t :
-        public audio_source_t {
+namespace tengu {
+struct audio_source_wave_t:
+    public audio_source_t {
 
     virtual void render(const mix_out_t &) override;
 
@@ -34,21 +35,22 @@ protected:
     void _check_messages();
 
     bool _render_8_1(
-            const mix_out_t & mix,
-            info_wave_t & info);
+        const mix_out_t & mix,
+        info_wave_t & info);
 
     bool _render_8_2(
-            const mix_out_t & mix,
-            info_wave_t & info);
+        const mix_out_t & mix,
+        info_wave_t & info);
 
     bool _render_16_1(
-            const mix_out_t & mix,
-            info_wave_t & info);
+        const mix_out_t & mix,
+        info_wave_t & info);
 
     bool _render_16_2(
-            const mix_out_t & mix,
-            info_wave_t & info);
+        const mix_out_t & mix,
+        info_wave_t & info);
 
     std::map<const wave_t*, info_wave_t> waves_;
     queue_t<play_wave_t> queue_;
 };
+} // namespace tengu

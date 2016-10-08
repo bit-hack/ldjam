@@ -4,9 +4,9 @@
 
 #include "../../framework_core/geometry.h"
 #include "../../framework_core/random.h"
-//#include "../../framework_core/bsp.h"
-
 #include "../../framework_draw/draw.h"
+
+using namespace tengu;
 
 namespace {
     SDL_Surface * screen_ = nullptr;

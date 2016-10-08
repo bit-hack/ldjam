@@ -9,6 +9,7 @@
 #include "../framework_core/vec2.h"
 #include "../framework_core/random.h"
 
+namespace tengu {
 struct body_t {
     body_t() = default;
 
@@ -17,7 +18,7 @@ struct body_t {
            struct object_t* object)
         : p(pos)
         , r(radius)
-        , vel_(vec2f_t{ 0.f, 0.f })
+        , vel_(vec2f_t{0.f, 0.f})
         , obj_(object)
     {
     }
@@ -49,8 +50,8 @@ struct body_pair_set_t {
         size_t operator()(const pair_t& in) const
         {
             return size_t(
-                random_t::hash64(uint64_t(in.first) ^
-                random_t::hash64(uint64_t(in.second))));
+                tengu::hash_t::wang_64(uint64_t(in.first)^
+                                       tengu::hash_t::wang_64(uint64_t(in.second))));
         }
     };
 
@@ -146,12 +147,12 @@ protected:
 
         bool contains(int32_t x, int32_t y) const
         {
-            return x >= x0 && x <= x1 && y >= y0 && y <= y1;
+            return x>=x0 && x<=x1 && y>=y0 && y<=y1;
         }
 
         bool operator==(const bound_t& o) const
         {
-            return memcmp(this, &o, sizeof(o)) == 0;
+            return memcmp(this, &o, sizeof(o))==0;
         }
     };
 
@@ -181,9 +182,9 @@ struct body_ex_t {
     body_t body_;
 
     body_ex_t(spatial_t& spatial,
-        const vec2f_t& pos,
-        float radius,
-        struct object_t* obj)
+              const vec2f_t& pos,
+              float radius,
+              struct object_t* obj)
         : spatial_(spatial)
         , body_(pos, radius, obj)
     {
@@ -222,3 +223,4 @@ struct body_ex_t {
 protected:
     spatial_t& spatial_;
 };
+} // namespace tengu

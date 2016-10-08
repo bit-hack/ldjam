@@ -4,6 +4,8 @@
 #include "../../framework_core/timer.h"
 #include "../../framework_draw/draw.h"
 
+using namespace tengu;
+
 // object type enumeration
 enum {
     e_object_simple = 0,

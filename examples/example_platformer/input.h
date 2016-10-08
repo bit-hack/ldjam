@@ -9,6 +9,8 @@
 struct gamepad_t {
     static const uint32_t C_BUTTONS = 2;
 
+    typedef tengu::vec2f_t vec2f_t;
+
     gamepad_t() {
         button_.fill(false);
         delta_.fill(false);
@@ -22,7 +24,7 @@ struct gamepad_t {
         e_button_z,
     };
 
-    vec2f_t axis_;
+    tengu::vec2f_t axis_;
     std::array<bool, C_BUTTONS> button_;
     std::array<bool, C_BUTTONS> delta_;
 
@@ -39,7 +41,7 @@ struct gamepad_key_t : public gamepad_t {
     virtual void tick() {
         uint8_t * keys = SDL_GetKeyState(nullptr);
         if (keys) {
-            axis_ = vec2f_t{0.f, 0.f};
+            axis_ = tengu::vec2f_t{0.f, 0.f};
             axis_.x -= keys[SDLK_LEFT]  ? 1.f : 0.f;
             axis_.x += keys[SDLK_RIGHT] ? 1.f : 0.f;
             axis_.y -= keys[SDLK_UP]    ? 1.f : 0.f;
@@ -97,7 +99,7 @@ struct gamepad_joy_t : public gamepad_t {
         const int16_t dx = SDL_JoystickGetAxis(joy_, 0);
         const int16_t dy = SDL_JoystickGetAxis(joy_, 1);
 
-        axis_ = vec2f_t{0.f, 0.f};
+        axis_ = tengu::vec2f_t{0.f, 0.f};
 
         axis_.x -= dx < -64 ? 1.f : 0.f;
         axis_.x += dx > +64 ? 1.f : 0.f;

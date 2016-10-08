@@ -6,6 +6,7 @@
 #include "../framework_core/rect.h"
 #include "../framework_core/buffer.h"
 
+namespace tengu {
 struct mat4_t {
     float e[4*4];
 };
@@ -26,8 +27,8 @@ struct gl_texture_t {
 struct gl_shader_t {
     bool load(const char *);
 protected:
-    buffer_t vert_;
-    buffer_t frag_;
+    tengu::buffer_t vert_;
+    tengu::buffer_t frag_;
 };
 
 struct gl_mesh_t {
@@ -48,3 +49,4 @@ struct gl_draw_t {
 
     void present();
 };
+} // namespace tengu

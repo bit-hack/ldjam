@@ -8,11 +8,12 @@
 #include "../framework_core/vec2.h"
 #include "../framework_core/random.h"
 
+namespace tengu {
 /* axis aligned bounding box proxy object
  */
 struct aabb_proxy_t {
 
-    aabb_proxy_t(object_t * obj,
+    aabb_proxy_t(tengu::object_t * obj,
                  const rectf_t & aabb)
         : obj_(obj)
         , aabb_(aabb)
@@ -26,14 +27,14 @@ struct aabb_proxy_t {
 
     /* get the object associated with this proxy
      */
-    object_t * get_object() const {
+    tengu::object_t * get_object() const {
         return obj_;
     }
 
 protected:
 
     friend struct aabb_tree_t;
-    object_t * const obj_;
+    tengu::object_t * const obj_;
     rectf_t aabb_;
 };
 
@@ -91,7 +92,7 @@ protected:
     /* check if a node is a leaf
      */
     bool is_leaf(index_t index) const {
-        return type_[index] != nullptr;
+        return type_[index]!=nullptr;
     }
 
     index_t new_node() {
@@ -110,7 +111,7 @@ protected:
     using array_t = std::array<type_t, _SIZE>;
 
     //
-    random_t rand_;
+    tengu::random_t rand_;
 
     // index -> (fat) axis aligned bounding box
     array_t<rectf_t> aabb_;
@@ -125,3 +126,4 @@ protected:
     // list of free nodes
     std::vector<index_t> free_;
 };
+} // namespace tengu

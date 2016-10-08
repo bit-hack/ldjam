@@ -2,9 +2,10 @@
 #include <memory>
 #include "../../framework_core/file.h"
 
+namespace tengu {
 struct vorbis_t {
 
-    vorbis_t() 
+    vorbis_t()
         : data_()
         , size_(0)
     {
@@ -43,3 +44,4 @@ protected:
     std::unique_ptr<uint8_t[]> data_;
     size_t size_;
 };
+} // namespace tengu

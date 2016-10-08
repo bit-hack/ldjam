@@ -2,7 +2,7 @@
 #include "player.h"
 #include "map.h"
 
-camera_t::camera_t(object_service_t s)
+camera_t::camera_t(tengu::object_service_t s)
     : object_ex_t()
     , service_(*reinterpret_cast<service_t*>(s))
     , pos_{32, 32}
@@ -12,10 +12,14 @@ camera_t::camera_t(object_service_t s)
 }
 
 void camera_t::shake(float magnitude) {
-    shake_.mag_ = max2(shake_.mag_, magnitude);
+    using namespace tengu;
+
+    shake_.mag_ = maxv(shake_.mag_, magnitude);
 }
 
 void camera_t::tick() {
+    using namespace tengu;
+
     // smoothign factors
     const float C_SMOOTH_1 = 0.5f;
     const float C_SMOOTH_2 = 0.1f;
@@ -26,7 +30,7 @@ void camera_t::tick() {
         const vec2f_t player_pos = player.get_pos();
         const vec2f_t player_vel = player.get_velocity();
         // calculate an deadzone factor
-        const float deadzone = max2(falloff(6.f, vec2f_t::distance(player_pos, pos_), 8.f), 
+        const float deadzone = maxv(falloff(6.f, vec2f_t::distance(player_pos, pos_), 8.f), 
                                     falloff(1.f, vec2f_t::length(player_vel), 2.f));
 #if 0
         // debug show movement factor

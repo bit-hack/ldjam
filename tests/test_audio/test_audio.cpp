@@ -5,6 +5,8 @@
 #include "../../framework_audio/source/wave/source_wave.h"
 #include "../../framework_audio/source/vorbis/source_vorbis.h"
 
+using namespace tengu;
+
 namespace {
 
 std::array<wave_t, 2> s_wave;

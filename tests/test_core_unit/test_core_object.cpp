@@ -3,6 +3,8 @@
 
 #define TEST_ASSERT(X) {if (!(X)) { return false; }}
 
+using namespace tengu;
+
 enum {
     e_type_obj_1,
     e_type_obj_2,
@@ -16,18 +18,15 @@ struct test_obj_1_t : public object_t {
         ref_.dec();
     }
 
-    static object_type_t type()
-    {
+    static object_type_t type() {
         return e_type_obj_1;
     }
 
-    static object_factory_t::creator_t* creator()
-    {
+    static object_factory_t::creator_t* creator() {
         return new object_create_t<test_obj_1_t>();
     }
 
-    static uint32_t magic()
-    {
+    static uint32_t magic() {
         return 0x12345678;
     }
 };
@@ -38,13 +37,11 @@ struct test_obj_2_t : public object_t {
     {
     }
 
-    static object_type_t type()
-    {
+    static object_type_t type() {
         return e_type_obj_2;
     }
 
-    static object_factory_t::creator_t* creator()
-    {
+    static object_factory_t::creator_t* creator() {
         return new object_create_t<test_obj_2_t>();
     }
 };
@@ -55,14 +52,14 @@ struct test_obj_3_t: public object_t {
             : counter_(0)
         {
         }
-        virtual object_t* create(object_type_t, object_service_t service)
-        {
+
+        virtual object_t* create(object_type_t, object_service_t service) {
             ++counter_;
             object_t* obj = new test_obj_3_t(service);
             return obj;
         }
-        virtual void destroy(object_t* obj)
-        {
+
+        virtual void destroy(object_t* obj) {
             delete obj;
             --counter_;
         }
@@ -76,15 +73,15 @@ struct test_obj_3_t: public object_t {
         ref_.dec();
     }
 
-    static object_type_t type()
-    {
+    static object_type_t type() {
         return e_type_obj_3;
     }
 };
 
 extern
-bool test_object_1()
-{
+bool test_object_1() {
+    using namespace tengu;
+
     object_factory_t factory(nullptr);
 
     factory.add_creator<test_obj_1_t>();
@@ -122,8 +119,9 @@ bool test_object_1()
 };
 
 extern
-bool test_object_2()
-{
+bool test_object_2() {
+    using namespace tengu;
+
     object_ref_t ref1;
     TEST_ASSERT(!ref1.valid());
 
@@ -149,8 +147,9 @@ bool test_object_2()
 }
 
 extern
-bool test_object_3()
-{
+bool test_object_3() {
+    using namespace tengu;
+
     object_factory_t factory(nullptr);
     factory.add_creator<test_obj_1_t>();
 
@@ -182,8 +181,9 @@ bool test_object_3()
 }
 
 extern
-bool test_object_4()
-{
+bool test_object_4() {
+    using namespace tengu;
+
     object_factory_t factory(nullptr);
     factory.add_creator<test_obj_1_t>();
     // try to create unregistered object
@@ -197,8 +197,9 @@ bool test_object_4()
 }
 
 extern
-bool test_object_5()
-{
+bool test_object_5() {
+    using namespace tengu;
+
     enum {
         e_obj_test_t
     };
@@ -214,8 +215,7 @@ bool test_object_5()
         {
         }
 
-        void init(int value)
-        {
+        void init(int value) {
         }
     };
 
@@ -238,6 +238,7 @@ bool test_object_5()
 
 extern
 bool test_object_6() {
+    using namespace tengu;
 
     random_t random(0x1234);
 
@@ -283,6 +284,7 @@ bool test_object_6() {
 
 extern
 bool test_object_7() {
+    using namespace tengu;
 
     struct obj_t: object_ex_t<0, obj_t> {
         uint32_t id_;

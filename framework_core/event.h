@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <array>
 
+namespace tengu {
 struct event_t {
 
     const uint32_t type_;
@@ -73,7 +74,7 @@ struct event_stream_t {
         }
         // send to any local listeners
         auto itt = local_.find(event->type_);
-        if (itt != local_.end()) {
+        if (itt!=local_.end()) {
             const auto & vec = itt->second;
             for (auto & l:vec) {
                 l->recieve_event(event);
@@ -88,3 +89,4 @@ protected:
     std::unordered_map<uint32_t, event_set_t> local_;
     event_set_t global_;
 };
+} // namespace tengu

@@ -24,7 +24,8 @@ set(SOURCE_FILES_SRC
     source/chip/source_chip.cpp
     source/chip/source_chip.h
     source/chip/decimate.h
-    source/chip/blip_table.cpp)
+    source/chip/blip_table.cpp
+	source/chip/verb.cpp)
 
 add_library(
     framework_audio 

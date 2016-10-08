@@ -1,7 +1,7 @@
 #include "../framework_core/file.h"
 #include "bitmap.h"
 
-
+namespace tengu {
 #if !defined(_MSC_VER)
 #define PACK__ __attribute__((__packed__))
 #else
@@ -13,7 +13,7 @@ bool bitmap_t::create(const uint32_t width,
                       const uint32_t height,
                       bitmap_t & out) {
     // allocate space for all the pixels
-    out.pix_.resize(width * height * sizeof(uint32_t));
+    out.pix_.resize(width * height*sizeof(uint32_t));
     out.width_ = width;
     out.height_ = height;
     return true;
@@ -56,14 +56,14 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
     if (dib_v1_.bpp_&0x7) {
         return false;
     }
-    const uint32_t image_size = (dib_v1_.width_ * dib_v1_.height_ * dib_v1_.bpp_) / 8;
+    const uint32_t image_size = (dib_v1_.width_ * dib_v1_.height_ * dib_v1_.bpp_)/8;
     const uint32_t free_space = header.bmp_size_-header.pix_offset_;
     // check reported size can fit in our file
-    if (image_size > free_space) {
+    if (image_size>free_space) {
         return false;
     }
     // allocate space for all the pixels
-    out.pix_.resize(dib_v1_.width_ * dib_v1_.height_ * sizeof(uint32_t));
+    out.pix_.resize(dib_v1_.width_ * dib_v1_.height_*sizeof(uint32_t));
     // seek to the start of pixel data
     if (!file.seek(header.pix_offset_)) {
         return false;
@@ -113,3 +113,4 @@ bool bitmap_t::load(const char * path, bitmap_t & out) {
 #if _MSC_VER
 #pragma pack(pop)
 #endif
+} // namespace tengu
