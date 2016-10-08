@@ -213,9 +213,9 @@ struct test_file_4_t: public test_t {
     }
 };
 
-static std::array<register_t*, 4> reg_test = {
-    register_t::test<test_file_1_t>(),
-    register_t::test<test_file_2_t>(),
-    register_t::test<test_file_3_t>(),
-    register_t::test<test_file_4_t>()
+static std::array<test_lib::register_t*, 4> reg_test = {
+    test_lib::register_t::test<test_file_1_t>(),
+    test_lib::register_t::test<test_file_2_t>(),
+    test_lib::register_t::test<test_file_3_t>(),
+    test_lib::register_t::test<test_file_4_t>()
 };
