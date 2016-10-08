@@ -8,6 +8,10 @@
 #include "../lib_vst/utility.h"
 #include "../../framework_audio/source/chip/source_chip.h"
 
+/* todo:
+ *  add SDL GUI
+ */
+
 namespace {
 enum {
     e_gain,

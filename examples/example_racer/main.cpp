@@ -1,4 +1,5 @@
 #include "common.h"
+#include "../../framework_core/mat2.h"
 
 using namespace tengu;
 
@@ -15,10 +16,11 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
     draw_ex_t & draw_;
     bitmap_t sprite_;
     vec2f_t pos_;
-
     float rot_;
 
-    void draw_car(uint32_t car, const vec2f_t & pos) {
+    tengu::mat2f_t mat;
+
+    void draw(uint32_t car, const vec2f_t & pos) {
         assert(sprite_.valid());
         blit_info_ex_t info;
         info.bitmap_ = &sprite_;
@@ -40,8 +42,8 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
     }
 
     virtual void tick() override {
-        draw_car(0, vec2f_t{ 50, 60});
-        draw_car(1, vec2f_t{110, 60});
+        draw(0, vec2f_t{ 50, 60});
+        draw(1, vec2f_t{110, 60});
         // advance the rotation
         rot_ += 0.1f;
         if (rot_>C_2PI) rot_ -= C_2PI;
