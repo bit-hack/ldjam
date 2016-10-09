@@ -8,7 +8,9 @@ set(SOURCE_FILES
     draw.cpp
     draw.h
     bitmap.cpp
-    bitmap.h)
+    bitmap.h
+    text_buffer.h
+    text_buffer.cpp)
 
 add_library(framework_draw ${SOURCE_FILES})
 

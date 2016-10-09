@@ -5,6 +5,7 @@
 #include "../framework_core/vec2.h"
 #include "../framework_core/vec3.h"
 #include "../framework_core/rect.h"
+#include "../framework_core/mat2.h"
 #include "bitmap.h"
 
 namespace tengu {
@@ -33,7 +34,7 @@ struct blit_info_ex_t {
     vec2f_t dst_pos_;
     recti_t src_rect_;
     blit_type_t type_;
-    std::array<float, 4> matrix_;
+    mat2f_t matrix_;
 };
 
 struct font_t {
@@ -47,6 +48,7 @@ struct tilemap_t {
     vec2i_t map_size_;
     vec2i_t cell_size_;
     uint8_t * cells_;
+    uint8_t * attrib_;
     bitmap_t * bitmap_;
     blit_type_t type_;
 };
@@ -82,7 +84,7 @@ struct draw_t {
 
     void blit(const blit_info_ex_t & info);
 
-    void blit(const tilemap_t & tiles, vec2i_t & p);
+    void blit(const tilemap_t & tiles, const vec2i_t & p);
 
     void set_target(struct bitmap_t &);
 
@@ -200,6 +202,11 @@ public:
         blit_info_ex_t info_b = info;
         info_b.dst_pos_ = select<C_OFFSET>(info.dst_pos_);
         draw_.blit(info_b);
+    }
+
+    template <bool C_OFFSET=true>
+    void blit(const tilemap_t & tiles, const vec2i_t & p) {
+        draw_.blit(tiles, select<C_OFFSET>(p));
     }
 
     draw_t & draw_;
