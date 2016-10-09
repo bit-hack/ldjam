@@ -606,7 +606,7 @@ void draw_t::printf(const font_t & font,
 }
 
 // tilemap blit function
-void draw_t::blit(const tilemap_t & tiles, vec2i_t & p) {
+void draw_t::blit(const tilemap_t & tiles, const vec2i_t & p) {
     // cell size
     const int32_t cell_w = tiles.cell_size_.x;
     const int32_t cell_h = tiles.cell_size_.y;

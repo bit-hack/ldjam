@@ -10,13 +10,13 @@ namespace tengu {
             float (*cos_t)(float)>
     struct mat2_t {
 
-        type_t e[4];
+        std::array<type_t, 4> e;
 
-        // scale in principal axies
-        mat2_t scale(float x, float y) const {
+        mat2_t scale(float x, float y,
+                     float tx = 1.f, float ty = 1.f) const {
             return mat2_t {
-                e[0] * x, e[1] * y,
-                e[2] * x, e[3] * y
+                e[0] * x * tx, e[1] * y * tx,
+                e[2] * x * ty, e[3] * y * ty
             };
         }
 
@@ -62,8 +62,8 @@ namespace tengu {
         static mat2_t rotate(type_t angle) {
             const type_t s = sin_t(angle), c = cos_t(angle);
             return mat2_t{
-                 s, c,
-                -c, s
+                 c,-s,
+                 s, c
             };
         }
 
@@ -79,9 +79,10 @@ namespace tengu {
         // transform vector
         template<typename vec_t>
         vec_t transform(const vec_t &v) const {
+            const mat2_t i = invert();
             return vec_t{
-                v.x * e[0] + v.y * e[1],
-                v.x * e[2] + v.y * e[3]
+                 v.x * i.e[0] + v.y * i.e[2],
+                 v.x * i.e[1] + v.y * i.e[3]
             };
         }
     };

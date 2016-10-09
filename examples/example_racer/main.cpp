@@ -17,7 +17,6 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
     bitmap_t sprite_;
     vec2f_t pos_;
     float rot_;
-
     tengu::mat2f_t mat;
 
     void draw(uint32_t car, const vec2f_t & pos) {
@@ -28,11 +27,13 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
         info.src_rect_ = recti_t(0, car * 16, 15, 15, recti_t::e_relative);
         info.type_ = e_blit_key;
         float scale = 0.8f;
-        auto & m = info.matrix_;
-        m[0] = scale * cosf(rot_) * 1.2;
-        m[1] = scale *-sinf(rot_);
-        m[2] = scale * sinf(rot_) * 2.f * 1.2;
-        m[3] = scale * cosf(rot_) * 2.f;
+
+        info.matrix_ = mat2f_t::rotate(rot_).scale(scale*1.2f, scale, 1.f, 2.0f);
+
+        vec2f_t p = info.matrix_.transform(vec2f_t{16.f, 0.f});
+        draw_.colour_ = 0x446688;
+        draw_.line(pos+p, pos);
+
         for (int i = 0; i<8; ++i) {
             draw_.key_ = 0x00D77BBA;
             draw_.blit<true>(info);
