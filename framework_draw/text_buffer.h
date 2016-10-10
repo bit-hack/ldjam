@@ -24,7 +24,11 @@ struct text_buffer_t {
 
     void print(const char * fmt, ...);
 
-    void border(recti_t & rect);
+    void copy(const recti_t & src, const recti_t & dst);
+
+    void border(const recti_t & rect);
+
+    void scroll(const vec2i_t & delta);
 
     const vec2i_t & size() const {
         return size_;

@@ -51,7 +51,7 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
     }
 
     void init(int dummy) {
-        bitmap_t::load("assets/car.bmp", sprite_);
+        sprite_.load("assets/car.bmp");
     }
 };
 
@@ -95,7 +95,7 @@ struct app_t {
         if (!screen_) {
             return false;
         }
-        if (!bitmap_t::create(C_WIDTH, C_HEIGHT, target_)) {
+        if (!target_.create(vec2i_t{C_WIDTH, C_HEIGHT})) {
             return false;
         }
         if (!target_.valid()) {

@@ -5,16 +5,16 @@
 
 #include "../framework_core/buffer.h"
 #include "../framework_core/rect.h"
+#include "../framework_core/vec2.h"
 
 namespace tengu {
 struct bitmap_t {
 
-    static bool create(const uint32_t width,
-                       const uint32_t height,
-                       bitmap_t & out);
+    bool create(const vec2i_t & size);
 
-    static bool load(const char * path,
-                     bitmap_t & out);
+    bool load(const char * path);
+
+    bool free();
 
     // todo: load from memory
 
@@ -36,7 +36,7 @@ struct bitmap_t {
         return pix;
     }
 
-    void colour_key(uint32_t key);
+    void colour_key(const uint32_t key);
 
     bool valid() const {
         return pix_.size()&&pix_.get()!=nullptr;

@@ -34,7 +34,7 @@ bool init() {
     if (!screen_) {
         return false;
     }
-    if (!bitmap_t::create(320, 240, bitmap_)) {
+    if (!bitmap_.create(vec2i_t{320, 240})) {
         return false;
     }
     if (!bitmap_.valid()) {
@@ -99,7 +99,7 @@ void test_plot() {
 
 void test_blit() {
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+        if (!sprite_.load("assets/sprite1.bmp")) {
             return;
         }
     }
@@ -121,7 +121,7 @@ void test_blit() {
 
 void test_rotosprite() {
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+        if (!sprite_.load("assets/sprite1.bmp")) {
             return;
         }
     }
@@ -148,7 +148,7 @@ void test_rotosprite() {
 
 void test_rotosprite_2() {
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+        if (!sprite_.load("assets/sprite1.bmp")) {
             return;
         }
     }
@@ -184,7 +184,7 @@ void test_rotosprite_2() {
 
 void test_rotosprite_3() {
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+        if (!sprite_.load("assets/sprite1.bmp")) {
             return;
         }
     }
@@ -222,7 +222,7 @@ void test_rotosprite_3() {
 void test_blit_clip() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!sprite_.valid()) {
-        if (!bitmap_t::load("assets/sprite1.bmp", sprite_)) {
+        if (!sprite_.load("assets/sprite1.bmp")) {
             return;
         }
     }
@@ -246,7 +246,7 @@ void test_blit_clip() {
 void test_font() {
     draw_.viewport(recti_t {32, 32, 320-32, 240-32});
     if (!font_.valid()) {
-        if (!bitmap_t::load("assets/font.bmp", font_)) {
+        if (!font_.load("assets/font.bmp")) {
             return;
         }
     }
@@ -285,7 +285,7 @@ void test_triangle() {
 
 void test_tilemap() {
     if (!font_.valid()) {
-        if (!bitmap_t::load("assets/font.bmp", font_)) {
+        if (!font_.load("assets/font.bmp")) {
             return;
         }
     }
@@ -313,6 +313,7 @@ void test_tilemap() {
         vec2i_t { _WIDTH, _HEIGHT },
         vec2i_t { 9, 14 },
         tdata.data(),
+        nullptr,
         &font_,
         e_blit_opaque
     };

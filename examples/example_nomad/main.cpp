@@ -205,7 +205,7 @@ struct app_t {
             return false;
         }
         // create a render target
-        if (!bitmap_t::create(_WIDTH, _HEIGHT, target_)) {
+        if (!target_.create(vec2i_t{_WIDTH, _HEIGHT})) {
             return false;
         }
         if (!target_.valid()) {

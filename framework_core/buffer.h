@@ -41,7 +41,7 @@ struct buffer_t {
         data_.reset(mem.release());
     }
 
-    void clear() {
+    void free() {
         data_.reset();
         size_ = 0;
     }

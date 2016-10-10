@@ -39,7 +39,13 @@ void text_buffer_t::print(const char * fmt, ...) {
     va_end(va);
 }
 
-void text_buffer_t::border(recti_t & rect) {
+void text_buffer_t::copy(const recti_t & src, const recti_t & dst) {
+}
+
+void text_buffer_t::border(const recti_t & rect) {
+}
+
+void text_buffer_t::scroll(const vec2i_t & delta) {
 }
 
 } // namespace tengu

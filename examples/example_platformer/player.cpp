@@ -29,7 +29,7 @@ player_anim_t::player_anim_t()
     // set to stand by default
     controller_.push_sequence(&run_);
     // load the sprite sheet
-    bitmap_t::load("assets/ninja.bmp", bitmap_);
+    bitmap_.load("assets/ninja.bmp");
 }
 
 bool player_anim_t::event_foot_fall() {
