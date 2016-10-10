@@ -55,7 +55,7 @@ struct app_t {
         if (!screen_) {
             return false;
         }
-        if (!bitmap_t::create(C_WIDTH, C_HEIGHT, target_)) {
+        if (!target_.create(vec2i_t{C_WIDTH, C_HEIGHT})) {
             return false;
         }
         if (!target_.valid()) {

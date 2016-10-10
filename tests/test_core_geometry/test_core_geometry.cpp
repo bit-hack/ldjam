@@ -33,7 +33,7 @@ bool init() {
     if (!screen_) {
         return false;
     }
-    if (!bitmap_t::create(320, 240, target_)) {
+    if (!target_.create(vec2i_t{320, 240})) {
         return false;
     }
     if (!target_.valid()) {

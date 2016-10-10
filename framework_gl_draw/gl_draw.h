@@ -1,52 +1,76 @@
 #pragma once
 #include <vector>
+#include <map>
+#include <SDL/SDL_opengl.h>
 
 #include "../framework_core/vec2.h"
 #include "../framework_core/vec3.h"
 #include "../framework_core/rect.h"
 #include "../framework_core/buffer.h"
+#include "../framework_core/mat2.h"
+#include "../framework_draw/bitmap.h"
 
 namespace tengu {
+template <typename type_t>
 struct mat4_t {
-    float e[4*4];
+    std::array<type_t, 16> e_;
 };
 
+typedef mat4_t<float> mat4f_t;
+
 struct gl_texture_t {
-    bool load(const char *);
-    bool save(const char *);
-
-    void copy_from(struct bitmap_t *);
-    void copy_to(struct bitmap_t *);
-
-    void update(struct bitmap_t *,
-                const vec2i_t & src,
-                const vec2i_t & dst,
-                const vec2i_t & size);
+    bool copy_from(struct bitmap_t &, const rectf_t & src);
+    bool copy_to(struct bitmap_t &, const rectf_t & dst);
+protected:
+    int32_t id_;
 };
 
 struct gl_shader_t {
-    bool load(const char *);
+    bool load(const buffer_t & vert,
+              const buffer_t & frag);
+
+    bool bind(const char * name, gl_texture_t & val) {
+        return false;
+    }
+
+    bool bind(const char * name, mat4f_t & val);
+    bool bind(const char * name, mat2f_t & val);
+    bool bind(const char * name, vec3f_t & val);
+    bool bind(const char * name, vec2f_t & val);
+    bool bind(const char * name, float & val);
+
 protected:
-    tengu::buffer_t vert_;
-    tengu::buffer_t frag_;
+    int32_t program_;
 };
 
-struct gl_mesh_t {
-    bool load(const char *);
-protected:
-    std::vector<vec3f_t> pos_;
-    std::vector<vec3f_t> rgb_;
-    std::vector<vec2f_t> uv_;
+struct gl_quad_info_t {
+    rectf_t frame_;
+    vec3f_t pos_;
+    mat2f_t mat_;
 };
 
 struct gl_draw_t {
-    bool bind(gl_texture_t & texture);
+
+    gl_draw_t(const vec2i_t & size);
+    ~gl_draw_t();
+
+    bool clear();
     bool bind(gl_shader_t & shader);
-
-    bool draw(gl_mesh_t & mesh);
-
+    bool quad(gl_quad_info_t & quad);
+    bool line(const vec2f_t & a, const vec2f_t & b);
+    bool rect(const rectf_t & rect);
     bool copy_rect(const recti_t & rect, gl_texture_t & dst);
+    bool present();
+    bool viewport(const rectf_t & rect);
 
-    void present();
+protected:
+    bool dispatch_();
+
+    std::vector<float> tris_;
+    std::vector<float> uv_;
+    gl_texture_t * texture_;
+    gl_shader_t * shader_;
+//    mat4_t mat_;
+    rectf_t viewport_;
 };
 } // namespace tengu

@@ -159,7 +159,7 @@ struct app_t {
             return false;
         }
         // create a render target
-        if (!bitmap_t::create(_WIDTH, _HEIGHT, target_)) {
+        if (!target_.create(vec2i_t{_WIDTH, _HEIGHT})) {
             return false;
         }
         if (!target_.valid()) {
@@ -172,7 +172,7 @@ struct app_t {
         timer_.func_ = SDL_GetTicks;
         timer_.reset();
         //
-        if (!bitmap_t::load("assets/font.bmp", service_.font_)) {
+        if (!service_.font_.load("assets/font.bmp")) {
             return false;
         }
         return true;

@@ -25,7 +25,7 @@ struct app_t {
             return false;
         w_ = w;
         h_ = h;
-        if (!bitmap_t::create(w, h, target_)) {
+        if (!target_.create(vec2i_t{w, h})) {
             return false;
         }
         draw_.set_target(target_);

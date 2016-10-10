@@ -78,7 +78,7 @@ bool init() {
     if (!screen_) {
         return false;
     }
-    if (!tengu::bitmap_t::create(640, 480, target_)) {
+    if (!target_.create(vec2i_t{640, 480})) {
         return false;
     }
     if (!target_.valid()) {

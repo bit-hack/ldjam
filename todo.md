@@ -1,3 +1,9 @@
+## Worklog
+
+Mon Oct 10 2016
+- Work on GL draw for 2D quads
+- added colourkey -> alpha for bitmap_t
+
 ## Todo
 
 ##### framework
