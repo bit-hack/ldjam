@@ -1,7 +1,32 @@
 #include <array>
 #include <SDL/SDL.h>
 
+#include "../../external/glee/GLee.h"
 #include "../../framework_gl_draw/gl_draw.h"
+
+const char vshad[] = R"(
+attribute vec4 vPosition;
+attribute vec3 vNormal;
+attribute vec2 vTexCoord;
+uniform mat4 vTransform;
+uniform mat4 vProj;
+varying vec3 sNormal;
+varying vec2 sUV;
+void main() {
+    sUV =  vTexCoord;
+    gl_Position = (vPosition * vTransform) * vProj;
+    sNormal = vNormal;
+})";
+
+const char fshad[] = R"(
+uniform sampler2D tex0;
+varying vec3 sNormal;
+varying vec2 sUV;
+void main() {
+    // stored as rgba
+    float flux = sNormal.z * .5 + .5;
+    gl_FragColor = vec4( sNormal.xyz, 0.0f );
+})";
 
 namespace {
     SDL_Surface * screen_;
@@ -11,7 +36,7 @@ bool init() {
     if (SDL_Init(SDL_INIT_VIDEO)) {
         return false;
     }
-    screen_ = SDL_SetVideoMode(320*2, 240*2, 32, SDL_OPENGL);
+    screen_ = SDL_SetVideoMode(640, 480, 32, SDL_OPENGL);
     if (!screen_) {
         return false;
     }
@@ -70,11 +95,20 @@ struct main_t {
         if (!init()) {
             return 1;
         }
+
+        tengu::buffer_t vs(vshad, sizeof(vshad));
+        tengu::buffer_t fs(fshad, sizeof(fshad));
+
+        tengu::gl_shader_t shader;
+        shader.load(vs, fs);
+
         while (active_) {
             tick_events();
             if (!pause_) {
                 const auto test = tests[test_ % tests.size()];
                 test.func_();
+                glClearColor(.0f, .1f, .2f, .3f);
+                glClear(GL_COLOR_BUFFER_BIT);
                 SDL_GL_SwapBuffers();
             }
             SDL_Delay(1000/25);

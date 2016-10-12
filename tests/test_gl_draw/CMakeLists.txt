@@ -12,7 +12,8 @@ set(SOURCE_FILES
 set(LIBRARIES
     framework_core 
     framework_gl_draw 
-    SDL 
+    SDL
+    glee
     ${OPENGL_LIBRARIES})
     
 add_executable(test_gl_draw ${SOURCE_FILES})

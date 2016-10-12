@@ -52,6 +52,12 @@ struct hash_t {
         a = (a^0xb55a4f09)^(a>>16);
         return a;
     }
+
+    static uint32_t string_1(const char *str) {
+        uint32_t hash = 5381, c;
+        for (; c = *str++; hash = hash * 33 + c);
+        return hash;
+    }
 };
 
 struct random_t {

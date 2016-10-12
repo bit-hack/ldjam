@@ -10,39 +10,11 @@
 #include "../framework_core/mat2.h"
 #include "../framework_draw/bitmap.h"
 
+#include "gl_mat4.h"
+#include "gl_shader.h"
+#include "gl_texture.h"
+
 namespace tengu {
-template <typename type_t>
-struct mat4_t {
-    std::array<type_t, 16> e_;
-};
-
-typedef mat4_t<float> mat4f_t;
-
-struct gl_texture_t {
-    bool copy_from(struct bitmap_t &, const rectf_t & src);
-    bool copy_to(struct bitmap_t &, const rectf_t & dst);
-protected:
-    int32_t id_;
-};
-
-struct gl_shader_t {
-    bool load(const buffer_t & vert,
-              const buffer_t & frag);
-
-    bool bind(const char * name, gl_texture_t & val) {
-        return false;
-    }
-
-    bool bind(const char * name, mat4f_t & val);
-    bool bind(const char * name, mat2f_t & val);
-    bool bind(const char * name, vec3f_t & val);
-    bool bind(const char * name, vec2f_t & val);
-    bool bind(const char * name, float & val);
-
-protected:
-    int32_t program_;
-};
-
 struct gl_quad_info_t {
     rectf_t frame_;
     vec3f_t pos_;
@@ -70,7 +42,7 @@ protected:
     std::vector<float> uv_;
     gl_texture_t * texture_;
     gl_shader_t * shader_;
-//    mat4_t mat_;
+    mat4f_t mat_;
     rectf_t viewport_;
 };
 } // namespace tengu
