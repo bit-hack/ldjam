@@ -6,7 +6,12 @@ endif()
 
 set(SOURCE_FILES
     gl_draw.cpp
-    gl_draw.h)
+    gl_draw.h
+    gl_shader.h
+    gl_texture.h
+    gl_mat4.h
+    gl_shader.cpp
+    gl_texture.cpp)
 
 add_library(framework_gl_draw ${SOURCE_FILES})
 

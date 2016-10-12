@@ -1,5 +1,12 @@
 ## Worklog
 
+Wed Oct 12 2016
+- Work to enumerate uniforms and attributes
+
+Tue Oct 11 2016
+- Make fixed vertex shader, like love2d?
+- Create uniform map that can easily be queried
+
 Mon Oct 10 2016
 - Work on GL draw for 2D quads
 - added colourkey -> alpha for bitmap_t

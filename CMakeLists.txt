@@ -14,6 +14,7 @@ add_subdirectory(framework_gl_draw)
 add_subdirectory(framework_tiles)
 add_subdirectory(framework_spatial)
 
+add_subdirectory(external)
 add_subdirectory(examples)
 add_subdirectory(games)
 add_subdirectory(tests)

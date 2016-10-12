@@ -33,6 +33,20 @@ struct buffer_t {
         , data_(std::move(buffer.data()))
     {}
 
+    explicit buffer_t(const char * src)
+        : size_(strlen(src))
+        , data_(new uint8_t[size_])
+    {
+        memcpy(data_.get(), src, size_);
+    }
+
+    explicit buffer_t(const void * src, size_t len)
+        : size_(len)
+        , data_(new uint8_t[len])
+    {
+        memcpy(data_.get(), src, size_);
+    }
+
     void resize(size_t size) {
         std::unique_ptr<uint8_t[]> mem(new uint8_t[size]);
         size_t copy_size = minv(size, size_);

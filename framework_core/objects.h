@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <cstring>
 
+#include "string.h"
+
 namespace tengu {
 struct ref_t;
 struct object_t;
@@ -286,41 +288,6 @@ struct object_ex_t: public object_t {
 };
 
 struct object_map_t {
-
-    struct const_str_t {
-
-        const_str_t(const char * str)
-            : str_(str)
-            , hash_(hash(str))
-        {
-        }
-
-        bool operator == (const const_str_t & rhs) const {
-            if (hash_==rhs.hash_) {
-                return strcmp(str_, rhs.str_)==0;
-            }
-            return false;
-        }
-
-        struct hash_t {
-            size_t operator () (const const_str_t & in) const {
-                return in.hash_;
-            }
-        };
-
-    protected:
-
-        friend struct hash_t;
-
-        static uint32_t hash(const char * str) {
-            uint32_t hash = 5381, c;
-            for (; c = *str++; hash = hash*33+c);
-            return hash;
-        }
-
-        const uint32_t hash_;
-        const char * str_;
-    };
 
     object_map_t()
         : map_()
