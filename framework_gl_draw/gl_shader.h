@@ -18,7 +18,7 @@ struct gl_shader_t {
     bool load(const buffer_t &vert,
               const buffer_t &frag);
 
-    bool bind(const char *name, gl_texture_t &val);
+    bool bind(const char *name, const uint32_t slot, gl_texture_t &val);
     bool bind(const char *name, const mat4f_t &val);
     bool bind(const char *name, const mat2f_t &val);
     bool bind(const char *name, const vec3f_t &val);

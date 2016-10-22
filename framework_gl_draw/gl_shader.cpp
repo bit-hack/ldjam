@@ -1,4 +1,6 @@
+#include <cstdint>
 #include <memory>
+
 #include "../external/glee/GLee.h"
 #include "gl_shader.h"
 #include "gl_texture.h"
@@ -88,11 +90,7 @@ bool gl_shader_t::load(
     return true;
 }
 
-bool gl_shader_t::bind(const char *name, gl_texture_t &val) {
-
-    // how to specify different slots?
-
-    const GLuint slot = 0;
+bool gl_shader_t::bind(const char *name, const uint32_t slot, gl_texture_t &val) {
     glActiveTexture(GL_TEXTURE0);
     GLint loc = glGetUniformLocation(program_, name);
     glUniform1i(loc, slot);
@@ -101,22 +99,47 @@ bool gl_shader_t::bind(const char *name, gl_texture_t &val) {
 }
 
 bool gl_shader_t::bind(const char *name, const mat4f_t &val) {
+    const auto & itt = uniforms_.find(name);
+    if (itt != uniforms_.end()) {
+        glUniformMatrix4fv(0, 1, GL_FALSE, val.e.data());
+        return true;
+    }
     return false;
 }
 
 bool gl_shader_t::bind(const char *name, const mat2f_t &val) {
+    const auto & itt = uniforms_.find(name);
+    if (itt != uniforms_.end()) {
+        glUniformMatrix2fv(0, 1, GL_FALSE, val.e.data());
+        return true;
+    }
     return false;
 }
 
 bool gl_shader_t::bind(const char *name, const vec3f_t &val) {
+    const auto & itt = uniforms_.find(name);
+    if (itt != uniforms_.end()) {
+        glUniform3f(itt->second, val.x, val.y, val.z);
+        return true;
+    }
     return false;
 }
 
 bool gl_shader_t::bind(const char *name, const vec2f_t &val) {
+    const auto & itt = uniforms_.find(name);
+    if (itt != uniforms_.end()) {
+        glUniform2f(itt->second, val.x, val.y);
+        return true;
+    }
     return false;
 }
 
 bool gl_shader_t::bind(const char *name, float &val) {
+    const auto & itt = uniforms_.find(name);
+    if (itt != uniforms_.end()) {
+        glUniform1f(itt->second, val);
+        return true;
+    }
     return false;
 }
 
@@ -171,23 +194,3 @@ void gl_shader_t::_inspect_shader() {
     }
 }
 }
-
-#if 0
-u32 cShader::getUniformId( char *name ) {
-    return glGetUniformLocation( program, name );
-    u32 error = glGetError( );
-}
-
-void cShader::setUniform( u32 id, const mat4 &data ) {
-    glUniformMatrix4fv( id, 1, GL_FALSE, data.e );
-    u32 error = glGetError( );
-}
-
-void cShader::setUniform( u32 id, const vec3 &data ) {
-}
-
-void cShader::setUniform( u32 id, const int &data ) {
-    glUniform1i( id, data );
-    u32 error = glGetError( );
-}
-#endif
