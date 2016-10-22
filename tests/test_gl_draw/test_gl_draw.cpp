@@ -6,26 +6,28 @@
 
 const char vshad[] = R"(
 attribute vec4 vPosition;
-attribute vec3 vNormal;
-attribute vec2 vTexCoord;
-uniform mat4 vTransform;
-uniform mat4 vProj;
-varying vec3 sNormal;
-varying vec2 sUV;
+//attribute vec3 vNormal;
+//attribute vec2 vTexCoord;
+//uniform mat4 vTransform;
+//uniform mat4 vProj;
+//varying vec3 sNormal;
+//varying vec2 sUV;
 void main() {
-    sUV =  vTexCoord;
-    gl_Position = (vPosition * vTransform) * vProj;
-    sNormal = vNormal;
+//    sUV =  vTexCoord;
+//    gl_Position = (vPosition * vTransform) * vProj;
+        gl_Position = vPosition;
+//    sNormal = vNormal;
 })";
 
 const char fshad[] = R"(
-uniform sampler2D tex0;
-varying vec3 sNormal;
-varying vec2 sUV;
+//uniform sampler2D tex0;
+//varying vec3 sNormal;
+//varying vec2 sUV;
 void main() {
     // stored as rgba
-    float flux = sNormal.z * .5 + .5;
-    gl_FragColor = vec4( sNormal.xyz, 0.0f );
+//    float flux = sNormal.z * .5 + .5;
+//    gl_FragColor = vec4( sNormal.xyz, 0.0f );
+    gl_FragColor = vec4( 1.f, 1.f, 1.f, 1.f );
 })";
 
 namespace {
@@ -43,27 +45,10 @@ bool init() {
     return true;
 }
 
-void test_simple() {
-}
-
-struct test_t {
-    const char * name_;
-    void (*func_)();
-};
-
-#define STRINGY(X) #X
-#define TEST(X) {STRINGY(X), X}
-
-std::array<test_t, 1> tests = {{
-    TEST(test_simple)
-}};
-
 struct main_t {
 
     main_t() 
-        : test_  (0    )
-        , pause_ (false)
-        , active_(true )
+        : active_(true )
     {
     }
 
@@ -72,15 +57,6 @@ struct main_t {
         while (SDL_PollEvent(&event)) {
 
             if (event.type==SDL_KEYDOWN) {
-                if (event.key.keysym.sym==SDLK_LEFT) {
-                    --test_;
-                }
-                if (event.key.keysym.sym==SDLK_RIGHT) {
-                    ++test_;
-                }
-                if (event.key.keysym.sym==SDLK_SPACE) {
-                    pause_ ^= true;
-                }
                 if (event.key.keysym.sym==SDLK_ESCAPE) {
                     active_ = false;
                 }
@@ -96,6 +72,11 @@ struct main_t {
             return 1;
         }
 
+        tengu::bitmap_t bmp;
+        bmp.load("/home/flipper/repos/ldjam/tests/assets/sprite1.bmp");
+        tengu::gl_texture_t texture;
+        texture.load(bmp);
+
         tengu::buffer_t vs(vshad, sizeof(vshad));
         tengu::buffer_t fs(fshad, sizeof(fshad));
 
@@ -104,21 +85,33 @@ struct main_t {
 
         while (active_) {
             tick_events();
-            if (!pause_) {
-                const auto test = tests[test_ % tests.size()];
-                test.func_();
-                glClearColor(.0f, .1f, .2f, .3f);
-                glClear(GL_COLOR_BUFFER_BIT);
-                SDL_GL_SwapBuffers();
+            glClearColor(.0f, .1f, .2f, .3f);
+            glClear(GL_COLOR_BUFFER_BIT);
+
+            glRasterPos2f(.0f, .0f);
+            glDisable(GL_CULL_FACE);
+            glDisable(GL_DEPTH_TEST);
+            glEnable(GL_TEXTURE_2D);
+            glBegin(GL_TRIANGLE_FAN);
+            glColor3i(0, 0, 0);
+            glVertex3f( 0.f, -1.f, .5f);
+            glVertex3f(-1.f, 1.f, .5f);
+            glVertex3f( 1.f, 1.f, .5f);
+            glEnd();
+
+            if (bmp.valid()) {
+                glViewport(0, 0, screen_->w, screen_->h);
+                glRasterPos2f(.5f, .5f);
+                glDrawPixels(bmp.width(), bmp.height(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, bmp.data());
             }
+
+            SDL_GL_SwapBuffers();
             SDL_Delay(1000/25);
         }
         return 0;
     }
 
-    uint32_t test_;
     bool active_;
-    bool pause_;
 };
 
 int main(int argc, char ** args) {

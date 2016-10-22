@@ -40,17 +40,36 @@ struct buffer_t {
         memcpy(data_.get(), src, size_);
     }
 
+    template <typename type_t, size_t len>
+    explicit buffer_t(const std::array<type_t, len> & in)
+        : size_(len * sizeof(type_t))
+        , data_(new uint8_t[size_])
+    {
+        memcpy(data_.get(), in.data(), size_);
+    };
+
+    template <typename type_t, size_t len>
+    explicit buffer_t(const type_t (&array_in)[len])
+        : size_(len * sizeof(type_t))
+        , data_(new uint8_t[size_])
+    {
+        memcpy(data_.get(), array_in, size_);
+    };
+
     explicit buffer_t(const void * src, size_t len)
         : size_(len)
-        , data_(new uint8_t[len])
+        , data_(new uint8_t[size_])
     {
         memcpy(data_.get(), src, size_);
     }
 
     void resize(size_t size) {
+        assert(size > 0);
         std::unique_ptr<uint8_t[]> mem(new uint8_t[size]);
         size_t copy_size = minv(size, size_);
-        memcpy(mem.get(), data_.get(), copy_size);
+        if (copy_size) {
+            memcpy(mem.get(), data_.get(), copy_size);
+        }
         size_ = size;
         data_.reset(mem.release());
     }
@@ -77,6 +96,9 @@ struct buffer_t {
     }
 
     bool save(const char * path) const {
+        if (!data_) {
+            return false;
+        }
         file_writer_t file;
         if (!file.open(path)) {
             return false;
@@ -89,17 +111,19 @@ struct buffer_t {
     }
 
     uint8_t * data() {
-        assert(data_.get());
+        assert(data_);
         return data_.get();
     }
 
     const uint8_t * data() const {
-        assert(data_.get());
+        assert(data_);
         return data_.get();
     }
 
     void fill(const uint8_t value) {
-        memset(data_.get(), value, size_);
+        if (size_ && data_) {
+            memset(data_.get(), value, size_);
+        }
     }
 
     void copy_from(uint8_t * src, size_t dst, size_t size) {

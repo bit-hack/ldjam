@@ -10,7 +10,8 @@ set(SOURCE_FILES
     test_gl_draw.cpp)
 
 set(LIBRARIES
-    framework_core 
+    framework_core
+    framework_draw
     framework_gl_draw 
     SDL
     glee

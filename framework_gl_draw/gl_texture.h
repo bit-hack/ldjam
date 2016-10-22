@@ -6,11 +6,17 @@ namespace tengu {
 struct bitmap_t;
 
 struct gl_texture_t {
-    bool copy_from(const bitmap_t &, const rectf_t & src);
+    gl_texture_t();
+    ~gl_texture_t();
 
-    bool copy_to(bitmap_t &, const rectf_t &dst);
+    bool load(const bitmap_t &);
+    bool store(bitmap_t &);
+
+    bool copy_from(const rectf_t &dst);
+
+    void release();
 
 protected:
-    int32_t id_;
+    uint32_t id_;
 };
 } // namespace tengu
