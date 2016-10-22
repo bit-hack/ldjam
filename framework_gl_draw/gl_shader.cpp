@@ -90,12 +90,16 @@ bool gl_shader_t::load(
     return true;
 }
 
-bool gl_shader_t::bind(const char *name, const uint32_t slot, gl_texture_t &val) {
+bool gl_shader_t::bind(const char *name, const gl_texture_t &val, const uint32_t slot) {
     glActiveTexture(GL_TEXTURE0);
     GLint loc = glGetUniformLocation(program_, name);
-    glUniform1i(loc, slot);
-    glBindTexture(loc, slot);
-    return true;
+    if (loc!=GL_INVALID_VALUE) {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(loc, slot);
+        glUniform1i(loc, slot);
+        return true;
+    }
+    return false;
 }
 
 bool gl_shader_t::bind(const char *name, const mat4f_t &val) {
@@ -143,14 +147,11 @@ bool gl_shader_t::bind(const char *name, float &val) {
     return false;
 }
 
-void gl_shader_t::activate() {
-    assert(program_);
-    glUseProgram(program_);
-}
-
 void gl_shader_t::_inspect_shader() {
     using namespace tengu;
-
+    if (program_==GL_INVALID_VALUE) {
+        return;
+    }
     glUseProgram(program_);
     // enumerate uniforms
     {
@@ -193,4 +194,43 @@ void gl_shader_t::_inspect_shader() {
         }
     }
 }
+
+gl_shader_t::operator bool() const {
+    return program_!=GL_INVALID_VALUE;
 }
+
+gl_shader_t::gl_shader_t()
+    : program_(GL_INVALID_VALUE)
+    , vert_(GL_INVALID_VALUE)
+    , frag_(GL_INVALID_VALUE)
+{
+}
+
+gl_shader_t::~gl_shader_t() {
+    release();
+}
+
+void gl_shader_t::release() {
+    // delete vertex shader
+    if (vert_!=GL_INVALID_VALUE) {
+        if (glIsShader(vert_)) {
+            glDeleteShader(vert_);
+        }
+        vert_ = GL_INVALID_VALUE;
+    }
+    // delete fragment shader
+    if (frag_!=GL_INVALID_VALUE) {
+        if (glIsShader(frag_)) {
+            glDeleteShader(frag_);
+        }
+        frag_ = GL_INVALID_VALUE;
+    }
+    // delete linked program
+    if (program_!=GL_INVALID_VALUE) {
+        if (glIsProgram(program_)) {
+            glDeleteProgram(program_);
+        }
+        program_ = GL_INVALID_VALUE;
+    }
+}
+} // tengu

@@ -1,33 +1,24 @@
 #include <array>
 #include <SDL/SDL.h>
 
+#include "../../framework_core/vec2.h"
 #include "../../external/glee/GLee.h"
 #include "../../framework_gl_draw/gl_draw.h"
 
 const char vshad[] = R"(
-attribute vec4 vPosition;
-//attribute vec3 vNormal;
-//attribute vec2 vTexCoord;
-//uniform mat4 vTransform;
-//uniform mat4 vProj;
-//varying vec3 sNormal;
-//varying vec2 sUV;
+attribute vec4 pos;
+attribute vec2 tex;
+varying vec2 tex_out;
 void main() {
-//    sUV =  vTexCoord;
-//    gl_Position = (vPosition * vTransform) * vProj;
-        gl_Position = vPosition;
-//    sNormal = vNormal;
+    tex_out =  tex;
+    gl_Position = pos;
 })";
 
 const char fshad[] = R"(
-//uniform sampler2D tex0;
-//varying vec3 sNormal;
-//varying vec2 sUV;
+varying vec2 tex_out;
+uniform sampler2D texture1;
 void main() {
-    // stored as rgba
-//    float flux = sNormal.z * .5 + .5;
-//    gl_FragColor = vec4( sNormal.xyz, 0.0f );
-    gl_FragColor = vec4( 1.f, 1.f, 1.f, 1.f );
+    gl_FragColor = texture(texture1, tex_out);
 })";
 
 namespace {
@@ -72,39 +63,30 @@ struct main_t {
             return 1;
         }
 
+        tengu::gl_draw_t draw(tengu::vec2i_t{screen_->w, screen_->h});
+
         tengu::bitmap_t bmp;
-        bmp.load("/home/flipper/repos/ldjam/tests/assets/sprite1.bmp");
+        bmp.load("D:/projects/ldjam/tests/assets/sprite1.bmp");
         tengu::gl_texture_t texture;
         texture.load(bmp);
 
-        tengu::buffer_t vs(vshad, sizeof(vshad));
-        tengu::buffer_t fs(fshad, sizeof(fshad));
+        tengu::buffer_t vs(vshad), fs(fshad);
 
         tengu::gl_shader_t shader;
-        shader.load(vs, fs);
+        if (!shader.load(vs, fs)) {
+            return -1;
+        }
+
+        draw.bind(shader);
+
+        shader.bind("texture1", texture, 0);
 
         while (active_) {
             tick_events();
-            glClearColor(.0f, .1f, .2f, .3f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
-            glRasterPos2f(.0f, .0f);
-            glDisable(GL_CULL_FACE);
-            glDisable(GL_DEPTH_TEST);
-            glEnable(GL_TEXTURE_2D);
-            glBegin(GL_TRIANGLE_FAN);
-            glColor3i(0, 0, 0);
-            glVertex3f( 0.f, -1.f, .5f);
-            glVertex3f(-1.f, 1.f, .5f);
-            glVertex3f( 1.f, 1.f, .5f);
-            glEnd();
-
-            if (bmp.valid()) {
-                glViewport(0, 0, screen_->w, screen_->h);
-                glRasterPos2f(.5f, .5f);
-                glDrawPixels(bmp.width(), bmp.height(), GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, bmp.data());
-            }
-
+            draw.clear();
+            tengu::gl_quad_info_t info;
+            draw.quad(info);
+            draw.present();
             SDL_GL_SwapBuffers();
             SDL_Delay(1000/25);
         }

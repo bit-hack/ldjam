@@ -56,7 +56,7 @@ bool gl_texture_t::store(bitmap_t & out) {
 //  glReadPixels(0, 0, out.width(), out.height(), GL_RGBA, GL_UNSIGNED_BYTE, out.data());
     return false;
 }
-
+    
 bool gl_texture_t::copy_from(const rectf_t &dst) {
 
     if (id_ == GL_INVALID_VALUE) {
@@ -72,5 +72,9 @@ bool gl_texture_t::copy_from(const rectf_t &dst) {
                      dst.height(),
                      0);
     return true;
+}
+
+gl_texture_t::operator bool () const {
+    return id_!=GL_INVALID_VALUE;
 }
 } // namespace tengu

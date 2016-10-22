@@ -16,6 +16,8 @@ struct gl_texture_t {
 
     void release();
 
+    operator bool () const;
+
 protected:
     uint32_t id_;
 };

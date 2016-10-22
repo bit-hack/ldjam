@@ -25,7 +25,7 @@ struct app_t {
             return false;
         w_ = w;
         h_ = h;
-        if (!target_.create(vec2i_t{w, h})) {
+        if (!target_.create(vec2i_t{int32_t(w), int32_t(h)})) {
             return false;
         }
         draw_.set_target(target_);

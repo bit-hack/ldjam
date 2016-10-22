@@ -15,19 +15,33 @@ struct buffer_t;
 
 struct gl_shader_t {
 
+    gl_shader_t();
+    ~gl_shader_t();
+
     bool load(const buffer_t &vert,
               const buffer_t &frag);
 
-    bool bind(const char *name, const uint32_t slot, gl_texture_t &val);
+    bool bind(const char *name, const gl_texture_t &val, const uint32_t slot);
     bool bind(const char *name, const mat4f_t &val);
     bool bind(const char *name, const mat2f_t &val);
     bool bind(const char *name, const vec3f_t &val);
     bool bind(const char *name, const vec2f_t &val);
     bool bind(const char *name, float &val);
 
-    void activate();
+    bool get_attrib_loc(const string_t & name, int32_t & out) const {
+        auto itt = attribs_.find(name);
+        if (itt!=attribs_.end()) {
+            out = itt->second;
+        }
+        return itt!=attribs_.end();
+    }
+
+    void release();
+
+    operator bool() const;
 
 protected:
+    friend struct gl_draw_t;
 
     void _inspect_shader();
 

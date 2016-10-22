@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <map>
+#include <set>
 #include <SDL/SDL_opengl.h>
 
 #include "../framework_core/vec2.h"
@@ -37,11 +38,16 @@ struct gl_draw_t {
 
 protected:
     bool dispatch_();
+    bool bind_attriute_(const int32_t loc, const int32_t count, const float * data);
 
     std::vector<float> tris_;
     std::vector<float> uv_;
+    std::vector<int32_t> index_;
+    std::set<int32_t> attrib_;
+
     gl_texture_t * texture_;
     gl_shader_t * shader_;
+
     mat4f_t mat_;
     rectf_t viewport_;
 };
