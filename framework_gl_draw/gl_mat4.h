@@ -53,7 +53,7 @@ struct mat4f_t {
 		e[0xb] = in.z;
 	}
 
-	void projection( float fovy, float aspect, float znear, float zfar ) {
+	void projection(float fovy, float aspect, float znear, float zfar) {
 		float r = (fovy / 2) * 57.295779f;
 		float deltaZ = zfar - znear;
 		float s = sinf(r);
@@ -75,6 +75,20 @@ struct mat4f_t {
 		e[0x8] = 0; e[0x9] = 0; e[0xa] = k; e[0xb] = l;
 		e[0xc] = 0; e[0xd] = 0; e[0xe] = m; e[0xf] = n;
 	}
+
+    void isometric(float xscale, float yscale) {
+        static const float sx = 2.f/xscale;
+        static const float sy = 2.f/yscale;
+        static const float cx = 0.f;
+        static const float cy =-0.5f;
+        static const float sz = 0.01f;
+        e = std::array<float, 16>{
+            +1.0f*sx, .5f*sy,  sz, 0.f,
+            -1.0f*sx, .5f*sy,  sz, 0.f,
+            +0.0f*sx, 1.f*sy, 0.f, 0.f,
+            +1.0f*cx, 1.f*cy, 0.f, 1.f,
+        };
+    }
 
 	float &operator [] (int32_t i) {
 		assert(i<e.size());

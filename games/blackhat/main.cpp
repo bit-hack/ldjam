@@ -105,7 +105,7 @@ struct object_editor_t:
         tiles.cell_size_ = vec2i_t{8, 8};
         tiles.attrib_ = buffer_.attrib_.data();
         tiles.cells_ = buffer_.cells_.data();
-        tiles.map_size_ = vec2i_t { _WIDTH, _HEIGHT };
+        tiles.map_size_ = vec2i_t { int32_t(_WIDTH), int32_t(_HEIGHT) };
 
         draw_.blit(tiles, vec2i_t{0, 0});
     }
