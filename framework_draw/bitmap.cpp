@@ -120,13 +120,12 @@ bool bitmap_t::free() {
 }
 
 void bitmap_t::colour_key(const uint32_t key) {
-    const uint32_t amask = ~0xffffff;
+    const uint32_t mask = 0xffffff;
     uint32_t * dst = pix_.get<uint32_t>();
     const uint32_t area = width_ * height_;
-    for (uint32_t i=0; i<area; ++i) {
-        *dst = (*dst&0xffffff == key) ?
-               (*dst |~amask) :
-               (*dst & amask);
+    for (uint32_t i=0; i<area; ++i, ++dst) {
+        *dst &= mask;
+        *dst |= *dst == key ? 0 : ~mask;
     }
 }
 
