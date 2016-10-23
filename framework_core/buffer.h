@@ -33,15 +33,6 @@ struct buffer_t {
         , data_(std::move(buffer.data()))
     {}
 
-#if 0
-    explicit buffer_t(const char * src)
-        : size_(strlen(src))
-        , data_(new uint8_t[size_])
-    {
-        memcpy(data_.get(), src, size_);
-    }
-#endif
-
     template <typename type_t, size_t len>
     explicit buffer_t(const std::array<type_t, len> & in)
         : size_(len * sizeof(type_t))
@@ -115,6 +106,14 @@ struct buffer_t {
     uint8_t * data() {
         assert(data_);
         return data_.get();
+    }
+
+    bool empty() const {
+        return data()==nullptr || size_ == 0;
+    }
+
+    operator bool () const {
+        return !empty();
     }
 
     const uint8_t * data() const {
