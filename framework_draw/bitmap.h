@@ -38,6 +38,10 @@ struct bitmap_t {
 
     void colour_key(const uint32_t key);
 
+    operator bool () const {
+        return valid();
+    }
+
     bool valid() const {
         return pix_.size()&&pix_.get()!=nullptr;
     }
