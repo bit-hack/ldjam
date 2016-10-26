@@ -2,8 +2,11 @@
 #include <memory>
 
 #include "../external/glee/GLee.h"
+
 #include "gl_shader.h"
 #include "gl_texture.h"
+#include "gl_draw.h"
+
 #include "../framework_draw/bitmap.h"
 #include "../framework_core/string.h"
 #include "../framework_core/rect.h"
@@ -12,6 +15,18 @@
 #include "../framework_core/vec3.h"
 
 namespace {
+
+// default, fallback vertex shader
+const char default_vshader[] = R"(
+#version 130
+attribute vec4 pos;
+attribute vec2 tex;
+varying vec2 tex_out;
+void main() {
+    tex_out =  tex;
+    gl_Position = pos;
+})";
+
 void gl_dumpShaderError(GLuint shader) {
     GLint logSize = 0;
     glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &logSize);
@@ -41,8 +56,8 @@ bool gl_shader_t::load(
         const buffer_t &frag) {
 
     GLint status = -1;
-
-    const GLchar * vd = (const GLchar *)vert.data();
+    const GLchar * vd = vert.empty() ? (const GLchar *)default_vshader :
+                                       (const GLchar *)vert.data();
     const GLuint vsobj = glCreateShader(GL_VERTEX_SHADER);
     if (vsobj == 0) {
         return false;
@@ -199,15 +214,18 @@ gl_shader_t::operator bool() const {
     return program_!=GL_INVALID_VALUE;
 }
 
-gl_shader_t::gl_shader_t()
-    : program_(GL_INVALID_VALUE)
+gl_shader_t::gl_shader_t(gl_draw_t & draw)
+    : draw_(draw)
+    , program_(GL_INVALID_VALUE)
     , vert_(GL_INVALID_VALUE)
     , frag_(GL_INVALID_VALUE)
 {
+    draw_.shaders_.insert(this);
 }
 
 gl_shader_t::~gl_shader_t() {
     release();
+    draw_.shaders_.erase(this);
 }
 
 void gl_shader_t::release() {

@@ -1,15 +1,21 @@
 #include "../external/glee/GLee.h"
+
+#include "gl_draw.h"
 #include "gl_texture.h"
+
 #include "../framework_draw/bitmap.h"
 #include "../framework_core/rect.h"
 
 namespace tengu {
-gl_texture_t::gl_texture_t()
-    : id_(GL_INVALID_VALUE)
+gl_texture_t::gl_texture_t(gl_draw_t & draw)
+    : draw_(draw)
+    , id_(GL_INVALID_VALUE)
 {
+    draw_.textures_.insert(this);
 }
 
 gl_texture_t::~gl_texture_t() {
+    draw_.textures_.erase(this);
     release();
 }
 

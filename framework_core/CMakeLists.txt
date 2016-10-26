@@ -25,7 +25,9 @@ set(SOURCE_FILES
     thread.h
     thread.cpp
     vec2.h
-    vec3.h string.h)
+    vec3.h
+    vec4.h
+    string.h)
 
 add_library(framework_core ${SOURCE_FILES})
 

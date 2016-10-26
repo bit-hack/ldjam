@@ -4,9 +4,10 @@
 
 namespace tengu {
 struct bitmap_t;
+struct gl_draw_t;
 
 struct gl_texture_t {
-    gl_texture_t();
+    gl_texture_t(gl_draw_t &);
     ~gl_texture_t();
 
     bool load(const bitmap_t &);
@@ -19,6 +20,9 @@ struct gl_texture_t {
     operator bool () const;
 
 protected:
+    friend struct gl_draw_t;
+    gl_draw_t & draw_;
+
     uint32_t id_;
 };
 } // namespace tengu
