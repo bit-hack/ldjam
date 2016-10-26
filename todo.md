@@ -1,5 +1,8 @@
 ## Worklog
 
+Tue Oct 25 2016
+- Test out gl_draw stuffs
+
 Wed Oct 12 2016
 - Work to enumerate uniforms and attributes
 

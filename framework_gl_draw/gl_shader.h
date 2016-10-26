@@ -15,7 +15,7 @@ struct buffer_t;
 
 struct gl_shader_t {
 
-    gl_shader_t();
+    gl_shader_t(struct gl_draw_t &);
     ~gl_shader_t();
 
     bool load(const buffer_t &vert,
@@ -42,6 +42,7 @@ struct gl_shader_t {
 
 protected:
     friend struct gl_draw_t;
+    gl_draw_t & draw_;
 
     void _inspect_shader();
 
