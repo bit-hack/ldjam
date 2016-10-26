@@ -23,27 +23,35 @@ namespace tengu {
 struct gl_quad_t {
 
     gl_quad_t()
-        : frame_{0.f, 0.f,
+        : pos_{ 0.f, 0.f, 0.f}
+        , frame_{0.f, 0.f,
                  1.f, 1.f}
         , mat_{1.f, 0.f,
                0.f, 1.f}
-        , pos_{ 0.f, 0.f, 0.f}
     {
     }
 
-    gl_quad_t(const float & rot, const float scale, const vec3f_t & pos)
-            : frame_{0.f, 0.f,
+    gl_quad_t(const vec3f_t & pos, const float & rot, const float scale)
+            : pos_(pos)
+            , frame_{0.f, 0.f,
                      1.f, 1.f}
             , mat_{scale*cosf(rot), scale*-sinf(rot),
                    scale*sinf(rot), scale* cosf(rot)}
-            , pos_(pos)
     {
-
     }
 
+    gl_quad_t(const vec3f_t & pos, rectf_t frame)
+        : pos_(pos)
+        , frame_{frame.x0, frame.y0,
+                 frame.x1, frame.y1}
+        , mat_{1.f, 0.f,
+               0.f, 1.f}
+    {
+    }
+
+    vec3f_t pos_;
     rectf_t frame_;
     mat2f_t mat_;
-    vec3f_t pos_;
 };
 
 struct gl_depth_t {
@@ -164,10 +172,10 @@ struct gl_batch_quad_t {
         p[2] = xform(quad.mat_, quad.pos_, vec2f_t{-1.f,  1.f});
         p[3] = xform(quad.mat_, quad.pos_, vec2f_t{ 1.f,  1.f});
         // update tex cords
-        t[0] = vec2f_t{0.f, 0.f};
-        t[1] = vec2f_t{1.f, 0.f};
-        t[2] = vec2f_t{0.f, 1.f};
-        t[3] = vec2f_t{1.f, 1.f};
+        t[0] = vec2f_t{quad.frame_.x0, quad.frame_.y0};
+        t[1] = vec2f_t{quad.frame_.x1, quad.frame_.y0};
+        t[2] = vec2f_t{quad.frame_.x0, quad.frame_.y1};
+        t[3] = vec2f_t{quad.frame_.x1, quad.frame_.y1};
         // set indices
         i[0] = base + 0; i[1] = base + 1; i[2] = base + 2;
         i[3] = base + 1; i[4] = base + 3; i[5] = base + 2;
