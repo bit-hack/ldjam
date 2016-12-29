@@ -108,8 +108,10 @@ struct main_t {
         tengu::gl_batch_quad_t qb;
         qb.resize(2);
         // frame mat pos
-        qb.set(0, tengu::gl_quad_t(tengu::vec3f_t {0.f, 0.f, 0.f}, tengu::rectf_t{.5f, .5f, .1f, .1f}));
-        qb.set(1, tengu::gl_quad_t(tengu::vec3f_t {0.f, 0.f, 0.f}, 0.1f, 0.1f));
+        qb.set(0, tengu::gl_quad_t(tengu::vec3f_t {0.f, 0.f, 0.f},
+                                   tengu::rectf_t{.5f, .5f, .1f, .1f}));
+        qb.set(1, tengu::gl_quad_t(tengu::vec3f_t {0.f, 0.f, 0.f},
+                                   0.1f, 0.1f));
 
         while (active_) {
             tick_events();

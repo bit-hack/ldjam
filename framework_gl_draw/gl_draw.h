@@ -77,6 +77,10 @@ struct gl_vertex_t {
 
 struct gl_batch_t {
 
+    gl_batch_t()
+    {
+    }
+
     enum {
         e_line,
         e_point,
@@ -145,6 +149,8 @@ protected:
 struct gl_batch_quad_t {
 
     gl_batch_quad_t()
+        : scale_(1.f, 1.f)
+        , offset_(-1.f, -1.f)
     {
     }
 
@@ -154,8 +160,8 @@ struct gl_batch_quad_t {
 
     vec4f_t xform(const mat2f_t & m, const vec3f_t & p, const vec2f_t & in) {
         return vec4f_t {
-            p.x + in.x * m[0] + in.y * m[1],
-            p.y + in.x * m[2] + in.y * m[3],
+            offset_.x + p.x + (in.x * m[0] + in.y * m[1]) * scale_.x,
+            offset_.y + p.y + (in.x * m[2] + in.y * m[3]) * scale_.y,
             p.z,
             1.f
         };
@@ -185,7 +191,14 @@ struct gl_batch_quad_t {
         return batch_;
     }
 
+    void set_scale(vec2f_t screen) {
+        scale_ = vec2f_t{2.f / screen.x,
+                         2.f / screen.y};
+    }
+
     gl_batch_t batch_;
+    vec2f_t scale_;
+    vec2f_t offset_;
 };
 
 struct gl_draw_t {
