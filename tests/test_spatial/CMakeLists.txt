@@ -12,6 +12,10 @@ set(LIBS
     framework_draw
     framework_spatial
     SDL)
+	
+if (MSVC)
+    add_definitions(-D_SDL_main_h)
+endif()
 
 add_executable(test_spatial ${SOURCE_FILES})
 target_link_libraries(test_spatial PUBLIC ${LIBS})

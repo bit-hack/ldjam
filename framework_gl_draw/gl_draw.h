@@ -6,8 +6,6 @@
 #include <cmath>
 #include <initializer_list>
 
-#include <SDL/SDL_opengl.h>
-
 #include "../framework_core/vec2.h"
 #include "../framework_core/vec4.h"
 #include "../framework_core/rect.h"
@@ -18,6 +16,8 @@
 #include "gl_mat4.h"
 #include "gl_shader.h"
 #include "gl_texture.h"
+
+#include "../external/glee/GLee.h"
 
 namespace tengu {
 struct gl_quad_t {

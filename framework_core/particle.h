@@ -1,7 +1,7 @@
 #pragma once
 
-#include <memory>
 #include "vec2.h"
+#include <memory>
 
 struct particles_t {
 

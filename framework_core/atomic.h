@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined (_MSC_VER)
+#if defined(_MSC_VER)
 #include <intrin.h>
 #endif
 
@@ -16,36 +16,43 @@ struct atomic_t {
         : v_(0)
     {
     }
-    
+
 #if defined(_MSC_VER)
-    long inc() {
+    long inc()
+    {
         return _InterlockedIncrement(&v_);
     }
 
-    long dec() {
+    long dec()
+    {
         return _InterlockedDecrement(&v_);
     }
 
-    long xchg(const long x) {
+    long xchg(const long x)
+    {
         return _InterlockedExchange(&v_, x);
     }
 #else
-    long inc() {
+    long inc()
+    {
         return __sync_fetch_and_add(&v_, 1);
     }
 
-    long dec() {
+    long dec()
+    {
         return __sync_fetch_and_sub(&v_, 1);
     }
 
-    long xchg(const long x) {
+    long xchg(const long x)
+    {
         long o = __sync_lock_test_and_set(&v_, x);
         __sync_synchronize();
         return o;
     }
 #endif
 
-    long operator () () const {
+    long operator()() const
+    {
         return v_;
     }
 
