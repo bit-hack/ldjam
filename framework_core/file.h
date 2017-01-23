@@ -1,12 +1,12 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
-#include <vector>
 #include <cstring>
+#include <string>
+#include <vector>
 
 struct file_reader_t {
 
@@ -18,7 +18,7 @@ struct file_reader_t {
     }
 
     // constructor with open
-    explicit file_reader_t(const std::string & path)
+    explicit file_reader_t(const std::string& path)
         : file_(nullptr)
         , pos_()
         , path_()
@@ -27,7 +27,7 @@ struct file_reader_t {
     }
 
     // constructor with open
-    explicit file_reader_t(const char * path)
+    explicit file_reader_t(const char* path)
         : file_(nullptr)
         , pos_()
         , path_()
@@ -36,7 +36,7 @@ struct file_reader_t {
     }
 
     // copy constructor
-    file_reader_t(const file_reader_t & other)
+    file_reader_t(const file_reader_t& other)
     {
         if (!copy(other)) {
             close();
@@ -44,7 +44,7 @@ struct file_reader_t {
     }
 
     // move constructor
-    file_reader_t(file_reader_t && other)
+    file_reader_t(file_reader_t&& other)
         : file_(other.file_)
         , pos_(std::move(other.pos_))
         , path_(std::move(other.path_))
@@ -53,7 +53,7 @@ struct file_reader_t {
     }
 
     // assignment operator
-    void operator = (const file_reader_t & rhs)
+    void operator=(const file_reader_t& rhs)
     {
         assert(!"todo, same as copy constructor");
     }
@@ -65,7 +65,7 @@ struct file_reader_t {
     }
 
     // open file from specific path
-    bool open(const char * path)
+    bool open(const char* path)
     {
         if (file_) {
             close();
@@ -98,7 +98,7 @@ struct file_reader_t {
 
     // read type from file
     template <typename type_t>
-    bool read(type_t & out)
+    bool read(type_t& out)
     {
         return read(&out, sizeof(type_t));
     }
@@ -107,7 +107,7 @@ struct file_reader_t {
     template <typename type_t, size_t c_size>
     bool read(type_t (&out)[c_size])
     {
-        for (size_t i=0; i<c_size; ++i) {
+        for (size_t i = 0; i < c_size; ++i) {
             if (!read<type_t>(out[i])) {
                 return false;
             }
@@ -117,9 +117,9 @@ struct file_reader_t {
 
     // read c++11 array from file
     template <typename type_t, size_t c_size>
-    bool read(std::array<type_t, c_size> & out)
+    bool read(std::array<type_t, c_size>& out)
     {
-        for (type_t & item : out) {
+        for (type_t& item : out) {
             if (!read<type_t>(item)) {
                 return false;
             }
@@ -128,7 +128,7 @@ struct file_reader_t {
     }
 
     // read c string (null terminated)
-    bool read_cstr(std::string & out)
+    bool read_cstr(std::string& out)
     {
         out.clear();
         while (true) {
@@ -146,14 +146,14 @@ struct file_reader_t {
 
     // read pascal string (size type specific)
     template <typename type_t>
-    bool read_pstr(std::string & out)
+    bool read_pstr(std::string& out)
     {
         out.clear();
         type_t count = 0;
         if (!read<type_t>(count)) {
             return false;
         }
-        for (type_t i = 0; i<count; ++i) {
+        for (type_t i = 0; i < count; ++i) {
             char ch = 0;
             if (!read<char>(ch)) {
                 return false;
@@ -164,7 +164,7 @@ struct file_reader_t {
     }
 
     // read data into memory
-    bool read(void * out, size_t size)
+    bool read(void* out, size_t size)
     {
         if (file_) {
             return fread(out, size, 1, file_) == 1;
@@ -173,7 +173,8 @@ struct file_reader_t {
     }
 
     // relative seek
-    bool jump(int32_t relative) {
+    bool jump(int32_t relative)
+    {
         if (!file_) {
             return false;
         }
@@ -198,7 +199,7 @@ struct file_reader_t {
     }
 
     // get current file read position
-    bool get_pos(size_t & pos) const
+    bool get_pos(size_t& pos) const
     {
         if (file_) {
             pos = ftell(file_);
@@ -241,7 +242,7 @@ struct file_reader_t {
     }
 
     // return the source file path
-    bool get_path(std::string & out) const
+    bool get_path(std::string& out) const
     {
         if (file_) {
             out = path_;
@@ -251,7 +252,7 @@ struct file_reader_t {
     }
 
     // return the total file size in bytes
-    bool size(size_t & out) const
+    bool size(size_t& out) const
     {
         auto pos = ftell(file_);
         if (fseek(file_, 0, SEEK_END))
@@ -265,7 +266,7 @@ struct file_reader_t {
 
 protected:
     // copy another file_reader_t
-    bool copy(const file_reader_t & other)
+    bool copy(const file_reader_t& other)
     {
         // close any already open file
         close();
@@ -292,7 +293,7 @@ protected:
 
     std::string path_;
     std::vector<size_t> pos_;
-    FILE * file_;
+    FILE* file_;
 };
 
 struct file_writer_t {
@@ -304,15 +305,16 @@ struct file_writer_t {
     }
 
     // constructor with open
-    file_writer_t(const char * path) {
+    file_writer_t(const char* path)
+    {
         open(path);
     }
 
     // copy constructor
-    file_writer_t(const file_writer_t &) = delete;
+    file_writer_t(const file_writer_t&) = delete;
 
     // move constructor
-    file_writer_t(file_writer_t && other)
+    file_writer_t(file_writer_t&& other)
         : file_(other.file_)
         , path_(std::move(other.path_))
     {
@@ -320,14 +322,16 @@ struct file_writer_t {
     }
 
     // assignment operator
-    void operator = (const file_writer_t &) = delete;
+    void operator=(const file_writer_t&) = delete;
 
     // destructor
-    ~file_writer_t() {
+    ~file_writer_t()
+    {
         close();
     }
 
-    bool open(const char * path) {
+    bool open(const char* path)
+    {
         if (file_) {
             close();
         }
@@ -347,33 +351,37 @@ struct file_writer_t {
     }
 
     // close opened file handle
-    bool close() {
+    bool close()
+    {
         if (file_) {
             path_.clear();
             fclose(file_);
-            file_=nullptr;
+            file_ = nullptr;
             return true;
         }
         return false;
     }
 
     // write c-string type
-    bool write(const char * & str) {
+    bool write(const char*& str)
+    {
         size_t str_size = strlen(str);
-        return write((void*)str, str_size+1);
+        return write((void*)str, str_size + 1);
     }
 
     // write p-string type
-    template<typename type_t>
-    bool write_pstr(const char * str) {
+    template <typename type_t>
+    bool write_pstr(const char* str)
+    {
         type_t str_size = type_t(strlen(str));
         write<type_t>(str_size);
         return write((void*)str, str_size);
     }
 
     // write p-string type
-    template<typename type_t>
-    bool write_pstr(const std::string & str) {
+    template <typename type_t>
+    bool write_pstr(const std::string& str)
+    {
         type_t str_size = type_t(str.size());
         write<type_t>(str_size);
         return write((void*)str.c_str(), str_size);
@@ -381,28 +389,32 @@ struct file_writer_t {
 
     // write specific type
     template <typename type_t>
-    bool write(const type_t & in) {
+    bool write(const type_t& in)
+    {
         return write(&in, sizeof(type_t));
     }
 
     // write c++ string as cstring
-    bool write(const std::string & str) {
+    bool write(const std::string& str)
+    {
         const size_t str_size = str.size();
-        return write((void*)str.c_str(), str_size+1);
+        return write((void*)str.c_str(), str_size + 1);
     }
 
     // write anonymous memory allocation
-    bool write(const void * src, const size_t size) {
+    bool write(const void* src, const size_t size)
+    {
         if (file_) {
-            return fwrite(src, size, 1, file_)==1;
+            return fwrite(src, size, 1, file_) == 1;
         }
         return false;
     }
 
     // write c++11 style array
     template <typename type_t, size_t c_size>
-    bool write(const std::array<type_t, c_size> & array) {
-        for (auto & item:array) {
+    bool write(const std::array<type_t, c_size>& array)
+    {
+        for (auto& item : array) {
             if (!write<type_t>(item)) {
                 return false;
             }
@@ -412,8 +424,9 @@ struct file_writer_t {
 
     // write c style array
     template <typename type_t, size_t c_size>
-    bool write(const type_t(&in)[c_size]) {
-        for (size_t i = 0; i<c_size; ++i) {
+    bool write(const type_t (&in)[c_size])
+    {
+        for (size_t i = 0; i < c_size; ++i) {
             if (!write<type_t>(in[i])) {
                 return false;
             }
@@ -423,8 +436,9 @@ struct file_writer_t {
 
     // repeat output a set number of times
     template <typename type_t>
-    bool fill(const type_t & item, size_t count) {
-        for (size_t i = 0; i<count; ++i) {
+    bool fill(const type_t& item, size_t count)
+    {
+        for (size_t i = 0; i < count; ++i) {
             if (!write(item)) {
                 return false;
             }
@@ -433,12 +447,14 @@ struct file_writer_t {
     }
 
     // check if the file is open
-    bool is_open() const {
-        return file_!=nullptr;
+    bool is_open() const
+    {
+        return file_ != nullptr;
     }
 
     // return the current file size
-    bool size(size_t & out) const {
+    bool size(size_t& out) const
+    {
         if (file_) {
             out = ftell(file_);
             return true;
@@ -447,7 +463,7 @@ struct file_writer_t {
     }
 
     // return the source file path
-    bool get_path(std::string & out) const
+    bool get_path(std::string& out) const
     {
         if (file_) {
             out = path_;
@@ -458,5 +474,5 @@ struct file_writer_t {
 
 protected:
     std::string path_;
-    FILE * file_;
+    FILE* file_;
 };

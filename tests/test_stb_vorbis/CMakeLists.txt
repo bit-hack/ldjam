@@ -6,6 +6,10 @@ endif()
 
 set(SOURCE_FILES
     test_stb_vorbis.cpp)
+	
+if (MSVC)
+    add_definitions(-D_SDL_main_h)
+endif()
 
 add_executable(test_stb_vorbis ${SOURCE_FILES})
 target_link_libraries(test_stb_vorbis framework_core framework_audio SDL)

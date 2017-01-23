@@ -9,6 +9,10 @@ endif()
 set(SOURCE_FILES
     test_gl_draw.cpp)
 
+if (MSVC)
+    add_definitions(-D_SDL_main_h)
+endif()
+
 set(LIBRARIES
     framework_core
     framework_draw

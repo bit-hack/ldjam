@@ -1,5 +1,7 @@
 #pragma once
 #include <memory>
+#include <array>
+
 #include "../framework_core/vec2.h"
 #include "../framework_core/rect.h"
 

@@ -14,6 +14,10 @@ set(LIBRARIES
     framework_draw
     framework_tiles
     SDL)
+	
+if (MSVC)
+    add_definitions(-D_SDL_main_h)
+endif()
 
 add_executable(test_tiles ${SOURCE_FILES})
 target_link_libraries(test_tiles PUBLIC ${LIBRARIES})

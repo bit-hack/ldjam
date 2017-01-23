@@ -17,9 +17,9 @@ struct vec3_t {
         float x2 = val * 0.5f;
         float y = val;
         long i = *(long*)&y;
-        i = 0x5f3759df-(i>>1);
+        i = 0x5f3759df - (i >> 1);
         y = *(float*)&i;
-        y = y * (threehalfs-(x2 * y * y));
+        y = y * (threehalfs - (x2 * y * y));
         return y;
     }
 
@@ -53,16 +53,16 @@ struct vec3_t {
 
     static type_t length(const vec3_t& v)
     {
-        return sqrt(v.x * v.x+v.y * v.y+v.z * v.z);
+        return sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
     }
 
     static vec3_t normalize(const vec3_t& v)
     {
         const type_t l = length(v);
         return vec3_t{
-            v.x/l,
-            v.y/l,
-            v.z/l
+            v.x / l,
+            v.y / l,
+            v.z / l
         };
     }
 
@@ -71,9 +71,9 @@ struct vec3_t {
         const vec3_t& b)
     {
         return vec3_t{
-            a.y * b.z-a.z * b.y,
-            a.z * b.x-a.x * b.z,
-            a.x * b.y-a.y * b.x
+            a.y * b.z - a.z * b.y,
+            a.z * b.x - a.x * b.z,
+            a.x * b.y - a.y * b.x
         };
     }
 
@@ -81,7 +81,7 @@ struct vec3_t {
         const vec3_t& a,
         const vec3_t& b)
     {
-        return length(b-a);
+        return length(b - a);
     }
 
     static vec3_t zero()
@@ -98,7 +98,7 @@ struct vec3_t {
     {
         const type_t vu = v * u;
         const type_t uu = u * u;
-        return u * (vu/uu);
+        return u * (vu / uu);
     }
 
     static vec3_t rotate_z(
@@ -108,14 +108,15 @@ struct vec3_t {
         const type_t s = sinf(angle);
         const type_t c = cosf(angle);
         return vec3_t{
-            c * x.x+s * x.y,
-            c * x.y-s * x.x,
+            c * x.x + s * x.y,
+            c * x.y - s * x.x,
             x.z
         };
     }
 
     template <typename other_t>
-    static vec3_t cast(const vec3_t<other_t> & a) {
+    static vec3_t cast(const vec3_t<other_t>& a)
+    {
         return vec3_t{
             type_t(a.x),
             type_t(a.y),
@@ -128,7 +129,7 @@ struct vec3_t {
         const vec3_t& b,
         const type_t i)
     {
-        return a+(b-a) * i;
+        return a + (b - a) * i;
     }
 };
 
@@ -140,9 +141,9 @@ vec3_t<type_t> operator+(
     const vec3_t<type_t>& b)
 {
     return vec3_t<type_t>{
-        a.x+b.x,
-            a.y+b.y,
-            a.z+b.z
+        a.x + b.x,
+        a.y + b.y,
+        a.z + b.z
     };
 }
 
@@ -152,9 +153,9 @@ vec3_t<type_t> operator-(
     const vec3_t<type_t>& b)
 {
     return vec3_t<type_t>{
-        a.x-b.x,
-            a.y-b.y,
-            a.z-b.z
+        a.x - b.x,
+        a.y - b.y,
+        a.z - b.z
     };
 }
 
@@ -163,7 +164,7 @@ type_t operator*(
     const vec3_t<type_t>& a,
     const vec3_t<type_t>& b)
 {
-    return a.x * b.x+a.y * b.y+a.z * b.z;
+    return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
 template <typename type_t>
@@ -173,8 +174,8 @@ vec3_t<type_t> operator*(
 {
     return vec3_t<type_t>{
         a.x * s,
-            a.y * s,
-            a.z * s
+        a.y * s,
+        a.z * s
     };
 }
 
@@ -185,8 +186,8 @@ vec3_t<type_t> operator*(
 {
     return vec3_t<type_t>{
         a.x * s,
-            a.y * s,
-            a.z * s
+        a.y * s,
+        a.z * s
     };
 }
 
@@ -196,9 +197,9 @@ vec3_t<type_t> operator/(
     const type_t s)
 {
     return vec3_t<type_t>{
-        a.x/s,
-            a.y/s,
-            a.z/s
+        a.x / s,
+        a.y / s,
+        a.z / s
     };
 }
 
@@ -208,8 +209,8 @@ vec3_t<type_t> operator-(
 {
     return vec3_t<type_t>{
         -a.x,
-            -a.y,
-            -a.z
+        -a.y,
+        -a.z
     };
 }
 
