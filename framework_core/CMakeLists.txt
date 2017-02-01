@@ -5,7 +5,6 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
-    atomic.h
     astar.h
     anim.h
     buffer.h
@@ -20,14 +19,15 @@ set(SOURCE_FILES
     particle.h
     random.h
     rect.h
-	registry.h
+    registry.h
     timer.h
     thread.h
     thread.cpp
     vec2.h
     vec3.h
     vec4.h
-    string.h)
+    string.h
+    lazy.h)
 
 add_library(framework_core ${SOURCE_FILES})
 

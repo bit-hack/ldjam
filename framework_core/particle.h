@@ -5,6 +5,8 @@
 
 struct particles_t {
 
+    //todo: remove hard coded particle limit
+
     particles_t(const vec2f_t pos, const size_t count)
         : count_(count)
         , centre_(pos)
@@ -15,6 +17,8 @@ struct particles_t {
     }
 
     virtual void particle_tick() = 0;
+
+    //todo: add spawn, add attractors, add repelant, add flow field
 
 protected:
     size_t count_;

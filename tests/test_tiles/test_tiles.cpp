@@ -1,76 +1,77 @@
 #include <array>
-#define _SDL_main_h
 #include <SDL/SDL.h>
 
 #include "test.h"
 
-#include "../../framework_tiles/tiles.h"
 #include "../../framework_core/random.h"
-
+#include "../../framework_tiles/tiles.h"
 #include "../../framework_draw/draw.h"
 
 using namespace tengu;
 
 namespace {
-    const int32_t _TILE_SIZE = 32;
-    const int32_t _MAP_WIDTH = 640 / _TILE_SIZE;
-    const int32_t _MAP_HEIGHT = 480 / _TILE_SIZE;
+const int32_t _TILE_SIZE = 32;
+const int32_t _MAP_WIDTH = 640 / _TILE_SIZE;
+const int32_t _MAP_HEIGHT = 480 / _TILE_SIZE;
 
-    collision_map_t map_ =
-            collision_map_t(
-                    vec2i_t{_MAP_WIDTH, _MAP_HEIGHT},
-                    vec2i_t{_TILE_SIZE, _TILE_SIZE});
+collision_map_t map_ = collision_map_t(
+    vec2i_t{ _MAP_WIDTH, _MAP_HEIGHT },
+    vec2i_t{ _TILE_SIZE, _TILE_SIZE });
 
-    SDL_Surface * screen_ = nullptr;
-    draw_t draw_;
-    bitmap_t target_;
-    random_t random_(0x12345);
-    vec2i_t point_{320/2, 240/2};
+SDL_Surface* screen_ = nullptr;
+draw_t draw_;
+bitmap_t target_;
+random_t random_(0x12345);
+vec2i_t point_{ 320 / 2, 240 / 2 };
 } // namespace {}
 
-void seed() {
+void seed()
+{
     const int32_t count = (_MAP_WIDTH * _MAP_HEIGHT) / 10;
     map_.clear(0);
-    for (int32_t i=0; i<count; ++i) {
+    for (int32_t i = 0; i < count; ++i) {
         map_.get(vec2i_t{
             random_.rand_range(0, _MAP_WIDTH),
-            random_.rand_range(0, _MAP_HEIGHT)}) = e_tile_solid;
+            random_.rand_range(0, _MAP_HEIGHT) })
+            = e_tile_solid;
     }
     map_.preprocess();
 }
 
-void draw_map() {
+void draw_map()
+{
     draw_.colour_ = 0x204060;
     draw_.clear();
-    for (int32_t y=0; y<_MAP_HEIGHT; ++y) {
-        for (int32_t x=0; x<_MAP_WIDTH; ++x) {
-            vec2i_t tp = (vec2i_t{x, y}) * _TILE_SIZE;
+    for (int32_t y = 0; y < _MAP_HEIGHT; ++y) {
+        for (int32_t x = 0; x < _MAP_WIDTH; ++x) {
+            vec2i_t tp = (vec2i_t{ x, y }) * _TILE_SIZE;
 
-            if (map_.is_solid(vec2i_t{x, y})) {
+            if (map_.is_solid(vec2i_t{ x, y })) {
                 draw_.colour_ = 0x4060A0;
                 draw_.rect(
-                        recti_t(tp.x,
-                                tp.y,
-                                _TILE_SIZE,
-                                _TILE_SIZE,
-                                recti_t::e_relative));
+                    recti_t(tp.x,
+                        tp.y,
+                        _TILE_SIZE,
+                        _TILE_SIZE,
+                        recti_t::e_relative));
             }
 
             draw_.colour_ = 0x202020;
-            uint8_t tile = map_.get(vec2i_t{x,y});
+            uint8_t tile = map_.get(vec2i_t{ x, y });
             if (tile & e_tile_push_up)
-                draw_.plot(tp + vec2i_t { 16, 2 });
+                draw_.plot(tp + vec2i_t{ 16, 2 });
             if (tile & e_tile_push_down)
-                draw_.plot(tp + vec2i_t { 16, 30 });
+                draw_.plot(tp + vec2i_t{ 16, 30 });
             if (tile & e_tile_push_left)
-                draw_.plot(tp + vec2i_t { 2,  16 });
+                draw_.plot(tp + vec2i_t{ 2, 16 });
             if (tile & e_tile_push_right)
-                draw_.plot(tp + vec2i_t { 30, 16 });
+                draw_.plot(tp + vec2i_t{ 30, 16 });
         }
     }
 }
 
-bool init() {
+bool init()
+{
     if (SDL_Init(SDL_INIT_VIDEO)) {
         return false;
     }
@@ -78,7 +79,7 @@ bool init() {
     if (!screen_) {
         return false;
     }
-    if (!target_.create(vec2i_t{640, 480})) {
+    if (!target_.create(vec2i_t{ 640, 480 })) {
         return false;
     }
     if (!target_.valid()) {
@@ -90,23 +91,24 @@ bool init() {
 }
 
 struct test_collision : public test_t {
-    virtual void tick() override {
+    virtual void tick() override
+    {
         int32_t mx, my;
         SDL_GetMouseState(&mx, &my);
         rectf_t rect{
-                mx - 24.f, my - 24.f,
-                mx + 24.f, my + 24.f
+            mx - 24.f, my - 24.f,
+            mx + 24.f, my + 24.f
         };
         draw_.colour_ = 0xD08040;
         draw_.rect(recti_t(rect));
-        vec2f_t res{0.f, 0.f};
+        vec2f_t res{ 0.f, 0.f };
         if (map_.collide(rect, res)) {
             rect.x0 += res.x;
             rect.y0 += res.y;
             rect.x1 += res.x;
             rect.y1 += res.y;
             draw_.colour_ = 0x004488;
-            draw_.rect(recti_t{16, 16, 32, 32});
+            draw_.rect(recti_t{ 16, 16, 32, 32 });
         }
         draw_.colour_ = 0x40A070;
         draw_.rect(recti_t(rect));
@@ -114,23 +116,24 @@ struct test_collision : public test_t {
 };
 
 struct test_collision_alt : public test_t {
-    virtual void tick() override {
+    virtual void tick() override
+    {
         int32_t mx, my;
         SDL_GetMouseState(&mx, &my);
         rectf_t rect{
-                mx - 24.f, my - 24.f,
-                mx + 24.f, my + 24.f
+            mx - 24.f, my - 24.f,
+            mx + 24.f, my + 24.f
         };
         draw_.colour_ = 0xD08040;
         draw_.rect(recti_t(rect));
-        vec2f_t res{0.f, 0.f};
+        vec2f_t res{ 0.f, 0.f };
         if (map_.collide_alt(rect, res)) {
             rect.x0 += res.x;
             rect.y0 += res.y;
             rect.x1 += res.x;
             rect.y1 += res.y;
             draw_.colour_ = 0x004488;
-            draw_.rect(recti_t{16, 16, 32, 32});
+            draw_.rect(recti_t{ 16, 16, 32, 32 });
         }
         draw_.colour_ = 0x40A070;
         draw_.rect(recti_t(rect));
@@ -138,21 +141,23 @@ struct test_collision_alt : public test_t {
 };
 
 struct test_collision_point : public test_t {
-    virtual void tick() override {
+    virtual void tick() override
+    {
         int32_t mx, my;
         SDL_GetMouseState(&mx, &my);
         draw_.colour_ = 0x00ff00;
         vec2f_t res;
-        if (map_.collide(vec2f_t{float(mx), float(my)}, res)) {
+        if (map_.collide(vec2f_t{ float(mx), float(my) }, res)) {
             mx += res.x;
             my += res.y;
-            draw_.circle(vec2i_t{mx, my}, 2);
+            draw_.circle(vec2i_t{ mx, my }, 2);
         }
     }
 };
 
 struct test_raycast_1 : public test_t {
-    virtual void tick() override {
+    virtual void tick() override
+    {
         vec2i_t mouse;
         int32_t b = SDL_GetMouseState(&mouse.x, &mouse.y);
         if (SDL_BUTTON(SDL_BUTTON_LEFT) & b) {
@@ -169,12 +174,13 @@ struct test_raycast_1 : public test_t {
 };
 
 struct test_raycast_2 : public test_t {
-    virtual void tick() override {
+    virtual void tick() override
+    {
         const float _STEP = .1f;
         vec2i_t mouse;
         SDL_GetMouseState(&mouse.x, &mouse.y);
         for (float i = 0; i < C_2PI; i += _STEP) {
-            vec2f_t delta{sinf(i), cosf(i)};
+            vec2f_t delta{ sinf(i), cosf(i) };
             vec2f_t targ = vec2f_t(mouse) + delta * 128.f;
             draw_.colour_ = 0xff5060;
             draw_.plot(vec2i_t(targ));
@@ -188,7 +194,8 @@ struct test_raycast_2 : public test_t {
 };
 
 struct test_line_of_sight : public test_t {
-    virtual void tick() override {
+    virtual void tick() override
+    {
         vec2i_t mouse;
         int32_t b = SDL_GetMouseState(&mouse.x, &mouse.y);
         if (SDL_BUTTON(SDL_BUTTON_LEFT) & b) {
@@ -204,17 +211,16 @@ struct test_line_of_sight : public test_t {
     }
 };
 
-std::array<test_t *, 7> tests = {{
-    new test_collision,
+std::array<test_t*, 7> tests = { { new test_collision,
     new test_collision_alt,
     new test_collision_point,
     new test_raycast_1,
     new test_raycast_2,
     new test_line_of_sight,
-    new_test_astar(draw_)
-}};
+    new_test_astar(draw_) } };
 
-int main(const int argc, char *args[]) {
+int main(const int argc, char* args[])
+{
     if (!init()) {
         return 1;
     }
@@ -228,7 +234,7 @@ int main(const int argc, char *args[]) {
                     seed();
                 }
                 if (event.key.keysym.sym == SDLK_LEFT) {
-                    if (--test_index<0) {
+                    if (--test_index < 0) {
                         test_index += int32_t(tests.size());
                     }
                 }
@@ -254,8 +260,8 @@ int main(const int argc, char *args[]) {
         const auto test = tests[test_index];
         test->tick();
 
-        for (int32_t i = 0; i<int32_t(tests.size()); ++i) {
-            draw_.colour_ = i==test_index ? 0xffffff : 0x909090;
+        for (int32_t i = 0; i < int32_t(tests.size()); ++i) {
+            draw_.colour_ = i == test_index ? 0xffffff : 0x909090;
             draw_.rect(recti_t(1 + 4 * i, 1, 3, 4, recti_t::e_relative));
         }
 
@@ -263,7 +269,7 @@ int main(const int argc, char *args[]) {
         draw_.render_1x(screen_->pixels, screen_->pitch / 4);
         SDL_Flip(screen_);
 
-        SDL_Delay(1000/25);
+        SDL_Delay(1000 / 25);
     }
     return 0;
 }
