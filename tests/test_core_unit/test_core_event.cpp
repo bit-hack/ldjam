@@ -9,7 +9,7 @@ struct local_listener_t : public event_listener_t {
 
     virtual void recieve_event(const event_t * e) {
         assert(e);
-        received_.insert(e->type_);
+        received_.insert(e->type());
     }
 
     bool has(uint32_t type) const {
@@ -23,7 +23,7 @@ struct global_listener_t: public event_listener_t {
 
     virtual void recieve_event(const event_t * e) {
         assert(e);
-        received_.insert(e->type_);
+        received_.insert(e->type());
     }
 
     bool has(uint32_t type) const {
@@ -48,7 +48,7 @@ struct test_event_t: public test_t {
         stream.add(&global);
 
         local_listener_t local;
-        uint32_t filter[] = {1, 3, 5};
+        std::array<uint32_t, 3> filter = {1, 3, 5};
         stream.add(&local, filter);
 
         for (uint32_t i = 0; i<4; ++i) {

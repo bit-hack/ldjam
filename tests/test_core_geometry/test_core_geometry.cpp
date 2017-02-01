@@ -1,5 +1,4 @@
 #include <array>
-#define _SDL_main_h
 #include <SDL/SDL.h>
 
 #include "../../framework_core/geometry.h"

@@ -39,9 +39,10 @@ struct vec2_t {
     {
     }
 
-    vec2_t(type_t a_x, type_t a_y)
-        : x(a_x)
-        , y(a_y)
+    template <typename input_t>
+    vec2_t(input_t a_x, input_t a_y)
+        : x(type_t(a_x))
+        , y(type_t(a_y))
     {
     }
 

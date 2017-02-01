@@ -1,4 +1,3 @@
-#define _SDL_main_h
 #include <SDL/SDL.h>
 #include <array>
 #include <list>

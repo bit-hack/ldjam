@@ -9,11 +9,43 @@
 #include <vector>
 
 namespace tengu {
+
+typedef uint32_t event_type_t;
+
 struct event_t {
 
-    const uint32_t type_;
+    event_t(event_type_t type)
+        : type_(type)
+    {
+    }
 
-    // <---- ---- ---- ---- ---- ---- ---- ---- ---- todo: add safe casts
+    template <typename type_t>
+    type_t& cast()
+    {
+        assert(type_t::type() == type_);
+        return *static_cast<type_t*>(this);
+    }
+
+    template <typename type_t>
+    type_t& cast() const
+    {
+        assert(type_t::type() == type_);
+        return *static_cast<const type_t*>(this);
+    }
+
+    template <typename type_t>
+    bool is_a() const
+    {
+        return type_t::type() == type_;
+    }
+
+    event_type_t type() const
+    {
+        return type_;
+    }
+
+protected:
+    const event_type_t type_;
 };
 
 struct event_listener_t {
@@ -25,10 +57,10 @@ struct event_stream_t {
 
     // add a filtered listener
     template <int SIZE>
-    void add(event_listener_t* l, const uint32_t (&filter)[SIZE])
+    void add(event_listener_t* l, const std::array<event_type_t, SIZE>& filter)
     {
         for (int i = 0; i < SIZE; ++i) {
-            const uint32_t type = filter[i];
+            const event_type_t type = filter[i];
             // push back this type
             local_[type].insert(l);
         }
@@ -42,11 +74,11 @@ struct event_stream_t {
 
     // remove a filtered listener
     template <int SIZE>
-    void remove(event_listener_t* l, const uint32_t (&filter)[SIZE])
+    void remove(event_listener_t* l, const std::array<event_type_t, SIZE>& filter)
     {
         // for each type being filtered
         for (int i = 0; i < SIZE; ++i) {
-            const uint32_t type = filter[i];
+            const event_type_t type = filter[i];
             // find it in the local map
             auto itt = local_.find(type);
             if (itt == local_.end()) {
@@ -67,6 +99,8 @@ struct event_stream_t {
         if (global_.find(l) != global_.end()) {
             global_.erase(l);
         }
+
+        //todo: remove from all locals?
     }
 
     // send a message to all eligible listeners
@@ -78,7 +112,7 @@ struct event_stream_t {
             l->recieve_event(event);
         }
         // send to any local listeners
-        auto itt = local_.find(event->type_);
+        auto itt = local_.find(event->type());
         if (itt != local_.end()) {
             const auto& vec = itt->second;
             for (auto& l : vec) {
@@ -90,7 +124,7 @@ struct event_stream_t {
 protected:
     typedef std::set<event_listener_t*> event_set_t;
 
-    std::unordered_map<uint32_t, event_set_t> local_;
+    std::unordered_map<event_type_t, event_set_t> local_;
     event_set_t global_;
 };
 } // namespace tengu

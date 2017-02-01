@@ -90,9 +90,14 @@ struct mat4f_t {
         };
     }
 
-	float &operator [] (int32_t i) {
+	float &operator [] (size_t i) {
 		assert(i<e.size());
-		return e[ i ];
+		return e[i];
+	}
+
+    const float operator [] (size_t i) const {
+		assert(i<e.size());
+		return e[i];
 	}
 
 	std::array<float, 16> e;

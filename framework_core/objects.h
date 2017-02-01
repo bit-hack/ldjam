@@ -339,18 +339,18 @@ struct object_map_t {
     {
     }
 
-    bool contains(const const_str_t& key) const
+    bool contains(const const_string_t & key) const
     {
         auto itt = map_.find(key);
         return itt != map_.end();
     }
 
-    void insert(const const_str_t& key, object_ref_t obj)
+    void insert(const const_string_t & key, object_ref_t obj)
     {
         map_[key] = obj;
     }
 
-    void remove(const const_str_t& key)
+    void remove(const const_string_t & key)
     {
         auto itt = map_.find(key);
         if (itt != map_.end()) {
@@ -358,7 +358,7 @@ struct object_map_t {
         }
     }
 
-    object_ref_t operator[](const const_str_t& key)
+    object_ref_t operator[](const const_string_t & key)
     {
         typename map_t::iterator itt = map_.find(key);
         assert(itt != map_.end());
@@ -366,10 +366,10 @@ struct object_map_t {
     }
 
 protected:
-    typedef std::unordered_map<const_str_t,
+    typedef std::unordered_map<
+        const_string_t,
         object_ref_t,
-        const_str_t::hash_t>
-        map_t;
+        const_string_t::hash_t> map_t;
     map_t map_;
 };
 } // namespace tengu

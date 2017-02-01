@@ -12,11 +12,11 @@ if (MSVC)
 endif()
 
 set(SOURCE_FILES
-    test_audio.cpp)
+    test_sdl.h
+    test_sdl.cpp)
 
-add_executable(test_audio ${SOURCE_FILES})
-target_link_libraries(test_audio PUBLIC framework_core framework_audio SDL)
+add_library(test_sdl ${SOURCE_FILES})
 
-set_target_properties(test_audio PROPERTIES
+set_target_properties(test_sdl PROPERTIES
     FOLDER tests
 )

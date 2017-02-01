@@ -21,23 +21,24 @@ struct object_car_t : object_ex_t<e_object_car, object_car_t> {
 
     void draw(uint32_t car, const vec2f_t & pos) {
         assert(sprite_.valid());
+
+        // fill out a blit info structure
         blit_info_ex_t info;
         info.bitmap_ = &sprite_;
         info.dst_pos_ = pos;
         info.src_rect_ = recti_t(0, car * 16, 15, 15, recti_t::e_relative);
         info.type_ = e_blit_key;
-        float scale = 0.8f;
-
+        const float scale = 0.8f;
         info.matrix_ = mat2f_t::rotate(rot_).scale(scale*1.2f, scale, 1.f, 2.0f);
 
-        vec2f_t p = info.matrix_.transform(vec2f_t{16.f, 0.f});
+        const vec2f_t p = info.matrix_.transform(vec2f_t{16.f, 0.f});
         draw_.colour_ = 0x446688;
         draw_.line(pos+p, pos);
 
         for (int i = 0; i<8; ++i) {
             draw_.key_ = 0x00D77BBA;
             draw_.blit<true>(info);
-            info.dst_pos_ -= vec2f_t{0, 1.f/scale};
+            info.dst_pos_ -= vec2f_t{0.f, 1.f/scale};
             info.src_rect_ = info.src_rect_ + vec2i_t{ 16, 0 };
         }
     }

@@ -22,9 +22,19 @@ const char default_vshader[] = R"(
 attribute vec4 pos;
 attribute vec2 tex;
 varying vec2 tex_out;
+uniform mat4 xform;
 void main() {
     tex_out =  tex;
-    gl_Position = pos;
+    gl_Position = pos * xform;
+})";
+
+// default, fallback fragment shader
+const char default_fshader[] = R"(
+#version 130
+varying vec2 tex_out;
+uniform sampler2D texture1;
+void main() {
+    gl_FragColor = texture(texture1, tex_out);
 })";
 
 void gl_dumpShaderError(GLuint shader)
@@ -57,7 +67,6 @@ bool gl_shader_t::load(
     const buffer_t& vert,
     const buffer_t& frag)
 {
-
     GLint status = -1;
     const GLchar* vd = vert.empty() ? (const GLchar*)default_vshader : (const GLchar*)vert.data();
     const GLuint vsobj = glCreateShader(GL_VERTEX_SHADER);
@@ -71,7 +80,7 @@ bool gl_shader_t::load(
         gl_dumpShaderError(vsobj);
         return false;
     }
-    const GLchar* fd = (const GLchar*)frag.data();
+    const GLchar* fd = frag.empty() ? (const GLchar*)default_fshader : (const GLchar*)frag.data();
     const GLuint fsobj = glCreateShader(GL_FRAGMENT_SHADER);
     if (fsobj == 0) {
         return false;
@@ -109,11 +118,16 @@ bool gl_shader_t::load(
 
 bool gl_shader_t::bind(const char* name, const gl_texture_t& val, const uint32_t slot)
 {
-    glActiveTexture(GL_TEXTURE0);
+    // todo: activate specific texture slot?
+//    glActiveTexture(GL_TEXTURE0);
     GLint loc = glGetUniformLocation(program_, name);
     if (loc != GL_INVALID_VALUE) {
+
+        //fixme: activate twice?
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(loc, slot);
+
+        // we need to bind it?
+//        glBindTexture(loc, slot);
         glUniform1i(loc, slot);
         return true;
     }
@@ -194,7 +208,7 @@ void gl_shader_t::_inspect_shader()
             glGetActiveUniform(program_, i, max_len, &written, &size, &type, buffer.get());
             // get the uniform location
             const GLint loc = glGetUniformLocation(program_, buffer.get());
-            uniforms_[string_t(buffer.get())] = loc;
+            uniforms_[const_string_t(buffer.get())] = loc;
         }
     }
     // enumerate attributes
@@ -214,7 +228,7 @@ void gl_shader_t::_inspect_shader()
             glGetActiveAttrib(program_, i, max_len, &written, &size, &type, buffer.get());
             // get the attribute location
             const GLint loc = glGetAttribLocation(program_, buffer.get());
-            attribs_[string_t(buffer.get())] = loc;
+            attribs_[const_string_t(buffer.get())] = loc;
         }
     }
 }
