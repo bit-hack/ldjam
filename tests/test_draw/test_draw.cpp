@@ -1,5 +1,8 @@
-#include <array>
+#ifndef _SDL_main_h
 #define _SDL_main_h
+#endif
+
+#include <array>
 #include <SDL/SDL.h>
 
 #include "../../framework_core/timer.h"
@@ -304,7 +307,7 @@ void test_tilemap() {
     draw_.rect(recti_t{0, 0, 320, 240});
 
     std::array<uint8_t, _WIDTH*_HEIGHT> tdata;
-    for (int i = 0; i<tdata.size(); ++i) {
+    for (size_t i = 0; i<tdata.size(); ++i) {
         auto & cell = tdata[i];
         cell = i % _WIDTH + (i / _WIDTH) + scroll_ * 10;
     }
@@ -391,7 +394,7 @@ int main(const int argc, char *args[]) {
                 test.func_();
                 //
                 draw_.viewport(recti_t {0, 0, 320, 240});
-                for (int i = 0; i<tests.size(); ++i) {
+                for (size_t i = 0; i<tests.size(); ++i) {
                     draw_.colour_ = i==test_index ? 0xffffff : 0x909090;
                     draw_.rect(recti_t(1 + 4 * i, 1, 3, 4, recti_t::e_relative));
                 }

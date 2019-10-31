@@ -7,7 +7,7 @@
 #include <vector>
 
 #include "../framework_core/buffer.h"
-#include "../framework_core/lazy.h"
+//#include "../framework_core/lazy.h"
 #include "../framework_core/mat2.h"
 #include "../framework_core/rect.h"
 #include "../framework_core/vec2.h"
@@ -91,15 +91,15 @@ struct gl_quad_t {
 
     gl_quad_t& texture(gl_texture_t* tex)
     {
-        if (tex)
-            texture_ = tex;
-        else
-            texture_.reset();
+        texture_ = nullptr;
         return *this;
     }
 
 protected:
-    tengu::lazy_t<gl_texture_t*> texture_;
+    // emit into vertex buffer
+    void emit_(vec4f_t *, vec2f_t *) const;
+
+    gl_texture_t* texture_;
     uint8_t flags_; // flags bit field
     rectf_t frame_; // texture frame
     vec3f_t pos_; // quad position
@@ -202,7 +202,7 @@ struct gl_batch_t {
         return index_.data() + index;
     }
 
-    tengu::lazy_t<gl_texture_t*> texture_;
+    gl_texture_t* texture_;
 
 protected:
     friend struct gl_draw_t;
@@ -234,7 +234,8 @@ struct gl_batch_quad_t {
     // set a specific quad in the batch
     void set(const size_t slot, const gl_quad_t& quad)
     {
-        // todo:
+        // todo: get gl_draw_t to set this for us or push that info back
+        //       into gl_quad_t an call it
     }
 
     // return the underlying batch object
@@ -252,7 +253,7 @@ struct gl_batch_quad_t {
         };
     }
 
-    tengu::lazy_t<gl_texture_t*> texture_;
+    gl_texture_t* texture_;
 
 protected:
     gl_batch_t batch_;
@@ -310,7 +311,7 @@ struct gl_draw_t {
 
     // present to the framebuffer
     bool present();
-    // sent the renderable viewport
+    // set the renderable viewport
     bool viewport(const rectf_t& rect);
     // flush all pending draw operation
     bool flush();
@@ -318,9 +319,6 @@ struct gl_draw_t {
 protected:
     friend struct gl_texture_t;
     friend struct gl_shader_t;
-
-    bool upload_transform();
-    bool bind_attriute_(const int32_t loc, const int32_t count, const float* data);
 
     struct draw_info_t {
         size_t num_vertices_;
@@ -331,8 +329,9 @@ protected:
         const gl_texture_t* texture_;
     };
 
-    bool prep_quad_(const gl_quad_t&, vec4f_t * pos, vec2f_t * tex);
-    bool draw(const draw_info_t& info);
+    bool upload_transform_();
+    bool bind_attriute_(const int32_t loc, const int32_t count, const float* data);
+    bool draw_(const draw_info_t& info);
 
     // resources
     std::set<int32_t> attrib_;

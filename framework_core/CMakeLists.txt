@@ -26,8 +26,7 @@ set(SOURCE_FILES
     vec2.h
     vec3.h
     vec4.h
-    string.h
-    lazy.h)
+)
 
 add_library(framework_core ${SOURCE_FILES})
 

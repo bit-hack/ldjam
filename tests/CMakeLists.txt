@@ -1,6 +1,5 @@
 add_subdirectory(test_audio)
 add_subdirectory(test_audio_unit)
-add_subdirectory(test_core_bsp)
 add_subdirectory(test_core_geometry)
 add_subdirectory(test_core_rand)
 add_subdirectory(test_core_unit)

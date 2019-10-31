@@ -104,10 +104,10 @@ bool gl_texture_t::copy_from(const rectf_t& dst)
     glCopyTexImage2D(GL_TEXTURE_2D,
         0,
         GL_RGB8,
-        dst.x0,
-        dst.y0,
-        dst.width(),
-        dst.height(),
+        GLint(dst.x0),
+        GLint(dst.y0),
+        GLint(dst.width()),
+        GLint(dst.height()),
         0);
     return true;
 }

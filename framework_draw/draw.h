@@ -53,6 +53,12 @@ struct tilemap_t {
     blit_type_t type_;
 };
 
+struct texture_t {
+  uint8_t *texel;
+  uint32_t w, h;
+  uint32_t channels;
+};
+
 struct draw_t {
 
     draw_t()
@@ -71,6 +77,14 @@ struct draw_t {
     void triangle(const vec2f_t & a,
                   const vec2f_t & b,
                   const vec2f_t & c);
+
+    void triangle(const vec2f_t & a,
+                  const vec2f_t & b,
+                  const vec2f_t & c,
+                  const vec2f_t& t0,
+                  const vec2f_t& t1,
+                  const vec2f_t& t2,
+                  const texture_t & tex);
 
     void line(const vec2f_t & p0,
               const vec2f_t & p1);
@@ -188,6 +202,23 @@ public:
         draw_.triangle(select<C_OFFSET>(a),
                        select<C_OFFSET>(b),
                        select<C_OFFSET>(c));
+    }
+
+    template <bool C_OFFSET = true>
+    void triangle(const vec2f_t & a,
+                  const vec2f_t & b,
+                  const vec2f_t & c,
+                  const vec2f_t& t0,
+                  const vec2f_t& t1,
+                  const vec2f_t& t2,
+                  const texture_t &tex) {
+        draw_.triangle(select<C_OFFSET>(a),
+                       select<C_OFFSET>(b),
+                       select<C_OFFSET>(c),
+                       t0,
+                       t1,
+                       t2,
+                       tex);
     }
 
     template <bool C_OFFSET = true>

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include <map>
-#include "../framework_core/string.h"
+//#include "../framework_core/string.h"
 #include "../framework_core/vec2.h"
 #include "../framework_core/vec3.h"
 #include "../framework_core/mat2.h"
@@ -34,7 +34,7 @@ struct gl_shader_t {
     bool bind(const char *name, float &val);
 
     // get the location of a shader attribute
-    bool get_attrib_loc(const const_string_t & name, int32_t & out) const {
+    bool get_attrib_loc(const std::string & name, int32_t & out) const {
         auto itt = attribs_.find(name);
         if (itt!=attribs_.end()) {
             out = itt->second;
@@ -53,8 +53,8 @@ protected:
 
     void _inspect_shader();
 
-    std::map<const_string_t, int32_t, const_string_t::compare_t> uniforms_;
-    std::map<const_string_t, int32_t, const_string_t::compare_t> attribs_;
+    std::map<std::string, int32_t> uniforms_;
+    std::map<std::string, int32_t> attribs_;
 
     uint32_t vert_, frag_;
     uint32_t program_;

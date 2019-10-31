@@ -9,7 +9,7 @@
 
 #include "../framework_core/mat2.h"
 #include "../framework_core/rect.h"
-#include "../framework_core/string.h"
+//#include "../framework_core/string.h"
 #include "../framework_core/vec2.h"
 #include "../framework_core/vec3.h"
 #include "../framework_draw/bitmap.h"
@@ -63,6 +63,30 @@ void gl_dumpProgramError(GLuint program)
 } // namespace {}
 
 namespace tengu {
+bool gl_shader_t::load() {
+
+    static const char vshad[] = R"(
+#version 130
+attribute vec4 pos;
+attribute vec2 tex;
+varying vec2 tex_out;
+uniform mat4 xform;
+void main() {
+    tex_out =  tex;
+    gl_Position = pos * xform;
+})";
+
+    static const char fshad[] = R"(
+#version 130
+varying vec2 tex_out;
+uniform sampler2D texture1;
+void main() {
+    gl_FragColor = texture(texture1, tex_out);
+})";
+
+    return load(buffer_t(vshad), buffer_t(fshad));
+}
+
 bool gl_shader_t::load(
     const buffer_t& vert,
     const buffer_t& frag)
@@ -201,14 +225,14 @@ void gl_shader_t::_inspect_shader()
         // buffer space for uniform name
         std::unique_ptr<char[]> buffer(new char[max_len]);
         // loop over uniform count
-        for (GLuint i = 0; i < count; ++i) {
+        for (GLint i = 0; i < count; ++i) {
             GLsizei written = 0;
             GLint size = 0;
             GLenum type = 0;
             glGetActiveUniform(program_, i, max_len, &written, &size, &type, buffer.get());
             // get the uniform location
             const GLint loc = glGetUniformLocation(program_, buffer.get());
-            uniforms_[const_string_t(buffer.get())] = loc;
+            uniforms_[buffer.get()] = loc;
         }
     }
     // enumerate attributes
@@ -221,14 +245,14 @@ void gl_shader_t::_inspect_shader()
         // buffer space for attribute name
         std::unique_ptr<char[]> buffer(new char[max_len]);
         // loop over attributes
-        for (GLuint i = 0; i < count; ++i) {
+        for (GLint i = 0; i < count; ++i) {
             GLsizei written = 0;
             GLint size = 0;
             GLenum type = 0;
             glGetActiveAttrib(program_, i, max_len, &written, &size, &type, buffer.get());
             // get the attribute location
             const GLint loc = glGetAttribLocation(program_, buffer.get());
-            attribs_[const_string_t(buffer.get())] = loc;
+            attribs_[buffer.get()] = loc;
         }
     }
 }

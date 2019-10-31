@@ -2,4 +2,4 @@ add_subdirectory(example_platformer)
 add_subdirectory(example_racer)
 add_subdirectory(example_basic)
 add_subdirectory(example_nomad)
-
+add_subdirectory(example_spine)

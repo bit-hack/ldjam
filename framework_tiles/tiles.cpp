@@ -126,7 +126,8 @@ bool collision_map_t::collide(const rectf_t& r,
             };
 
             // compute all of the resolution vectors
-            const std::array<vec2f_t, 4> vec = { { vec2f_t{ 0.f, res[0] },
+            const std::array<vec2f_t, 4> vec = { {
+                vec2f_t{ 0.f, res[0] },
                 vec2f_t{ 0.f, res[1] },
                 vec2f_t{ res[2], 0.f },
                 vec2f_t{ res[3], 0.f } } };

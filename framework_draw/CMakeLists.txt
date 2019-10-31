@@ -5,10 +5,12 @@ if (NOT MSVC)
 endif()
 
 set(SOURCE_FILES
-    draw.cpp
-    draw.h
     bitmap.cpp
     bitmap.h
+    blit.cpp
+    draw.cpp
+    draw.h
+    raster.cpp
     text_buffer.h
     text_buffer.cpp)
 

@@ -32,7 +32,7 @@ struct buffer_t {
 
     buffer_t(buffer_t&& buffer)
         : size_(buffer.size_)
-        , data_(std::move(buffer.data()))
+        , data_(std::move(buffer.data_))
     {
     }
 
@@ -57,6 +57,11 @@ struct buffer_t {
         , data_(new uint8_t[size_])
     {
         memcpy(data_.get(), src, size_);
+    }
+
+    void *release() {
+      size_ = 0;
+      return data_.release();
     }
 
     void resize(size_t size)

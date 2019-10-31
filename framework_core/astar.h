@@ -14,7 +14,7 @@ struct frame_alloc_t {
     type_t* alloc()
     {
 #if 0
-        assert(index_<c_size);
+        assert(index_ < c_size);
 #else
         if (index_ >= c_size)
             return nullptr;

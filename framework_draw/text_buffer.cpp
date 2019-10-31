@@ -43,7 +43,7 @@ void text_buffer_t::print(const char* fmt, ...)
     va_list va;
     va_start(va, fmt);
     const int out = vsnprintf(buffer.data(), buffer.size(), fmt, va);
-    assert(out >= 0 && out < buffer.size());
+    assert(out >= 0 && sizeof(out) < buffer.size());
     this->puts(buffer.data(), out);
     va_end(va);
 }

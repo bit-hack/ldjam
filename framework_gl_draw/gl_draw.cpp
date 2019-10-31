@@ -78,7 +78,7 @@ bool gl_draw_t::bind(const gl_depth_t& test)
     return true;
 }
 
-bool gl_draw_t::draw(const draw_info_t& info)
+bool gl_draw_t::draw_(const draw_info_t& info)
 {
     if (!shader_) {
         return false;
@@ -87,7 +87,7 @@ bool gl_draw_t::draw(const draw_info_t& info)
         shader_->bind(C_TEX, *info.texture_, 0);
     }
     // upload the current matrix transform
-    upload_transform();
+    upload_transform_();
     // push vertex location
     int32_t loc_pos = 0;
     if (!shader_->get_attrib_loc(C_POS, loc_pos)) {
@@ -128,7 +128,9 @@ bool gl_draw_t::draw(const draw_info_t& info)
     return true;
 }
 
-bool gl_draw_t::prep_quad_(const gl_quad_t& quad, vec4f_t * pos, vec2f_t * tex) {
+void gl_quad_t::emit_(vec4f_t * pos, vec2f_t * tex) const
+{
+    const gl_quad_t& quad = *this;
     // rotation angles
     const float sx = sinf(quad.angle_);
     const float cx = cosf(quad.angle_);
@@ -167,7 +169,6 @@ bool gl_draw_t::prep_quad_(const gl_quad_t& quad, vec4f_t * pos, vec2f_t * tex) 
         std::swap(tex[0].y, tex[1].y);
         std::swap(tex[2].y, tex[3].y);
     }
-    return true;
 }
 
 bool gl_draw_t::draw(const gl_quad_t& quad)
@@ -176,51 +177,14 @@ bool gl_draw_t::draw(const gl_quad_t& quad)
         return false;
     }
     if (quad.texture_) {
-        gl_texture_t* tex = quad.texture_.get();
+        gl_texture_t* tex = quad.texture_;
         shader_->bind(C_TEX, *tex, 0);
     }
-    // rotation angles
-    const float sx = sinf(quad.angle_);
-    const float cx = cosf(quad.angle_);
-    // position
-    const float x = quad.pos_.x;
-    const float y = quad.pos_.y;
-    const float z = quad.pos_.z;
-    // offset
-    const float ox = -quad.origin_.x * quad.size_.x;
-    const float oy = -quad.origin_.y * quad.size_.y;
-    // 2d rotation positions
-    const std::array<vec2f_t, 4> tmp = {
-        rotate(sx, cx, vec2f_t(ox, oy)),
-        rotate(sx, cx, vec2f_t(ox + quad.size_.x, oy)),
-        rotate(sx, cx, vec2f_t(ox, oy + quad.size_.y)),
-        rotate(sx, cx, vec2f_t(ox + quad.size_.x, oy + quad.size_.y)),
-    };
     // 4d vertex positions
-    const std::array<vec4f_t, 4> pos = {
-        vec4f_t{ x + tmp[0].x, y + tmp[0].y, z, 1.f },
-        vec4f_t{ x + tmp[1].x, y + tmp[1].y, z, 1.f },
-        vec4f_t{ x + tmp[2].x, y + tmp[2].y, z, 1.f },
-        vec4f_t{ x + tmp[3].x, y + tmp[3].y, z, 1.f }
-    };
+    std::array<vec4f_t, 4> pos;
     // texture coordinates
-    // todo: insert frame dependant coordinates here
-    std::array<vec2f_t, 4> tex = {
-        vec2f_t{ 0.f, 0.f },
-        vec2f_t{ 1.f, 0.f },
-        vec2f_t{ 0.f, 1.f },
-        vec2f_t{ 1.f, 1.f },
-    };
-    // mirror u coordinates
-    if (quad.flags_ & gl_quad_t::e_mirror_u) {
-        std::swap(tex[0].x, tex[1].x);
-        std::swap(tex[2].x, tex[3].x);
-    }
-    // mirror v coordinates
-    if (quad.flags_ & gl_quad_t::e_mirror_v) {
-        std::swap(tex[0].y, tex[1].y);
-        std::swap(tex[2].y, tex[3].y);
-    }
+    std::array<vec2f_t, 4> tex;
+    quad.emit_(pos.data(), tex.data());
     // index array
     const std::array<int32_t, 6> index = {
         0, 1, 2,
@@ -233,10 +197,10 @@ bool gl_draw_t::draw(const gl_quad_t& quad)
         &tex.data()->x,
         index.size(),
         index.data(),
-        quad.texture_ ? quad.texture_.get() : nullptr
+        quad.texture_
     };
     // todo: we can use this code to insert into a batch too
-    return draw(draw_info);
+    return draw_(draw_info);
 }
 
 bool gl_draw_t::draw(const gl_batch_t& batch)
@@ -249,7 +213,7 @@ bool gl_draw_t::draw(const gl_batch_t& batch)
         batch.index_.data(),
         nullptr
     };
-    return draw(draw_info);
+    return draw_(draw_info);
 }
 
 bool gl_draw_t::present()
@@ -289,11 +253,11 @@ bool gl_draw_t::bind(const gl_blend_t& blend)
 bool gl_draw_t::bind(const gl_camera_t& camera)
 {
     camera.get(transform_);
-    upload_transform();
+    upload_transform_();
     return true;
 }
 
-bool gl_draw_t::upload_transform()
+bool gl_draw_t::upload_transform_()
 {
     return shader_ ? shader_->bind(C_XFORM, transform_) : false;
 }
