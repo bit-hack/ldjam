@@ -156,4 +156,31 @@ void gui_widget_vslider_t::tick(gui_t &gui,
         draw.draw_circle(x0 + rad, y0 + rad + yv, 3);
     }
 }
+
+void gui_widget_progress_bar_t::tick(gui_t &gui,
+                                 gui_extern_io_t &io,
+                                 gui_extern_render_t &draw,
+                                 vec2i_t &origin) {
+
+    const int32_t rad = size / 2;
+    // redraw
+    {
+        draw.origin = origin;
+        draw.rgb = GUI_RGB_BG_2;
+        draw.draw_circle(x0 + rad, y0 + rad, rad);
+        draw.draw_circle(x1 - rad, y0 + rad, rad);
+        draw.draw_rect_fill(x0 + rad, y0, x1 - rad, y0 + size);
+        
+        draw.rgb = GUI_RGB_PROGRESS;
+        draw.draw_circle(x0 + rad, y0 + rad, 3);
+
+        const int32_t val = clampv(0, value, max_value);
+        const int32_t max = maxv(1, max_value);
+        const int32_t use_size = (x1 - x0) - rad * 2;
+        const int32_t xv = (use_size * val) / max;
+        draw.draw_circle(x0 + rad + xv, y0 + rad, 3);
+        draw.draw_rect_fill(x0 + rad, y0 + rad - 3, xv - rad, y0 + rad + 3);
+    }
 }
+
+} // tengu

@@ -232,40 +232,49 @@ struct app_t {
 
     void init_gui()
     {
-        auto f = gui_.alloc.frame_create<gui_widget_frame_t>();
-        gui_.root = f;
-        f->x0 = 32;
-        f->y0 = 32;
-        f->x1 = 32 + 96;
-        f->y1 = 32 + 128;
+        auto z = gui_.alloc.frame_create<gui_widget_frame_t>();
+        gui_.root = z;
+        z->x0 = 32;
+        z->y0 = 32;
+        z->x1 = 32 + 96;
+        z->y1 = 32 + 128;
 
         auto b = gui_.alloc.frame_create<gui_widget_button_t>();
-        f->child_add(b);
+        z->child_add(b);
         b->x0 = 10;
         b->y0 = 10;
         b->x1 = 80;
         b->y1 = 25;
 
         auto c = gui_.alloc.frame_create<gui_widget_check_box_t>();
-        f->child_add(c);
+        z->child_add(c);
         c->x0 = 20;
         c->y0 = 60;
         c->x1 = 30;
         c->y1 = 70;
 
         auto d = gui_.alloc.frame_create<gui_widget_hslider_t>();
-        f->child_add(d);
+        z->child_add(d);
         d->x0 = 15;
-        d->y0 = 90;
+        d->y0 = 100;
         d->x1 = 90;
-        d->y1 = 100;
+        d->y1 = 115;
 
         auto e = gui_.alloc.frame_create<gui_widget_vslider_t>();
-        f->child_add(e);
+        z->child_add(e);
         e->x0 = 2;
         e->y0 = 50;
         e->x1 = 12;
         e->y1 = 100;
+        e->user_tag = 0x1234;
+
+        auto f = gui_.alloc.frame_create<gui_widget_progress_bar_t>();
+        z->child_add(f);
+        f->x0 = 15;
+        f->y0 = 110;
+        f->x1 = 90;
+        f->y1 = 120;
+        f->user_tag = 0x4321;
     }
 
     // framework entry point

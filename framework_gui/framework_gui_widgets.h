@@ -110,4 +110,25 @@ struct gui_widget_vslider_t: public gui_frame_t {
             vec2i_t &origin) override;
 };
 
+struct gui_widget_progress_bar_t: public gui_frame_t {
+
+  static const uint32_t size = 9;
+
+  gui_widget_progress_bar_t()
+    : gui_frame_t(_type)
+    , max_value(100)
+    , value(0) {
+  }
+
+  static const uint32_t _type = GUI_WIDGET_PROGRESS_BAR;
+
+  int32_t max_value;
+  int32_t value;
+
+  void tick(gui_t &,
+            gui_extern_io_t &io,
+            gui_extern_render_t &draw,
+            vec2i_t &origin) override;
+};
+
 } // namespage tengu
