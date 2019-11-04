@@ -5,6 +5,46 @@
 #include "../framework_core/common.h"
 #include "draw.h"
 
+namespace {
+
+static inline uint32_t alpha_blend(
+    const uint32_t a,
+    const uint32_t b,
+    const uint8_t i)
+{
+#if 0
+  // unpack a
+  const uint8_t a_r = (a >> 16);
+  const uint8_t a_g = (a >>  8);
+  const uint8_t a_b = (a >>  0);
+  // unpack b
+  const uint8_t b_r = (b >> 16);
+  const uint8_t b_g = (b >>  8);
+  const uint8_t b_b = (b >>  0);
+  // blend
+  const uint8_t o_r = (a_r * (255 - i) + (b_r * i)) >> 8;
+  const uint8_t o_g = (a_g * (255 - i) + (b_g * i)) >> 8;
+  const uint8_t o_b = (a_b * (255 - i) + (b_b * i)) >> 8;
+  // repack
+  return uint32_t(o_r << 16) |
+         uint32_t(o_g <<  8) |
+         uint32_t(o_b <<  0);
+#else
+  const uint8_t j = 255 - i;
+  // pixel a
+  const uint32_t a0 = ((a & 0xff00ff) * j) >> 8;
+  const uint32_t a1 = ((a & 0x00ff00) * j) >> 8;
+  // pixel b
+  const uint32_t b0 = ((b & 0xff00ff) * i) >> 8;
+  const uint32_t b1 = ((b & 0x00ff00) * i) >> 8;
+  // mix results
+  return ((a0 & 0xff00ff) | (a1 & 0xff00)) +
+         ((b0 & 0xff00ff) | (b1 & 0xff00));
+#endif
+}
+
+} // namespace {}
+
 namespace tengu {
 
 void draw_t::clear()
@@ -43,6 +83,57 @@ void draw_t::circle(
     }
 }
 
+void draw_t::circleAA(
+    const vec2i_t& center,
+    const int32_t radius)
+{
+    assert(target_);
+    recti_t rect = {
+        center.x - radius - 1,
+        center.y - radius - 1,
+        center.x + radius + 1,
+        center.y + radius + 1
+    };
+    rect = recti_t::intersect(viewport_, rect);
+    const float r2 = 1.f / (radius * radius);
+    const uint32_t pitch = target_->width();
+    uint32_t* pix = target_->data() + rect.y0 * pitch;
+    const uint32_t colour = colour_;
+    // rasterize loop
+    for (int y = rect.y0; y <= rect.y1; ++y) {
+        for (int x = rect.x0; x <= rect.x1; ++x) {
+            // distance to edge
+            const float dx = absv(x - center.x);
+            const float dy = absv(y - center.y);
+            // distance squared
+            const float dx2 = dx * dx;
+            const float dy2 = dy * dy;
+            // calculate edge distance
+            const float v = (dx2 + dy2) * r2;
+            const float error = (v - 1.f) * radius;
+            // greater then edge
+            if (error > 1.f) {
+                continue;
+            }
+            // less than edge
+            if (error < -1.f) {
+                // skip spans on leading edge
+                if (x < center.x) {
+                    const int32_t nx = x + (dx * 2);
+                    _span(x, nx, y);
+                    x = nx;
+                } else {
+                    pix[x] = colour;
+                }
+                continue;
+            }
+            // render edge
+            pix[x] = alpha_blend(pix[x], colour, 128 - 127 * error);
+        }
+        pix += pitch;
+    }
+}
+
 void draw_t::rect(const recti_t p)
 {
     assert(target_);
@@ -55,6 +146,56 @@ void draw_t::rect(const recti_t p)
             pix[x] = colour;
         }
         pix += pitch;
+    }
+}
+
+void draw_t::rect_gliss(const recti_t p)
+{
+    assert(target_);
+    const recti_t rect = recti_t::intersect(viewport_ + recti_t{ 0, 0, 1, 1 }, p);
+    const uint32_t pitch = target_->width();
+    const uint32_t colour = (colour_ >> 1) & 0x7f7f7f;
+    uint32_t* pix = target_->data() + rect.y0 * pitch;
+    for (int y = rect.y0; y < rect.y1; ++y) {
+        for (int x = rect.x0; x < rect.x1; ++x) {
+            pix[x] = ((pix[x] >> 1) & 0x7f7f7f) + colour;
+        }
+        pix += pitch;
+    }
+}
+
+void draw_t::outline(const recti_t p)
+{
+    assert(target_);
+    const recti_t rect = recti_t::intersect(viewport_ + recti_t{ 0, 0, 1, 1 }, p);
+    const uint32_t pitch = target_->width();
+    const uint32_t colour = colour_;
+    uint32_t* pix = target_->data() + rect.y0 * pitch;
+    if (p.y0 >= viewport_.y0 && p.y0 < viewport_.y1) {
+        uint32_t* pix = target_->data() + rect.y0 * pitch;
+        for (int x = rect.x0; x < rect.x1; ++x) {
+            pix[x] = colour;
+        }
+    }
+    if (p.y1 >= viewport_.y0 && p.y1 < viewport_.y1) {
+        uint32_t* pix = target_->data() + (rect.y1 - 1) * pitch;
+        for (int x = rect.x0; x < rect.x1; ++x) {
+            pix[x] = colour;
+        }
+    }
+    if (p.x0 >= viewport_.x0 && p.x0 < viewport_.x1) {
+        uint32_t* pix = target_->data() + rect.y0 * pitch + rect.x0;
+        for (int y = rect.y0; y < rect.y1; ++y) {
+            pix[0] = colour;
+            pix += pitch;
+        }
+    }
+    if (p.x1 >= viewport_.x0 && p.x1 < viewport_.x1) {
+        uint32_t* pix = target_->data() + rect.y0 * pitch + (rect.x1 - 1);
+        for (int y = rect.y0; y < rect.y1; ++y) {
+            pix[0] = colour;
+            pix += pitch;
+        }
     }
 }
 

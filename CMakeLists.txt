@@ -4,17 +4,36 @@ project(tengu)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 option(USE_SPINE "enable spine-c runtime" OFF)
+option(USE_FRAMEWORK_GUI "enable framework GUI" OFF)
+option(USE_FRAMEWORK_AUDIO "enable framework audio" ON)
+option(USE_FRAMEWORK_DRAW "enable framework draw" ON)
+option(USE_FRAMEWORK_GLDRAW "enable framework gldraw" OFF)
 
-add_subdirectory(framework_audio)
+if (${USE_FRAMEWORK_AUDIO})
+  add_subdirectory(framework_audio)
+endif()
+
 add_subdirectory(framework_core)
-add_subdirectory(framework_draw)
-add_subdirectory(framework_gl_draw)
+
+if (${USE_FRAMEWORK_DRAW})
+  add_subdirectory(framework_draw)
+endif()
+
+if (${USE_FRAMEWORK_GLDRAW})
+  add_subdirectory(framework_gl_draw)
+endif()
+
 add_subdirectory(framework_sdl)
 add_subdirectory(framework_spatial)
-if (${USE_SPINE})
-add_subdirectory(framework_spine)
-endif()
 add_subdirectory(framework_tiles)
+
+if (${USE_FRAMEWORK_GUI})
+  add_subdirectory(framework_gui)
+endif()
+
+if (${USE_SPINE})
+  add_subdirectory(framework_spine)
+endif()
 
 add_subdirectory(examples)
 add_subdirectory(external)

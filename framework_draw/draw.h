@@ -72,7 +72,14 @@ struct draw_t {
     void circle(const vec2i_t & p,
                 const int32_t radius);
 
+    void circleAA(const vec2i_t &p,
+                  const int32_t radius);
+
     void rect(const recti_t p);
+
+    void outline(const recti_t p);
+
+    void rect_gliss(const recti_t p);
 
     void triangle(const vec2f_t & a,
                   const vec2f_t & b,
@@ -178,9 +185,35 @@ public:
     }
 
     template <bool C_OFFSET = true>
+    void rect_gliss(const recti_t p) {
+        draw_.rect(recti_t{
+            select_x<C_OFFSET>(p.x0),
+            select_y<C_OFFSET>(p.y0),
+            select_x<C_OFFSET>(p.x1),
+            select_y<C_OFFSET>(p.y1)
+        });
+    }
+
+    template <bool C_OFFSET = true>
+    void outline(const recti_t p) {
+        draw_.outline(recti_t{
+            select_x<C_OFFSET>(p.x0),
+            select_y<C_OFFSET>(p.y0),
+            select_x<C_OFFSET>(p.x1),
+            select_y<C_OFFSET>(p.y1)
+        });
+    }
+
+    template <bool C_OFFSET = true>
     void circle(const vec2i_t & p,
                 const int32_t radius) {
         draw_.circle(select<C_OFFSET, vec2i_t>(p), radius);
+    }
+
+    template <bool C_OFFSET = true>
+    void circleAA(const vec2i_t & p,
+                const int32_t radius) {
+        draw_.circleAA(select<C_OFFSET, vec2i_t>(p), radius);
     }
 
     template <typename vec_t, bool C_OFFSET = true>

@@ -19,6 +19,7 @@ struct rect_t {
 
     rect_t() = default;
 
+#if 0
     rect_t(const std::initializer_list<type_t>& l)
     {
         assert(l.size() == 4);
@@ -28,6 +29,7 @@ struct rect_t {
         x1 = a[2];
         y1 = a[3];
     }
+#endif
 
     rect_t(type_t a,
         type_t b,
@@ -94,6 +96,11 @@ struct rect_t {
         e_rect_outside,
         e_rect_overlap
     };
+
+    static rect_t sort(const rect_t &a) {
+      return rect_t{minv(a.x0, a.x1), minv(a.y0, a.y1),
+                    maxv(a.x0, a.x1), maxv(a.y0, a.y1)};
+    }
 
     /* test for levels of intersection between two rects
      */

@@ -59,6 +59,17 @@ void test_circles() {
     }
 }
 
+void test_circlesAA() {
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    for (int i=0; i<100; ++i) {
+        const vec2i_t p = vec2i_t {
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
+        draw_.colour_ = random_.rand<uint32_t>();
+        draw_.circleAA(p, random_.rand<uint32_t>() % 64);
+    }
+}
+
 void test_lines() {
     draw_.colour_ = 0x202020;
     draw_.clear();
@@ -86,6 +97,34 @@ void test_rect() {
             int32_t(random_.rand<uint32_t>() % 240u)};
         draw_.colour_ = random_.rand<uint32_t>();
         draw_.rect(recti_t{p0.x, p0.y, p1.x, p1.y});
+    }
+}
+
+void test_outline() {
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    for (int i=0; i<100; ++i) {
+        const vec2i_t p0 = vec2i_t {
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
+        const vec2i_t p1 = vec2i_t {
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
+        draw_.colour_ = random_.rand<uint32_t>();
+        draw_.outline(recti_t::sort(recti_t{p0.x, p0.y, p1.x, p1.y}));
+    }
+}
+
+void test_gliss() {
+    draw_.viewport(recti_t {32, 32, 320-32, 240-32});
+    for (int i=0; i<100; ++i) {
+        const vec2i_t p0 = vec2i_t {
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
+        const vec2i_t p1 = vec2i_t {
+            int32_t(random_.rand<uint32_t>() % 320u),
+            int32_t(random_.rand<uint32_t>() % 240u)};
+        draw_.colour_ = random_.rand<uint32_t>();
+        draw_.rect_gliss(recti_t{p0.x, p0.y, p1.x, p1.y});
     }
 }
 
@@ -334,14 +373,17 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 12> tests = {{
+std::array<test_t, 15> tests = {{
     TEST(test_font),
     TEST(test_blit),
     TEST(test_blit_clip),
     TEST(test_circles),
+    TEST(test_circlesAA),
     TEST(test_lines),
     TEST(test_plot),
     TEST(test_rect),
+    TEST(test_outline),
+    TEST(test_gliss),
     TEST(test_triangle),
     TEST(test_tilemap),
     TEST(test_rotosprite),
@@ -353,7 +395,7 @@ int main(const int argc, char *args[]) {
     if (!init()) {
         return 1;
     }
-    int32_t test_index = 9;
+    int32_t test_index = 4;
     bool pause = false;
     bool active = true;
     while (active) {
