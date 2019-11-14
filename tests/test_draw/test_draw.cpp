@@ -8,6 +8,7 @@
 #include "../../framework_core/timer.h"
 #include "../../framework_core/random.h"
 #include "../../framework_draw/draw.h"
+#include "../../framework_draw/font.h"
 
 using namespace tengu;
 
@@ -27,6 +28,7 @@ bitmap_t font_;
 random_t random_(0x12345);
 bitmap_t sprite_;
 float time_ = 0.f;
+ttf_font_t ttf_;
 }
 
 bool init() {
@@ -137,6 +139,26 @@ void test_plot() {
         draw_.colour_ = random_.rand<uint32_t>();
         draw_.plot(p0);
     } /* dither order */
+}
+
+void test_ttf() {
+  if (!ttf_.valid()) {
+    ttf_.load("c:/windows/fonts/arialbd.ttf", 15);
+  }
+  const auto vp = recti_t{32, 32, 320 - 32, 240 - 32};
+  draw_.viewport(vp);
+  for (int i=0; i<1000; ++i) {
+      const vec2i_t p0 = vec2i_t {
+          int32_t(random_.rand<uint32_t>() % 320u),
+          int32_t(random_.rand<uint32_t>() % 240u)};
+      auto &bmp = draw_.get_target();
+      ttf_font_t::target_t t;
+      t.dst = bmp.data();
+      t.pitch = bmp.width();
+      t.viewport = vp;
+      draw_.colour_ = random_.rand<uint32_t>();
+      ttf_.render(t, p0, "test", draw_.colour_);
+  }
 }
 
 void test_blit() {
@@ -373,7 +395,7 @@ struct test_t {
 #define STRINGY(X) #X
 #define TEST(X) {STRINGY(X), X}
 
-std::array<test_t, 15> tests = {{
+std::array<test_t, 16> tests = {{
     TEST(test_font),
     TEST(test_blit),
     TEST(test_blit_clip),
@@ -388,7 +410,8 @@ std::array<test_t, 15> tests = {{
     TEST(test_tilemap),
     TEST(test_rotosprite),
     TEST(test_rotosprite_2),
-    TEST(test_rotosprite_3)
+    TEST(test_rotosprite_3),
+    TEST(test_ttf)
 }};
 
 int main(const int argc, char *args[]) {

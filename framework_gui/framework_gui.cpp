@@ -9,14 +9,15 @@ namespace tengu {
 
 // modify hierarchy
 void gui_frame_t::child_add(gui_frame_t* c) {
-  child.push_back(c);
+  c->_parent = this;
+  _child.push_back(c);
 }
 
 // remove a child
 void gui_frame_t::child_remove(gui_frame_t* c) {
-  for (auto itt = child.begin(); itt != child.end();) {
+  for (auto itt = _child.begin(); itt != _child.end();) {
     if (*itt == c) {
-      itt = child.erase(itt);
+      itt = _child.erase(itt);
     }
     else {
       ++itt;
@@ -27,7 +28,7 @@ void gui_frame_t::child_remove(gui_frame_t* c) {
 bool gui_frame_t::event_pop(gui_event_t &out, bool recurse) {
   if (event.empty()) {
     if (recurse) {
-      for (gui_frame_t *f : child) {
+      for (gui_frame_t *f : _child) {
         if (f->event_pop(out, true)) {
           return true;
         }
@@ -84,8 +85,14 @@ void gui_t::tick(gui_frame_t *frame,
   vec2i_t o = vec2i_t{origin.x + frame->x0, origin.y + frame->y0};
 
   // update all children
-  for (gui_frame_t *c : frame->children()) {
-    tick(c, io, draw, o, hover);
+  auto &c = frame->children();
+  for (auto itt = c.begin(); itt != c.end();) {
+    if ((*itt)->dispose) {
+      itt = c.erase(itt);
+      continue;
+    }
+    tick(*itt, io, draw, o, hover);
+    ++itt;
   }
 
   // check what mouse is hovering over
@@ -156,8 +163,13 @@ void gui_alloc_t::collect(gui_t &gui) {
 
 void gui_alloc_t::visit(gui_frame_t *f, std::set<gui_frame_t*> &found) const {
   for (gui_frame_t *c : f->children()) {
-    found.insert(c);
-    visit(c, found);
+    if (c) {
+      found.insert(c);
+      visit(c, found);
+    }
+    if (c->parent()) {
+      found.insert(c->parent());
+    }
   }
 }
 

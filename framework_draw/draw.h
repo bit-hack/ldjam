@@ -136,13 +136,13 @@ struct draw_t {
 
     uint32_t colour_, key_;
 
+    recti_t target_size() const;
+
 protected:
 
     void _span(int32_t x0,
                int32_t x1,
                int32_t y);
-
-    recti_t _target_size() const;
 
     recti_t viewport_;
     bitmap_t * target_;

@@ -251,18 +251,18 @@ void draw_t::plot(const vec2i_t& p)
 void draw_t::set_target(struct bitmap_t& bmp)
 {
     target_ = &bmp;
-    viewport_ = _target_size();
+    viewport_ = target_size();
 }
 
 void draw_t::viewport(const recti_t& rect)
 {
-    recti_t vp = _target_size();
+    recti_t vp = target_size();
     viewport_ = recti_t::intersect(vp, rect);
 }
 
 void draw_t::viewport()
 {
-    viewport_ = _target_size();
+    viewport_ = target_size();
 }
 
 void draw_t::copy(
@@ -286,7 +286,7 @@ void draw_t::_span(int32_t x0, int32_t x1, int32_t y)
     }
 }
 
-recti_t draw_t::_target_size() const
+recti_t draw_t::target_size() const
 {
     assert(target_);
     return recti_t{

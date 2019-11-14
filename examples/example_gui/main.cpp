@@ -4,7 +4,9 @@
 
 #include "../../framework_core/objects.h"
 #include "../../framework_core/timer.h"
+
 #include "../../framework_draw/draw.h"
+#include "../../framework_draw/font.h"
 
 #include "../../framework_gui/framework_gui.h"
 #include "../../framework_gui/framework_gui_widgets.h"
@@ -23,6 +25,14 @@ struct gui_impl_render_t : public gui_extern_render_t {
         origin.y = 0;
     }
 
+    bool init() {
+      if (!font.load("c:/windows/fonts/arialbd.ttf", 10)) {
+        return false;
+      }
+      return true;
+    }
+
+    ttf_font_t font;
     draw_t& draw;
 
     // draw outline rectangle
@@ -71,7 +81,23 @@ struct gui_impl_render_t : public gui_extern_render_t {
 
     void draw_text(int32_t x0, int32_t y0, int32_t x1, int32_t y1, const std::string& txt) override
     {
-        // todo
+        recti_t bb;
+        font.get_bound(txt, bb);
+        bb.normalize();
+
+        auto& bitmap = draw.get_target();
+
+        ttf_font_t::target_t target;
+        target.dst = bitmap.data();
+        target.pitch = bitmap.width();
+        target.viewport = bitmap.rect();
+
+        font.render(
+          target,
+          vec2i_t{
+            x0 + origin.x - bb.x1 / 2,
+            y0 + origin.y + bb.y1 / 2},
+          txt, rgb);
     }
 };
 
@@ -142,6 +168,9 @@ struct app_t {
     gui_impl_io_t gui_io_;
     gui_impl_render_t gui_render_;
 
+    gui_widget_hslider_t *d;
+    gui_widget_progress_bar_t *f;
+
     // ctor
     app_t()
         : screen_(nullptr)
@@ -180,6 +209,10 @@ struct app_t {
         timer_.period_ = 1000 / _FPS;
         timer_.func_ = SDL_GetTicks;
         timer_.reset();
+        //
+        if (!gui_render_.init()) {
+          return false;
+        }
         return true;
     }
 
@@ -227,6 +260,8 @@ struct app_t {
             printf("event %d\n", event.type);
         }
 
+        f->value = d->value;
+
         return true;
     }
 
@@ -245,6 +280,7 @@ struct app_t {
         b->y0 = 10;
         b->x1 = 80;
         b->y1 = 25;
+        b->caption = "button";
 
         auto c = gui_.alloc.frame_create<gui_widget_check_box_t>();
         z->child_add(c);
@@ -253,7 +289,7 @@ struct app_t {
         c->x1 = 30;
         c->y1 = 70;
 
-        auto d = gui_.alloc.frame_create<gui_widget_hslider_t>();
+        d = gui_.alloc.frame_create<gui_widget_hslider_t>();
         z->child_add(d);
         d->x0 = 15;
         d->y0 = 100;
@@ -268,13 +304,24 @@ struct app_t {
         e->y1 = 100;
         e->user_tag = 0x1234;
 
-        auto f = gui_.alloc.frame_create<gui_widget_progress_bar_t>();
+        f = gui_.alloc.frame_create<gui_widget_progress_bar_t>();
         z->child_add(f);
         f->x0 = 15;
         f->y0 = 110;
         f->x1 = 90;
         f->y1 = 120;
         f->user_tag = 0x4321;
+
+        auto g = gui_.alloc.frame_create<gui_widget_combo_box_t>();
+        z->child_add(g);
+        g->x0 = 10;
+        g->y0 = 25;
+        g->x1 = 80;
+        g->y1 = 35;
+        g->items.push_back("item 1");
+        g->items.push_back("item 2");
+        g->items.push_back("item 3");
+        g->value = 0;
     }
 
     // framework entry point

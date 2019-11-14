@@ -15,7 +15,7 @@ set(SOURCE_FILES
     test_draw.cpp)
 
 add_executable(test_draw ${SOURCE_FILES})
-target_link_libraries(test_draw PUBLIC framework_core framework_draw SDL)
+target_link_libraries(test_draw PUBLIC framework_core framework_draw SDL stb_ttf)
 
 set_target_properties(test_draw PROPERTIES
     FOLDER tests

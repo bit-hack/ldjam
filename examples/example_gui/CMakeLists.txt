@@ -15,6 +15,7 @@ set(LIBRARIES
     framework_core
     framework_draw
     framework_gui
+    stb_ttf
     SDL)
 
 add_executable(example_gui ${SOURCE_FILES})

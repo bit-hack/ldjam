@@ -215,6 +215,15 @@ struct rect_t {
             y1 + rhs.y
         };
     }
+
+    void normalize() {
+      const type_t mx = abs(dx());
+      const type_t my = abs(dy());
+      x0 = 0;
+      y0 = 0;
+      x1 = mx;
+      y1 = my;
+    }
 };
 
 typedef rect_t<int32_t> recti_t;

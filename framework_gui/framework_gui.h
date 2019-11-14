@@ -43,6 +43,9 @@ struct gui_frame_t {
   // custom widget tag
   uint32_t user_tag;
 
+  // we should dispose of this frame
+  bool dispose;
+
   template <typename TYPE>
   bool is_a() const {
     return type == TYPE::_type;
@@ -68,11 +71,14 @@ struct gui_frame_t {
   virtual void on_focus_lost();
   virtual void on_focus_gain();
 
-  //
+  // 
   virtual void on_hover(gui_t &gui, gui_extern_io_t &io);
 
-  const auto &children() const {
-    return child;
+  auto &children() {
+    return _child;
+  }
+  gui_frame_t *parent() const {
+    return _parent;
   }
 
   bool event_pop(gui_event_t &out, bool recurse);
@@ -87,12 +93,13 @@ protected:
   gui_frame_t(int32_t t)
     : type(t)
     , user_tag(0)
-    , parent(nullptr)
+    , _parent(nullptr)
+    , dispose(false)
   {}
 
   // hierarchy
-  std::vector<gui_frame_t*> child;
-  gui_frame_t *parent;
+  std::vector<gui_frame_t*> _child;
+  gui_frame_t *_parent;
 };
 
 struct gui_extern_render_t {

@@ -15,6 +15,8 @@ enum gui_widget_type_t {
   GUI_WIDGET_PROGRESS_BAR,
   GUI_WIDGET_COMBO_BOX,
   GUI_WIDGET_LIST_BOX,
+
+  _GUI_WIDGET_COMBO_BOX_SELECT_FRAME,
 };
 
 struct gui_widget_frame_t: public gui_frame_t {
@@ -123,6 +125,40 @@ struct gui_widget_progress_bar_t: public gui_frame_t {
   static const uint32_t _type = GUI_WIDGET_PROGRESS_BAR;
 
   int32_t max_value;
+  int32_t value;
+
+  void tick(gui_t &,
+            gui_extern_io_t &io,
+            gui_extern_render_t &draw,
+            vec2i_t &origin) override;
+};
+
+struct gui_widget_combo_box_t: public gui_frame_t {
+
+  struct select_frame_t: public gui_frame_t {
+
+    select_frame_t()
+      : gui_frame_t(_type) {
+    }
+
+    void tick(gui_t &,
+              gui_extern_io_t &io,
+              gui_extern_render_t &draw,
+              vec2i_t &origin) override;
+
+    static const uint32_t _type = _GUI_WIDGET_COMBO_BOX_SELECT_FRAME;
+  };
+
+  static const uint32_t size = 9;
+
+  gui_widget_combo_box_t()
+    : gui_frame_t(_type)
+    , value(0) {
+  }
+
+  static const uint32_t _type = GUI_WIDGET_COMBO_BOX;
+
+  std::vector<std::string> items;
   int32_t value;
 
   void tick(gui_t &,

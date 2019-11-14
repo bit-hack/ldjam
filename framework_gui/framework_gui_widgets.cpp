@@ -47,6 +47,10 @@ void gui_widget_button_t::tick(gui_t &gui,
         draw.origin = origin;
         draw.rgb = GUI_RGB_BORDER;
         draw.draw_rect_outline(x0, y0, x1, y1);
+        if (!caption.empty()) {
+          draw.rgb = 0xe3e3e3;
+          draw.draw_text(x0, y0, x1, y1, caption);
+        }
     }
 }
 
@@ -179,7 +183,74 @@ void gui_widget_progress_bar_t::tick(gui_t &gui,
         const int32_t use_size = (x1 - x0) - rad * 2;
         const int32_t xv = (use_size * val) / max;
         draw.draw_circle(x0 + rad + xv, y0 + rad, 3);
-        draw.draw_rect_fill(x0 + rad, y0 + rad - 3, xv - rad, y0 + rad + 3);
+        draw.draw_rect_fill(x0 + rad, y0 + rad - 3, x0 + rad + xv + 1, y0 + rad + 4);
+    }
+}
+
+void gui_widget_combo_box_t::tick(
+    gui_t& gui,
+    gui_extern_io_t& io,
+    gui_extern_render_t& draw,
+    vec2i_t& origin)
+{
+    // if this has focus
+    if (gui.has_focus(this)) {
+        gui_extern_io_t::mouse_state_t mouse;
+        io.mouse_get(mouse);
+        if (mouse.button[0] == gui_extern_io_t::IO_MOUSE_DOWN) {
+          if (_child.empty()) {
+            select_frame_t *f = gui.alloc.frame_create<select_frame_t>();
+            f->x0 = x0;
+            f->x1 = x1;
+            f->y0 = y1;
+            f->y1 = y1 + items.size() * size;
+            child_add(f);
+            gui.set_focus(f);
+          }
+        }
+    }
+    // redraw
+    {
+        draw.origin = origin;
+
+        draw.rgb = GUI_RGB_BG_3;
+        draw.draw_rect_fill(x0+1, y0+1, x1-1, y1-1);
+        draw.rgb = GUI_RGB_BORDER;
+        draw.draw_rect_outline(x0, y0, x1, y1);
+        draw.rgb = 0xe3e3e3;
+        draw.draw_text(x0, y0, x1, y1, "test");
+    }
+}
+
+void gui_widget_combo_box_t::select_frame_t::tick(
+        gui_t& gui,
+        gui_extern_io_t& io,
+        gui_extern_render_t& draw,
+        vec2i_t& origin)
+{
+    if (!gui.has_focus(this)) {
+      dispose = true;
+      return;
+    }
+    gui_extern_io_t::mouse_state_t mouse;
+    io.mouse_get(mouse);
+    if (mouse.button[0] == gui_extern_io_t::IO_MOUSE_CLICK) {
+
+      // TODO: select the element
+
+      dispose = true;
+      return;
+    }
+
+    draw.rgb = GUI_RGB_BORDER;
+    draw.draw_rect_fill(x0, y0, x1, y1);
+    draw.rgb = GUI_RGB_SHADOW;
+    draw.draw_shadow(x0, y0, x1, y1);
+
+    const gui_widget_combo_box_t *p = (const gui_widget_combo_box_t*)_parent;
+    for (int i = 0; i < p->items.size(); ++i) {
+      const uint32_t y = y0 + i * p->size;
+      draw.draw_text(x0, y, x1, y, p->items[i]);
     }
 }
 
