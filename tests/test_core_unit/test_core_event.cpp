@@ -49,14 +49,14 @@ struct test_event_t: public test_t {
 
         local_listener_t local;
         std::array<uint32_t, 3> filter = {1, 3, 5};
-        stream.add(&local, filter);
+        stream.add<3>(&local, filter);
 
         for (uint32_t i = 0; i<4; ++i) {
             event_t e = {i};
             stream.send(&e);
         }
 
-        stream.remove(&local, filter);
+        stream.remove<3>(&local, filter);
 
         {
             event_t e = {5};
