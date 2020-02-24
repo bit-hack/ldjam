@@ -176,7 +176,7 @@ bool gl_draw_t::draw(const gl_quad_t& quad)
         return false;
     }
     if (quad.texture_) {
-        gl_texture_t* tex = quad.texture_.get();
+        gl_texture_t* tex = quad.texture_;
         shader_->bind(C_TEX, *tex, 0);
     }
     // rotation angles
@@ -233,7 +233,7 @@ bool gl_draw_t::draw(const gl_quad_t& quad)
         &tex.data()->x,
         index.size(),
         index.data(),
-        quad.texture_ ? quad.texture_.get() : nullptr
+        quad.texture_
     };
     // todo: we can use this code to insert into a batch too
     return draw(draw_info);

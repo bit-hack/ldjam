@@ -7,7 +7,6 @@
 #include <vector>
 
 #include "../framework_core/buffer.h"
-#include "../framework_core/lazy.h"
 #include "../framework_core/mat2.h"
 #include "../framework_core/rect.h"
 #include "../framework_core/vec2.h"
@@ -91,15 +90,12 @@ struct gl_quad_t {
 
     gl_quad_t& texture(gl_texture_t* tex)
     {
-        if (tex)
-            texture_ = tex;
-        else
-            texture_.reset();
+        texture_ = tex;
         return *this;
     }
 
 protected:
-    tengu::lazy_t<gl_texture_t*> texture_;
+    gl_texture_t* texture_;
     uint8_t flags_; // flags bit field
     rectf_t frame_; // texture frame
     vec3f_t pos_; // quad position
@@ -202,7 +198,7 @@ struct gl_batch_t {
         return index_.data() + index;
     }
 
-    tengu::lazy_t<gl_texture_t*> texture_;
+    gl_texture_t* texture_;
 
 protected:
     friend struct gl_draw_t;
@@ -252,7 +248,7 @@ struct gl_batch_quad_t {
         };
     }
 
-    tengu::lazy_t<gl_texture_t*> texture_;
+    gl_texture_t* texture_;
 
 protected:
     gl_batch_t batch_;
